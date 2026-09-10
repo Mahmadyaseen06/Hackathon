@@ -116,3 +116,145 @@ def save_interview_result(usn: str, interview_result: dict):
             s["interview_history"].append(interview_result)
             break
     _save_students(students)
+
+
+def usn_exists(usn: str) -> bool:
+    """Check if a USN is already registered."""
+    students = _load_students()
+    return any(s["usn"].upper() == usn.upper() for s in students)
+
+
+def register_student(profile: dict) -> dict:
+    """
+    Register a new self-signup student.
+    Assigns USN, hashes nothing (plain password stored same as mock data).
+    Returns the created student record (without password).
+    """
+    students = _load_students()
+
+    # Auto-generate USN if not provided
+    usn = profile.get("usn", "").strip().upper()
+    if not usn:
+        # Generate USN: SELF-YYYY-NNNN
+        import datetime
+        year = datetime.datetime.now().year % 100
+        existing_self = [s for s in students if s["usn"].startswith("SELF")]
+        seq = len(existing_self) + 1
+        usn = f"SELF{year:02d}{seq:04d}"
+
+    # Build full student record with defaults
+    student = {
+        "usn": usn,
+        "password": profile.get("password", "changeme123"),
+        "name": profile.get("name", "Student"),
+        "branch": profile.get("branch", "Computer Science & Engineering"),
+        "semester": int(profile.get("semester", 7)),
+        "cgpa": float(profile.get("cgpa", 7.0)),
+        "active_backlogs": int(profile.get("active_backlogs", 0)),
+        "backlogs_history": int(profile.get("backlogs_history", 0)),
+        "quantitative_aptitude": int(profile.get("quantitative_aptitude", 70)),
+        "logical_reasoning": int(profile.get("logical_reasoning", 70)),
+        "coding_benchmark": int(profile.get("coding_benchmark", 70)),
+        "communication_rating": float(profile.get("communication_rating", 7.0)),
+        "interview_rating": float(profile.get("interview_rating", 7.0)),
+        "target_role": profile.get("target_role", "SDE"),
+        "target_lpa": float(profile.get("target_lpa", 10.0)),
+        "skills": profile.get("skills", {}),
+        "certifications": profile.get("certifications", []),
+        "internships": profile.get("internships", []),
+        "projects": profile.get("projects", []),
+        # Platform usernames
+        "github_username": profile.get("github_username", ""),
+        "leetcode_username": profile.get("leetcode_username", ""),
+        "hackerrank_username": profile.get("hackerrank_username", ""),
+        "codeforces_username": profile.get("codeforces_username", ""),
+        # Metadata
+        "email": profile.get("email", ""),
+        "phone": profile.get("phone", ""),
+        "self_registered": True,
+        "interview_history": [],
+        "platform_stats": {},
+        "platform_stats_history": []
+    }
+
+    students.append(student)
+    _save_students(students)
+    return {k: v for k, v in student.items() if k != "password"}
+
+
+def save_platform_stats(usn: str, stats: dict):
+    """Save fetched platform stats snapshot to student record."""
+    students = _load_students()
+    for s in students:
+        if s["usn"].upper() == usn.upper():
+            s["platform_stats"] = stats
+            if "platform_stats_history" not in s:
+                s["platform_stats_history"] = []
+            s["platform_stats_history"].append(stats)
+            # Keep only last 30 snapshots
+            s["platform_stats_history"] = s["platform_stats_history"][-30:]
+            break
+    _save_students(students)
+
+
+def update_student_skills_from_platforms(usn: str, platform_stats: dict):
+    """
+    Auto-update student skill levels based on platform activity.
+    e.g. if LeetCode hard solved > 50, bump DSA skill.
+    """
+    students = _load_students()
+    for s in students:
+        if s["usn"].upper() == usn.upper():
+            skills = s.get("skills", {})
+
+            # LeetCode → DSA skill
+            lc = platform_stats.get("leetcode", {})
+            if not lc.get("error"):
+                hard = lc.get("hard_solved", 0)
+                medium = lc.get("medium_solved", 0)
+                total = lc.get("total_solved", 0)
+                if hard >= 50:
+                    skills["DSA"] = max(skills.get("DSA", 1), 9)
+                elif hard >= 20:
+                    skills["DSA"] = max(skills.get("DSA", 1), 8)
+                elif medium >= 50:
+                    skills["DSA"] = max(skills.get("DSA", 1), 7)
+                elif total >= 50:
+                    skills["DSA"] = max(skills.get("DSA", 1), 6)
+
+            # GitHub → language skills
+            gh = platform_stats.get("github", {})
+            if not gh.get("error"):
+                lang_map = {
+                    "Python": "Python", "JavaScript": "JavaScript", "TypeScript": "JavaScript",
+                    "Java": "Java", "C++": "C++", "C": "C", "Go": "Go", "Rust": "Rust",
+                    "Kotlin": "Kotlin", "Swift": "Swift", "Ruby": "Ruby", "PHP": "PHP"
+                }
+                for lang_item in gh.get("top_languages", []):
+                    lang = lang_item.get("language", "")
+                    repos = lang_item.get("repos", 0)
+                    skill_name = lang_map.get(lang)
+                    if skill_name and repos >= 3:
+                        skills[skill_name] = max(skills.get(skill_name, 1), min(8, 4 + repos))
+
+                # Coding benchmark from activity
+                activity = gh.get("activity_score", 0)
+                if activity > 0:
+                    s["coding_benchmark"] = max(s.get("coding_benchmark", 70), min(95, 60 + activity // 3))
+
+            # Codeforces → DSA + competitive
+            cf = platform_stats.get("codeforces", {})
+            if not cf.get("error"):
+                rating = cf.get("rating", 0)
+                if rating >= 2000:
+                    skills["DSA"] = max(skills.get("DSA", 1), 10)
+                elif rating >= 1600:
+                    skills["DSA"] = max(skills.get("DSA", 1), 9)
+                elif rating >= 1200:
+                    skills["DSA"] = max(skills.get("DSA", 1), 7)
+
+            s["skills"] = skills
+            break
+
+    _save_students(students)
+

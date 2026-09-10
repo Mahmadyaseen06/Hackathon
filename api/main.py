@@ -14,7 +14,7 @@ import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -37,7 +37,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from auth import (
     login_student, login_tpo, create_session_token, verify_session_token,
-    get_student_by_usn, get_all_students, save_interview_result
+    get_student_by_usn, get_all_students, save_interview_result,
+    register_student, usn_exists, save_platform_stats, update_student_skills_from_platforms
 )
 from interview.question_bank import get_calibrated_questions, COMPANY_PROFILES
 from interview.analyzer import analyze_answer, generate_followup, generate_full_interview_report
@@ -51,6 +52,8 @@ from upskilling.roadmap_generator import generate_personalized_roadmap as genera
 from upskilling.content_recommender import get_content_recommendations as recommend_resources
 from upskilling.project_ladder import get_project_recommendations as get_project_ladder
 from upskilling.internship_matcher import match_internships
+from api.cv_parser import parse_cv
+from api.progress_tracker import fetch_all_platform_stats
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 STATIC_DIR = Path(__file__).parent.parent / "static"
@@ -718,5 +721,329 @@ def health():
         "service": "AI Placement Predictor v3",
         "version": "3.0.0",
         "gemini_configured": bool(os.getenv("GEMINI_API_KEY", "") and os.getenv("GEMINI_API_KEY") != "your_gemini_api_key_here"),
+        "ollama_url": "http://localhost:11434",
         "students_loaded": len(get_all_students())
     }
+
+
+# ─────────────────────────────────────────────
+# SIGNUP & CV UPLOAD ENDPOINTS
+# ─────────────────────────────────────────────
+
+@app.get("/signup")
+def serve_signup():
+    signup_file = STATIC_DIR / "signup.html"
+    if signup_file.exists():
+        return FileResponse(str(signup_file))
+    return {"error": "Signup page not found."}
+
+
+class SignupRequest(BaseModel):
+    # Personal info
+    name: str
+    email: Optional[str] = ""
+    phone: Optional[str] = ""
+    password: str
+    # Academic
+    usn: Optional[str] = ""
+    branch: str = "Computer Science & Engineering"
+    semester: int = 7
+    cgpa: float = 7.0
+    active_backlogs: int = 0
+    backlogs_history: int = 0
+    # Scores
+    quantitative_aptitude: int = 70
+    logical_reasoning: int = 70
+    coding_benchmark: int = 70
+    communication_rating: float = 7.0
+    # Target
+    target_role: str = "SDE"
+    target_lpa: float = 10.0
+    # Skills as comma-separated string OR dict
+    skills_text: Optional[str] = ""
+    skills: Optional[dict] = {}
+    # Certifications / projects (comma-separated)
+    certifications_text: Optional[str] = ""
+    # Platform usernames
+    github_username: Optional[str] = ""
+    leetcode_username: Optional[str] = ""
+    hackerrank_username: Optional[str] = ""
+    codeforces_username: Optional[str] = ""
+
+
+@app.post("/api/auth/signup")
+async def signup(req: SignupRequest):
+    """Register a new student with manually entered details."""
+    if not req.name or not req.password:
+        raise HTTPException(status_code=400, detail="Name and password are required")
+
+    if len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    # Check USN conflict if provided
+    if req.usn and usn_exists(req.usn):
+        raise HTTPException(status_code=409, detail=f"USN '{req.usn}' is already registered")
+
+    # Parse skills from text if not provided as dict
+    skills = req.skills or {}
+    if not skills and req.skills_text:
+        for item in req.skills_text.split(","):
+            item = item.strip()
+            if ":" in item:
+                sk, lv = item.split(":", 1)
+                try:
+                    skills[sk.strip()] = int(lv.strip())
+                except ValueError:
+                    skills[sk.strip()] = 6
+            elif item:
+                skills[item] = 6  # default proficiency
+
+    # Parse certifications
+    certs = []
+    if req.certifications_text:
+        certs = [c.strip() for c in req.certifications_text.split(",") if c.strip()]
+
+    profile = req.dict()
+    profile["skills"] = skills
+    profile["certifications"] = certs
+
+    student = register_student(profile)
+    token = create_session_token(student["usn"], "student")
+
+    return {
+        "success": True,
+        "message": f"Account created! Your USN is {student['usn']}",
+        "usn": student["usn"],
+        "role": "student",
+        "token": token,
+        "user": {
+            "usn": student["usn"],
+            "name": student["name"],
+            "branch": student["branch"],
+            "cgpa": student["cgpa"]
+        },
+        "redirect": "/student"
+    }
+
+
+@app.post("/api/auth/signup-cv")
+async def signup_with_cv(
+    cv_file: UploadFile = File(...),
+    password: str = Form(...),
+    usn: str = Form(default=""),
+    github_username: str = Form(default=""),
+    leetcode_username: str = Form(default=""),
+    hackerrank_username: str = Form(default=""),
+    codeforces_username: str = Form(default="")
+):
+    """
+    Register a new student by uploading their CV/resume PDF.
+    Ollama AI extracts the profile automatically.
+    """
+    if not cv_file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    if usn and usn_exists(usn):
+        raise HTTPException(status_code=409, detail=f"USN '{usn}' is already registered")
+
+    # Read file content
+    file_bytes = await cv_file.read()
+    if len(file_bytes) > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
+    # Parse CV with AI
+    log.info(f"Parsing CV: {cv_file.filename} ({len(file_bytes)} bytes)")
+    cv_profile = await parse_cv(file_bytes, cv_file.filename)
+
+    if not cv_profile:
+        raise HTTPException(status_code=422, detail="Could not extract information from CV. Please check the PDF or use manual signup.")
+
+    # Override/supplement with form fields
+    cv_profile["password"] = password
+    if usn:
+        cv_profile["usn"] = usn
+    if github_username:
+        cv_profile["github_username"] = github_username
+    if leetcode_username:
+        cv_profile["leetcode_username"] = leetcode_username
+    if hackerrank_username:
+        cv_profile["hackerrank_username"] = hackerrank_username
+    if codeforces_username:
+        cv_profile["codeforces_username"] = codeforces_username
+
+    student = register_student(cv_profile)
+    token = create_session_token(student["usn"], "student")
+
+    return {
+        "success": True,
+        "message": f"CV parsed! Account created as {student['usn']}",
+        "usn": student["usn"],
+        "role": "student",
+        "token": token,
+        "extracted_profile": {
+            "name": student["name"],
+            "skills_found": len(student.get("skills", {})),
+            "projects_found": len(student.get("projects", [])),
+            "certifications_found": len(student.get("certifications", [])),
+            "internships_found": len(student.get("internships", [])),
+        },
+        "user": {
+            "usn": student["usn"],
+            "name": student["name"],
+            "branch": student["branch"],
+            "cgpa": student["cgpa"]
+        },
+        "redirect": "/student"
+    }
+
+
+# ─────────────────────────────────────────────
+# PROGRESS TRACKING ENDPOINTS
+# ─────────────────────────────────────────────
+
+@app.post("/api/progress/refresh")
+async def refresh_progress(usn: str, token: str):
+    """
+    Fetch fresh stats from GitHub, LeetCode, Codeforces, HackerRank.
+    Updates student profile and auto-adjusts skill levels.
+    """
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    student = get_student_by_usn(usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Fetch all platform stats in parallel
+    log.info(f"Fetching platform stats for {usn}")
+    stats = await fetch_all_platform_stats(student)
+
+    # Save to student record
+    save_platform_stats(usn, stats)
+
+    # Auto-update skill levels based on real activity
+    update_student_skills_from_platforms(usn, stats)
+
+    return {
+        "success": True,
+        "usn": usn,
+        "platforms_fetched": [k for k in stats if k not in ("fetched_at", "aggregate_activity_score", "message")],
+        "aggregate_activity_score": stats.get("aggregate_activity_score", 0),
+        "stats": stats
+    }
+
+
+@app.get("/api/progress/stats")
+def get_progress_stats(usn: str, token: str):
+    """Get the most recently fetched platform stats for a student."""
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    student = get_student_by_usn(usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    return {
+        "usn": usn,
+        "platform_stats": student.get("platform_stats", {}),
+        "has_github": bool(student.get("github_username")),
+        "has_leetcode": bool(student.get("leetcode_username")),
+        "has_hackerrank": bool(student.get("hackerrank_username")),
+        "has_codeforces": bool(student.get("codeforces_username")),
+        "github_username": student.get("github_username", ""),
+        "leetcode_username": student.get("leetcode_username", ""),
+        "hackerrank_username": student.get("hackerrank_username", ""),
+        "codeforces_username": student.get("codeforces_username", ""),
+    }
+
+
+@app.get("/api/progress/history")
+def get_progress_history(usn: str, token: str):
+    """Get platform stats history (daily snapshots) for trend graphs."""
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    student = get_student_by_usn(usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    history = student.get("platform_stats_history", [])
+    return {
+        "usn": usn,
+        "snapshots": len(history),
+        "history": history[-30:]  # Last 30 days
+    }
+
+
+@app.get("/api/progress/recommendations")
+async def get_progress_recommendations(usn: str, token: str):
+    """
+    Generate resource recommendations based on platform activity + skill gaps.
+    """
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    student = get_student_by_usn(usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Get skill gaps
+    gap_data = compute_skill_gap(student)
+    missing = (
+        [g["skill"] for g in gap_data.get("critical_gaps", [])] +
+        [g["skill"] for g in gap_data.get("minor_gaps", [])]
+    )
+
+    # Get resources for top 5 gaps
+    resources = recommend_resources(missing[:5])
+
+    # Get platform stats
+    platform_stats = student.get("platform_stats", {})
+
+    # Build activity-aware recommendations
+    suggestions = []
+
+    lc = platform_stats.get("leetcode", {})
+    if not lc.get("error") and lc.get("total_solved", 0) < 50:
+        suggestions.append({
+            "type": "action",
+            "platform": "LeetCode",
+            "message": f"You've solved {lc.get('total_solved', 0)} problems. Aim for 100+ to be competitive.",
+            "link": f"https://leetcode.com/{student.get('leetcode_username', '')}"
+        })
+
+    gh = platform_stats.get("github", {})
+    if not gh.get("error") and gh.get("recent_commits_30d", 0) < 10:
+        suggestions.append({
+            "type": "action",
+            "platform": "GitHub",
+            "message": f"Only {gh.get('recent_commits_30d', 0)} commits in 30 days. Try to commit daily!",
+            "link": f"https://github.com/{student.get('github_username', '')}"
+        })
+
+    cf = platform_stats.get("codeforces", {})
+    if not cf.get("error") and cf.get("rating", 0) < 1200:
+        suggestions.append({
+            "type": "action",
+            "platform": "Codeforces",
+            "message": f"Codeforces rating: {cf.get('rating', 0)}. Practice div.3 contests to reach 1200+.",
+            "link": f"https://codeforces.com/profile/{student.get('codeforces_username', '')}"
+        })
+
+    return {
+        "skill_gap_resources": resources,
+        "activity_suggestions": suggestions,
+        "skill_gaps": missing[:8]
+    }
+

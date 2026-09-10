@@ -17,13 +17,58 @@
     "interview_rating": 8.0,
     "target_role": "Full-Stack Developer",
     "target_lpa": 16.0,
-    "skills": {"JavaScript": 9, "React": 8, "Node.js": 8, "SQL": 7, "REST APIs": 8, "Git": 9, "TypeScript": 7, "Docker": 6, "Python": 7, "DSA": 8},
-    "certifications": ["AWS Certified Cloud Practitioner", "Meta Front-End Developer Certificate"],
-    "internships": [{"company": "FinTech Innovations", "role": "Full-Stack Intern", "duration_months": 3}],
+    "skills": {
+      "JavaScript": 9,
+      "React": 8,
+      "Node.js": 8,
+      "SQL": 7,
+      "REST APIs": 8,
+      "Git": 9,
+      "TypeScript": 7,
+      "Docker": 6,
+      "Python": 7,
+      "DSA": 8
+    },
+    "certifications": [
+      "AWS Certified Cloud Practitioner",
+      "Meta Front-End Developer Certificate"
+    ],
+    "internships": [
+      {
+        "company": "FinTech Innovations",
+        "role": "Full-Stack Intern",
+        "duration_months": 3
+      }
+    ],
     "projects": [
-      {"name": "E-Commerce Microservices", "complexity": "Advanced", "tags": ["React", "Node.js", "Docker", "MongoDB"]},
-      {"name": "Realtime Collab Whiteboard", "complexity": "Intermediate", "tags": ["React", "TypeScript", "WebSocket"]},
-      {"name": "Portfolio Website", "complexity": "Beginner", "tags": ["JavaScript", "HTML", "CSS"]}
+      {
+        "name": "E-Commerce Microservices",
+        "complexity": "Advanced",
+        "tags": [
+          "React",
+          "Node.js",
+          "Docker",
+          "MongoDB"
+        ]
+      },
+      {
+        "name": "Realtime Collab Whiteboard",
+        "complexity": "Intermediate",
+        "tags": [
+          "React",
+          "TypeScript",
+          "WebSocket"
+        ]
+      },
+      {
+        "name": "Portfolio Website",
+        "complexity": "Beginner",
+        "tags": [
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ]
+      }
     ],
     "github_username": "priya-dev-coder",
     "leetcode_username": "priya_codes",
@@ -47,12 +92,45 @@
     "interview_rating": 6.5,
     "target_role": "Data Analyst / ML Engineer",
     "target_lpa": 9.0,
-    "skills": {"Python": 7, "SQL": 6, "Pandas": 7, "Machine Learning": 5, "Data Visualization": 6, "Statistics": 6, "Git": 6, "DSA": 5},
-    "certifications": ["Google Data Analytics Certificate"],
-    "internships": [{"company": "Apex Analytics", "role": "Data Analyst Intern", "duration_months": 2}],
+    "skills": {
+      "Python": 7,
+      "SQL": 6,
+      "Pandas": 7,
+      "Machine Learning": 5,
+      "Data Visualization": 6,
+      "Statistics": 6,
+      "Git": 6,
+      "DSA": 5
+    },
+    "certifications": [
+      "Google Data Analytics Certificate"
+    ],
+    "internships": [
+      {
+        "company": "Apex Analytics",
+        "role": "Data Analyst Intern",
+        "duration_months": 2
+      }
+    ],
     "projects": [
-      {"name": "Customer Churn Prediction", "complexity": "Intermediate", "tags": ["Python", "scikit-learn", "Pandas"]},
-      {"name": "Sales Analytics Dashboard", "complexity": "Beginner", "tags": ["Python", "Excel", "Power BI"]}
+      {
+        "name": "Customer Churn Prediction",
+        "complexity": "Intermediate",
+        "tags": [
+          "Python",
+          "scikit-learn",
+          "Pandas"
+        ]
+      },
+      {
+        "name": "Sales Analytics Dashboard",
+        "complexity": "Beginner",
+        "tags": [
+          "Python",
+          "Excel",
+          "Power BI"
+        ]
+      }
     ],
     "github_username": "rahul-sharma-data",
     "leetcode_username": "rahul_s",
@@ -76,10 +154,25 @@
     "interview_rating": 5.0,
     "target_role": "Embedded Systems Developer",
     "target_lpa": 5.5,
-    "skills": {"C": 5, "Python": 4, "SQL": 3, "Git": 3, "DSA": 3},
+    "skills": {
+      "C": 5,
+      "Python": 4,
+      "SQL": 3,
+      "Git": 3,
+      "DSA": 3
+    },
     "certifications": [],
     "internships": [],
-    "projects": [{"name": "Basic Calculator App", "complexity": "Beginner", "tags": ["Python", "Tkinter"]}],
+    "projects": [
+      {
+        "name": "Basic Calculator App",
+        "complexity": "Beginner",
+        "tags": [
+          "Python",
+          "Tkinter"
+        ]
+      }
+    ],
     "github_username": "amit-v",
     "leetcode_username": "amit_verma_26",
     "interview_history": []
@@ -102,12 +195,45 @@
     "interview_rating": 8.0,
     "target_role": "Core Systems / SDE",
     "target_lpa": 22.0,
-    "skills": {"C++": 9, "DSA": 9, "Operating Systems": 8, "System Design": 7, "DBMS": 8, "Linux": 8, "Git": 8, "OOP": 8},
-    "certifications": ["Linux Foundation Certified System Administrator (LFCS)"],
-    "internships": [{"company": "InfraScale Labs", "role": "Systems Intern", "duration_months": 3}],
+    "skills": {
+      "C++": 9,
+      "DSA": 9,
+      "Operating Systems": 8,
+      "System Design": 7,
+      "DBMS": 8,
+      "Linux": 8,
+      "Git": 8,
+      "OOP": 8
+    },
+    "certifications": [
+      "Linux Foundation Certified System Administrator (LFCS)"
+    ],
+    "internships": [
+      {
+        "company": "InfraScale Labs",
+        "role": "Systems Intern",
+        "duration_months": 3
+      }
+    ],
     "projects": [
-      {"name": "Custom Key-Value Store", "complexity": "Advanced", "tags": ["C++", "Operating Systems", "DSA"]},
-      {"name": "Distributed Task Queue", "complexity": "Advanced", "tags": ["Go", "Docker", "System Design"]}
+      {
+        "name": "Custom Key-Value Store",
+        "complexity": "Advanced",
+        "tags": [
+          "C++",
+          "Operating Systems",
+          "DSA"
+        ]
+      },
+      {
+        "name": "Distributed Task Queue",
+        "complexity": "Advanced",
+        "tags": [
+          "Go",
+          "Docker",
+          "System Design"
+        ]
+      }
     ],
     "github_username": "sneha-systems",
     "leetcode_username": "sneha_rao",
@@ -119,7 +245,7 @@
     "name": "Kiran Kumar",
     "branch": "Artificial Intelligence & Machine Learning",
     "semester": 7,
-    "cgpa": 9.10,
+    "cgpa": 9.1,
     "tenth_percentage": 95.0,
     "twelfth_percentage": 93.0,
     "backlogs_history": 0,
@@ -131,16 +257,64 @@
     "interview_rating": 9.0,
     "target_role": "ML Engineer / AI Researcher",
     "target_lpa": 28.0,
-    "skills": {"Python": 10, "PyTorch": 9, "TensorFlow": 8, "NLP": 8, "Computer Vision": 7, "AWS": 7, "Docker": 7, "DSA": 9, "SQL": 7, "Git": 9},
-    "certifications": ["TensorFlow Developer Certificate", "AWS Machine Learning Specialty", "Deep Learning Specialization (Coursera)"],
+    "skills": {
+      "Python": 10,
+      "PyTorch": 9,
+      "TensorFlow": 8,
+      "NLP": 8,
+      "Computer Vision": 7,
+      "AWS": 7,
+      "Docker": 7,
+      "DSA": 9,
+      "SQL": 7,
+      "Git": 9
+    },
+    "certifications": [
+      "TensorFlow Developer Certificate",
+      "AWS Machine Learning Specialty",
+      "Deep Learning Specialization (Coursera)"
+    ],
     "internships": [
-      {"company": "NVIDIA Research", "role": "AI Research Intern", "duration_months": 6},
-      {"company": "Fractal Analytics", "role": "Data Science Intern", "duration_months": 3}
+      {
+        "company": "NVIDIA Research",
+        "role": "AI Research Intern",
+        "duration_months": 6
+      },
+      {
+        "company": "Fractal Analytics",
+        "role": "Data Science Intern",
+        "duration_months": 3
+      }
     ],
     "projects": [
-      {"name": "Real-time Object Detection API", "complexity": "Advanced", "tags": ["PyTorch", "FastAPI", "OpenCV", "Docker"]},
-      {"name": "Hindi NLP Sentiment Analyzer", "complexity": "Advanced", "tags": ["HuggingFace", "Transformers", "Python"]},
-      {"name": "AutoML Pipeline Builder", "complexity": "Intermediate", "tags": ["scikit-learn", "MLflow", "Python"]}
+      {
+        "name": "Real-time Object Detection API",
+        "complexity": "Advanced",
+        "tags": [
+          "PyTorch",
+          "FastAPI",
+          "OpenCV",
+          "Docker"
+        ]
+      },
+      {
+        "name": "Hindi NLP Sentiment Analyzer",
+        "complexity": "Advanced",
+        "tags": [
+          "HuggingFace",
+          "Transformers",
+          "Python"
+        ]
+      },
+      {
+        "name": "AutoML Pipeline Builder",
+        "complexity": "Intermediate",
+        "tags": [
+          "scikit-learn",
+          "MLflow",
+          "Python"
+        ]
+      }
     ],
     "github_username": "kiran-ai-ml",
     "leetcode_username": "kiran_codes",
@@ -152,7 +326,7 @@
     "name": "Divya Nair",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 7.80,
+    "cgpa": 7.8,
     "tenth_percentage": 84.0,
     "twelfth_percentage": 82.0,
     "backlogs_history": 0,
@@ -164,12 +338,44 @@
     "interview_rating": 7.0,
     "target_role": "Backend Developer",
     "target_lpa": 11.0,
-    "skills": {"Java": 8, "Spring Boot": 7, "SQL": 8, "REST APIs": 7, "Git": 7, "DSA": 6, "Docker": 5, "Python": 5},
-    "certifications": ["Oracle Certified Java Programmer"],
-    "internships": [{"company": "TCS", "role": "Java Developer Intern", "duration_months": 2}],
+    "skills": {
+      "Java": 8,
+      "Spring Boot": 7,
+      "SQL": 8,
+      "REST APIs": 7,
+      "Git": 7,
+      "DSA": 6,
+      "Docker": 5,
+      "Python": 5
+    },
+    "certifications": [
+      "Oracle Certified Java Programmer"
+    ],
+    "internships": [
+      {
+        "company": "TCS",
+        "role": "Java Developer Intern",
+        "duration_months": 2
+      }
+    ],
     "projects": [
-      {"name": "Hospital Management System", "complexity": "Intermediate", "tags": ["Java", "Spring Boot", "MySQL"]},
-      {"name": "ATM Simulation", "complexity": "Beginner", "tags": ["Java", "OOP"]}
+      {
+        "name": "Hospital Management System",
+        "complexity": "Intermediate",
+        "tags": [
+          "Java",
+          "Spring Boot",
+          "MySQL"
+        ]
+      },
+      {
+        "name": "ATM Simulation",
+        "complexity": "Beginner",
+        "tags": [
+          "Java",
+          "OOP"
+        ]
+      }
     ],
     "github_username": "divya-java-dev",
     "leetcode_username": "divya_nair",
@@ -193,12 +399,36 @@
     "interview_rating": 5.5,
     "target_role": "Web Developer",
     "target_lpa": 6.0,
-    "skills": {"HTML": 7, "CSS": 7, "JavaScript": 6, "PHP": 5, "MySQL": 5, "Git": 5, "DSA": 4},
+    "skills": {
+      "HTML": 7,
+      "CSS": 7,
+      "JavaScript": 6,
+      "PHP": 5,
+      "MySQL": 5,
+      "Git": 5,
+      "DSA": 4
+    },
     "certifications": [],
     "internships": [],
     "projects": [
-      {"name": "College Website Clone", "complexity": "Beginner", "tags": ["HTML", "CSS", "JavaScript"]},
-      {"name": "Student Result Portal", "complexity": "Beginner", "tags": ["PHP", "MySQL", "HTML"]}
+      {
+        "name": "College Website Clone",
+        "complexity": "Beginner",
+        "tags": [
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ]
+      },
+      {
+        "name": "Student Result Portal",
+        "complexity": "Beginner",
+        "tags": [
+          "PHP",
+          "MySQL",
+          "HTML"
+        ]
+      }
     ],
     "github_username": "arjun-menon-web",
     "leetcode_username": "arjun_m",
@@ -210,7 +440,7 @@
     "name": "Pooja Hegde",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 8.60,
+    "cgpa": 8.6,
     "tenth_percentage": 90.0,
     "twelfth_percentage": 87.0,
     "backlogs_history": 0,
@@ -222,12 +452,48 @@
     "interview_rating": 8.5,
     "target_role": "Cloud / DevOps Engineer",
     "target_lpa": 18.0,
-    "skills": {"AWS": 8, "GCP": 7, "Docker": 9, "Kubernetes": 7, "Terraform": 7, "Linux": 8, "Python": 7, "Git": 9, "CI/CD": 8, "DSA": 7},
-    "certifications": ["AWS Solutions Architect Associate", "CKA - Certified Kubernetes Administrator"],
-    "internships": [{"company": "Thoughtworks", "role": "DevOps Intern", "duration_months": 4}],
+    "skills": {
+      "AWS": 8,
+      "GCP": 7,
+      "Docker": 9,
+      "Kubernetes": 7,
+      "Terraform": 7,
+      "Linux": 8,
+      "Python": 7,
+      "Git": 9,
+      "CI/CD": 8,
+      "DSA": 7
+    },
+    "certifications": [
+      "AWS Solutions Architect Associate",
+      "CKA - Certified Kubernetes Administrator"
+    ],
+    "internships": [
+      {
+        "company": "Thoughtworks",
+        "role": "DevOps Intern",
+        "duration_months": 4
+      }
+    ],
     "projects": [
-      {"name": "Multi-Region Kubernetes Deployment", "complexity": "Advanced", "tags": ["Kubernetes", "Terraform", "AWS"]},
-      {"name": "CI/CD Pipeline Automation", "complexity": "Intermediate", "tags": ["Jenkins", "Docker", "GitHub Actions"]}
+      {
+        "name": "Multi-Region Kubernetes Deployment",
+        "complexity": "Advanced",
+        "tags": [
+          "Kubernetes",
+          "Terraform",
+          "AWS"
+        ]
+      },
+      {
+        "name": "CI/CD Pipeline Automation",
+        "complexity": "Intermediate",
+        "tags": [
+          "Jenkins",
+          "Docker",
+          "GitHub Actions"
+        ]
+      }
     ],
     "github_username": "pooja-devops",
     "leetcode_username": "pooja_h",
@@ -239,7 +505,7 @@
     "name": "Rohan Gowda",
     "branch": "Mechanical Engineering",
     "semester": 7,
-    "cgpa": 6.80,
+    "cgpa": 6.8,
     "tenth_percentage": 76.0,
     "twelfth_percentage": 74.0,
     "backlogs_history": 1,
@@ -251,10 +517,28 @@
     "interview_rating": 6.0,
     "target_role": "IT Support / Business Analyst",
     "target_lpa": 5.0,
-    "skills": {"Python": 4, "SQL": 5, "Excel": 7, "PowerPoint": 6, "Git": 3, "DSA": 3},
-    "certifications": ["Microsoft Office Specialist"],
+    "skills": {
+      "Python": 4,
+      "SQL": 5,
+      "Excel": 7,
+      "PowerPoint": 6,
+      "Git": 3,
+      "DSA": 3
+    },
+    "certifications": [
+      "Microsoft Office Specialist"
+    ],
     "internships": [],
-    "projects": [{"name": "Inventory Management Sheet", "complexity": "Beginner", "tags": ["Excel", "VBA"]}],
+    "projects": [
+      {
+        "name": "Inventory Management Sheet",
+        "complexity": "Beginner",
+        "tags": [
+          "Excel",
+          "VBA"
+        ]
+      }
+    ],
     "github_username": "rohan-gowda",
     "leetcode_username": "rohan_g26",
     "interview_history": []
@@ -265,7 +549,7 @@
     "name": "Ananya Krishnan",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 9.30,
+    "cgpa": 9.3,
     "tenth_percentage": 97.0,
     "twelfth_percentage": 95.0,
     "backlogs_history": 0,
@@ -277,16 +561,63 @@
     "interview_rating": 9.5,
     "target_role": "SDE / Product Engineer",
     "target_lpa": 30.0,
-    "skills": {"Python": 9, "C++": 9, "DSA": 10, "System Design": 9, "SQL": 8, "React": 7, "Node.js": 7, "Git": 10, "Docker": 7, "Kubernetes": 6},
-    "certifications": ["Google Cloud Professional Engineer", "Meta Backend Developer", "DSA Specialization"],
+    "skills": {
+      "Python": 9,
+      "C++": 9,
+      "DSA": 10,
+      "System Design": 9,
+      "SQL": 8,
+      "React": 7,
+      "Node.js": 7,
+      "Git": 10,
+      "Docker": 7,
+      "Kubernetes": 6
+    },
+    "certifications": [
+      "Google Cloud Professional Engineer",
+      "Meta Backend Developer",
+      "DSA Specialization"
+    ],
     "internships": [
-      {"company": "Google", "role": "SWE Intern", "duration_months": 3},
-      {"company": "Microsoft", "role": "SDE Intern", "duration_months": 3}
+      {
+        "company": "Google",
+        "role": "SWE Intern",
+        "duration_months": 3
+      },
+      {
+        "company": "Microsoft",
+        "role": "SDE Intern",
+        "duration_months": 3
+      }
     ],
     "projects": [
-      {"name": "Distributed File System", "complexity": "Advanced", "tags": ["Go", "gRPC", "Distributed Systems"]},
-      {"name": "LeetCode Contest Bot", "complexity": "Intermediate", "tags": ["Python", "Selenium", "FastAPI"]},
-      {"name": "AI Code Reviewer", "complexity": "Advanced", "tags": ["LLM", "Python", "GitHub Actions"]}
+      {
+        "name": "Distributed File System",
+        "complexity": "Advanced",
+        "tags": [
+          "Go",
+          "gRPC",
+          "Distributed Systems"
+        ]
+      },
+      {
+        "name": "LeetCode Contest Bot",
+        "complexity": "Intermediate",
+        "tags": [
+          "Python",
+          "Selenium",
+          "FastAPI"
+        ]
+      },
+      {
+        "name": "AI Code Reviewer",
+        "complexity": "Advanced",
+        "tags": [
+          "LLM",
+          "Python",
+          "GitHub Actions"
+        ]
+      }
     ],
     "github_username": "ananya-coder",
     "leetcode_username": "ananya_k",
@@ -298,7 +629,7 @@
     "name": "Vikram Singh",
     "branch": "Information Science & Engineering",
     "semester": 7,
-    "cgpa": 7.50,
+    "cgpa": 7.5,
     "tenth_percentage": 80.0,
     "twelfth_percentage": 78.0,
     "backlogs_history": 0,
@@ -310,12 +641,45 @@
     "interview_rating": 7.0,
     "target_role": "Cybersecurity Analyst",
     "target_lpa": 10.0,
-    "skills": {"Linux": 8, "Python": 6, "Networking": 7, "SQL": 6, "Ethical Hacking": 6, "Git": 6, "DSA": 5},
-    "certifications": ["CompTIA Security+", "CEH - Certified Ethical Hacker"],
-    "internships": [{"company": "TechSecure", "role": "Security Analyst Intern", "duration_months": 2}],
+    "skills": {
+      "Linux": 8,
+      "Python": 6,
+      "Networking": 7,
+      "SQL": 6,
+      "Ethical Hacking": 6,
+      "Git": 6,
+      "DSA": 5
+    },
+    "certifications": [
+      "CompTIA Security+",
+      "CEH - Certified Ethical Hacker"
+    ],
+    "internships": [
+      {
+        "company": "TechSecure",
+        "role": "Security Analyst Intern",
+        "duration_months": 2
+      }
+    ],
     "projects": [
-      {"name": "Network Vulnerability Scanner", "complexity": "Intermediate", "tags": ["Python", "Nmap", "Linux"]},
-      {"name": "Password Manager App", "complexity": "Beginner", "tags": ["Python", "Encryption", "SQLite"]}
+      {
+        "name": "Network Vulnerability Scanner",
+        "complexity": "Intermediate",
+        "tags": [
+          "Python",
+          "Nmap",
+          "Linux"
+        ]
+      },
+      {
+        "name": "Password Manager App",
+        "complexity": "Beginner",
+        "tags": [
+          "Python",
+          "Encryption",
+          "SQLite"
+        ]
+      }
     ],
     "github_username": "vikram-sec",
     "leetcode_username": "vikram_singh",
@@ -327,7 +691,7 @@
     "name": "Kavya Reddy",
     "branch": "Electronics & Communication Engineering",
     "semester": 7,
-    "cgpa": 7.20,
+    "cgpa": 7.2,
     "tenth_percentage": 82.0,
     "twelfth_percentage": 79.0,
     "backlogs_history": 0,
@@ -339,12 +703,46 @@
     "interview_rating": 7.0,
     "target_role": "Embedded / IoT Developer",
     "target_lpa": 8.0,
-    "skills": {"C": 8, "C++": 7, "Embedded C": 7, "Python": 5, "Arduino": 7, "MATLAB": 6, "Git": 5, "DSA": 5},
-    "certifications": ["ARM Embedded Systems Certification"],
-    "internships": [{"company": "Bosch", "role": "Embedded Engineer Intern", "duration_months": 3}],
+    "skills": {
+      "C": 8,
+      "C++": 7,
+      "Embedded C": 7,
+      "Python": 5,
+      "Arduino": 7,
+      "MATLAB": 6,
+      "Git": 5,
+      "DSA": 5
+    },
+    "certifications": [
+      "ARM Embedded Systems Certification"
+    ],
+    "internships": [
+      {
+        "company": "Bosch",
+        "role": "Embedded Engineer Intern",
+        "duration_months": 3
+      }
+    ],
     "projects": [
-      {"name": "IoT Smart Home Controller", "complexity": "Intermediate", "tags": ["Arduino", "C", "IoT", "MQTT"]},
-      {"name": "Gesture-Controlled Robot", "complexity": "Intermediate", "tags": ["C++", "Arduino", "Sensors"]}
+      {
+        "name": "IoT Smart Home Controller",
+        "complexity": "Intermediate",
+        "tags": [
+          "Arduino",
+          "C",
+          "IoT",
+          "MQTT"
+        ]
+      },
+      {
+        "name": "Gesture-Controlled Robot",
+        "complexity": "Intermediate",
+        "tags": [
+          "C++",
+          "Arduino",
+          "Sensors"
+        ]
+      }
     ],
     "github_username": "kavya-embedded",
     "leetcode_username": "kavya_r",
@@ -356,7 +754,7 @@
     "name": "Suresh Babu",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 6.10,
+    "cgpa": 6.1,
     "tenth_percentage": 68.0,
     "twelfth_percentage": 65.0,
     "backlogs_history": 4,
@@ -368,10 +766,25 @@
     "interview_rating": 4.5,
     "target_role": "Software Tester",
     "target_lpa": 4.5,
-    "skills": {"Python": 3, "Manual Testing": 5, "SQL": 3, "Git": 2, "DSA": 2},
+    "skills": {
+      "Python": 3,
+      "Manual Testing": 5,
+      "SQL": 3,
+      "Git": 2,
+      "DSA": 2
+    },
     "certifications": [],
     "internships": [],
-    "projects": [{"name": "Todo App", "complexity": "Beginner", "tags": ["Python", "Tkinter"]}],
+    "projects": [
+      {
+        "name": "Todo App",
+        "complexity": "Beginner",
+        "tags": [
+          "Python",
+          "Tkinter"
+        ]
+      }
+    ],
     "github_username": "suresh-babu",
     "leetcode_username": "suresh_b26",
     "interview_history": []
@@ -382,7 +795,7 @@
     "name": "Meghana Patil",
     "branch": "Artificial Intelligence & Machine Learning",
     "semester": 7,
-    "cgpa": 8.10,
+    "cgpa": 8.1,
     "tenth_percentage": 86.0,
     "twelfth_percentage": 83.0,
     "backlogs_history": 0,
@@ -394,12 +807,46 @@
     "interview_rating": 8.0,
     "target_role": "Data Scientist",
     "target_lpa": 14.0,
-    "skills": {"Python": 8, "R": 6, "Machine Learning": 8, "Deep Learning": 7, "SQL": 7, "Tableau": 7, "Git": 7, "DSA": 6},
-    "certifications": ["IBM Data Science Professional Certificate", "Kaggle ML Competitions - Expert"],
-    "internships": [{"company": "Mu Sigma", "role": "Data Science Intern", "duration_months": 3}],
+    "skills": {
+      "Python": 8,
+      "R": 6,
+      "Machine Learning": 8,
+      "Deep Learning": 7,
+      "SQL": 7,
+      "Tableau": 7,
+      "Git": 7,
+      "DSA": 6
+    },
+    "certifications": [
+      "IBM Data Science Professional Certificate",
+      "Kaggle ML Competitions - Expert"
+    ],
+    "internships": [
+      {
+        "company": "Mu Sigma",
+        "role": "Data Science Intern",
+        "duration_months": 3
+      }
+    ],
     "projects": [
-      {"name": "Credit Card Fraud Detection", "complexity": "Intermediate", "tags": ["Python", "XGBoost", "SMOTE"]},
-      {"name": "Stock Price Forecasting", "complexity": "Intermediate", "tags": ["Python", "LSTM", "Plotly"]}
+      {
+        "name": "Credit Card Fraud Detection",
+        "complexity": "Intermediate",
+        "tags": [
+          "Python",
+          "XGBoost",
+          "SMOTE"
+        ]
+      },
+      {
+        "name": "Stock Price Forecasting",
+        "complexity": "Intermediate",
+        "tags": [
+          "Python",
+          "LSTM",
+          "Plotly"
+        ]
+      }
     ],
     "github_username": "meghana-datascience",
     "leetcode_username": "meghana_p",
@@ -411,7 +858,7 @@
     "name": "Yashwanth Kumar",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 7.90,
+    "cgpa": 7.9,
     "tenth_percentage": 85.0,
     "twelfth_percentage": 82.0,
     "backlogs_history": 0,
@@ -423,15 +870,241 @@
     "interview_rating": 7.5,
     "target_role": "Mobile App Developer",
     "target_lpa": 12.0,
-    "skills": {"Flutter": 8, "Dart": 8, "Firebase": 7, "React Native": 6, "JavaScript": 7, "Git": 7, "DSA": 6, "SQL": 5},
-    "certifications": ["Flutter & Dart - Complete Guide", "Google Associate Android Developer"],
-    "internships": [{"company": "StartupX", "role": "Flutter Developer Intern", "duration_months": 3}],
+    "skills": {
+      "Flutter": 8,
+      "Dart": 8,
+      "Firebase": 7,
+      "React Native": 6,
+      "JavaScript": 7,
+      "Git": 7,
+      "DSA": 6,
+      "SQL": 5
+    },
+    "certifications": [
+      "Flutter & Dart - Complete Guide",
+      "Google Associate Android Developer"
+    ],
+    "internships": [
+      {
+        "company": "StartupX",
+        "role": "Flutter Developer Intern",
+        "duration_months": 3
+      }
+    ],
     "projects": [
-      {"name": "Expense Tracker App", "complexity": "Intermediate", "tags": ["Flutter", "Firebase", "Dart"]},
-      {"name": "Food Delivery Clone", "complexity": "Advanced", "tags": ["Flutter", "Firebase", "Google Maps API"]}
+      {
+        "name": "Expense Tracker App",
+        "complexity": "Intermediate",
+        "tags": [
+          "Flutter",
+          "Firebase",
+          "Dart"
+        ]
+      },
+      {
+        "name": "Food Delivery Clone",
+        "complexity": "Advanced",
+        "tags": [
+          "Flutter",
+          "Firebase",
+          "Google Maps API"
+        ]
+      }
     ],
     "github_username": "yash-flutter-dev",
     "leetcode_username": "yashwanth_k",
     "interview_history": []
+  },
+  {
+    "usn": "SELF260001",
+    "password": "mypass123",
+    "name": "Yaseen Test",
+    "branch": "Computer Science & Engineering",
+    "semester": 7,
+    "cgpa": 8.5,
+    "active_backlogs": 0,
+    "backlogs_history": 0,
+    "quantitative_aptitude": 70,
+    "logical_reasoning": 70,
+    "coding_benchmark": 70,
+    "communication_rating": 7.0,
+    "interview_rating": 7.0,
+    "target_role": "SDE",
+    "target_lpa": 10.0,
+    "skills": {
+      "DSA": 9,
+      "C": 8
+    },
+    "certifications": [],
+    "internships": [],
+    "projects": [],
+    "github_username": "torvalds",
+    "leetcode_username": "neal_wu",
+    "hackerrank_username": "",
+    "codeforces_username": "",
+    "email": "",
+    "phone": "",
+    "self_registered": true,
+    "interview_history": [],
+    "platform_stats": {
+      "fetched_at": "2026-09-10T20:01:23.568005+00:00",
+      "github": {
+        "username": "torvalds",
+        "profile_url": "https://github.com/torvalds",
+        "avatar_url": "https://avatars.githubusercontent.com/u/1024025?v=4",
+        "public_repos": 12,
+        "followers": 321844,
+        "following": 0,
+        "total_stars": 260846,
+        "top_languages": [
+          {
+            "language": "C",
+            "repos": 10
+          },
+          {
+            "language": "OpenSCAD",
+            "repos": 1
+          },
+          {
+            "language": "C++",
+            "repos": 1
+          }
+        ],
+        "recent_commits_30d": 0,
+        "recent_prs": 1,
+        "recent_issues": 0,
+        "recent_repos": [
+          {
+            "name": "linux",
+            "language": "C",
+            "stars": 247729,
+            "updated_at": "2026-09-10"
+          },
+          {
+            "name": "HunspellColorize",
+            "language": "C",
+            "stars": 375,
+            "updated_at": "2026-09-10"
+          },
+          {
+            "name": "GuitarPedal",
+            "language": "C",
+            "stars": 2297,
+            "updated_at": "2026-09-10"
+          },
+          {
+            "name": "AudioNoise",
+            "language": "C",
+            "stars": 4488,
+            "updated_at": "2026-09-10"
+          },
+          {
+            "name": "uemacs",
+            "language": "C",
+            "stars": 2132,
+            "updated_at": "2026-09-10"
+          }
+        ],
+        "activity_score": 5,
+        "fetched_at": "2026-09-10T20:01:23.567800+00:00"
+      },
+      "leetcode": {
+        "username": "neal_wu",
+        "profile_url": "https://leetcode.com/neal_wu",
+        "total_solved": 253,
+        "easy_solved": 60,
+        "medium_solved": 141,
+        "hard_solved": 52,
+        "ranking": 632371,
+        "contest_rating": 3686.2,
+        "contests_attended": 51,
+        "global_ranking": 2,
+        "top_percentage": 0.0,
+        "activity_score": 100,
+        "fetched_at": "2026-09-10T20:01:22.901092+00:00"
+      },
+      "aggregate_activity_score": 52.5
+    },
+    "platform_stats_history": [
+      {
+        "fetched_at": "2026-09-10T20:01:23.568005+00:00",
+        "github": {
+          "username": "torvalds",
+          "profile_url": "https://github.com/torvalds",
+          "avatar_url": "https://avatars.githubusercontent.com/u/1024025?v=4",
+          "public_repos": 12,
+          "followers": 321844,
+          "following": 0,
+          "total_stars": 260846,
+          "top_languages": [
+            {
+              "language": "C",
+              "repos": 10
+            },
+            {
+              "language": "OpenSCAD",
+              "repos": 1
+            },
+            {
+              "language": "C++",
+              "repos": 1
+            }
+          ],
+          "recent_commits_30d": 0,
+          "recent_prs": 1,
+          "recent_issues": 0,
+          "recent_repos": [
+            {
+              "name": "linux",
+              "language": "C",
+              "stars": 247729,
+              "updated_at": "2026-09-10"
+            },
+            {
+              "name": "HunspellColorize",
+              "language": "C",
+              "stars": 375,
+              "updated_at": "2026-09-10"
+            },
+            {
+              "name": "GuitarPedal",
+              "language": "C",
+              "stars": 2297,
+              "updated_at": "2026-09-10"
+            },
+            {
+              "name": "AudioNoise",
+              "language": "C",
+              "stars": 4488,
+              "updated_at": "2026-09-10"
+            },
+            {
+              "name": "uemacs",
+              "language": "C",
+              "stars": 2132,
+              "updated_at": "2026-09-10"
+            }
+          ],
+          "activity_score": 5,
+          "fetched_at": "2026-09-10T20:01:23.567800+00:00"
+        },
+        "leetcode": {
+          "username": "neal_wu",
+          "profile_url": "https://leetcode.com/neal_wu",
+          "total_solved": 253,
+          "easy_solved": 60,
+          "medium_solved": 141,
+          "hard_solved": 52,
+          "ranking": 632371,
+          "contest_rating": 3686.2,
+          "contests_attended": 51,
+          "global_ranking": 2,
+          "top_percentage": 0.0,
+          "activity_score": 100,
+          "fetched_at": "2026-09-10T20:01:22.901092+00:00"
+        },
+        "aggregate_activity_score": 52.5
+      }
+    ]
   }
 ]

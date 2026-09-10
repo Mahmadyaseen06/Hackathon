@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — AI Placement Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070b14; --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08); --primary: #6366f1; --primary-glow: rgba(99,102,241,0.25);
+      --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --text: #f1f5f9; --muted: #94a3b8;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Animated bg */
+    .bg-orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; animation: float 10s ease-in-out infinite; }
+    .orb-1 { width: 600px; height: 600px; background: #6366f1; top: -150px; left: -150px; }
+    .orb-2 { width: 400px; height: 400px; background: #22d3ee; bottom: -100px; right: -100px; animation-delay: 4s; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+
+    .page-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 20px; position: relative; z-index: 1; }
+
+    .header { text-align: center; margin-bottom: 32px; }
+    .logo-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .logo-title { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* Mode toggle */
+    .mode-toggle { display: flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 16px; padding: 6px; gap: 6px; margin-bottom: 28px; width: 100%; max-width: 480px; }
+    .mode-btn { flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .mode-btn.active { background: linear-gradient(135deg, #6366f1, #5b5fe0); color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.35); }
+
+    .form-card { background: rgba(13,18,32,0.9); border: 1px solid var(--border); border-radius: 24px; padding: 36px; width: 100%; max-width: 700px; backdrop-filter: blur(20px); margin-bottom: 24px; }
+
+    .section-title { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(99,102,241,0.2); }
+
+    .form-grid { display: grid; gap: 16px; margin-bottom: 24px; }
+    .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+    .form-input, .form-select {
+      padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+      outline: none; transition: all 0.2s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); background: rgba(99,102,241,0.08); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .form-input::placeholder { color: rgba(148,163,184,0.4); }
+    .form-select option { background: #0d1220; }
+    .form-hint { font-size: 11px; color: var(--muted); opacity: 0.7; }
+
+    /* Skill builder */
+    .skill-builder { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 44px; padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; }
+    .skill-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 12px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); border-radius: 20px; font-size: 12px; font-weight: 600; color: #a5b4fc; }
+    .skill-chip button { background: none; border: none; color: rgba(165,180,252,0.6); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+    .skill-chip button:hover { color: var(--danger); }
+    .skill-add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .skill-add-row input { flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
+    .skill-add-row input:focus { border-color: var(--primary); }
+    .skill-add-row select { padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; }
+    .skill-add-row button { padding: 8px 16px; background: var(--primary); border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* CV Upload */
+    .cv-dropzone {
+      border: 2px dashed rgba(99,102,241,0.4); border-radius: 16px; padding: 48px 32px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+      background: rgba(99,102,241,0.04);
+    }
+    .cv-dropzone:hover, .cv-dropzone.drag-over { border-color: var(--primary); background: rgba(99,102,241,0.08); }
+    .cv-dropzone.has-file { border-color: var(--success); background: rgba(16,185,129,0.05); }
+    .cv-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+    .cv-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .cv-sub { font-size: 13px; color: var(--muted); }
+    .cv-file-name { font-size: 13px; color: var(--success); font-weight: 600; margin-top: 8px; }
+
+    /* Platform section */
+    .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .platform-input-wrap { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .platform-icon { font-size: 20px; flex-shrink: 0; width: 24px; text-align: center; }
+    .platform-input-wrap input { background: none; border: none; color: var(--text); font-size: 13px; outline: none; flex: 1; }
+    .platform-input-wrap input::placeholder { color: rgba(148,163,184,0.4); }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #5b5fe0);
+      border: none; border-radius: 14px; color: white; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.5); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #fca5a5; margin-bottom: 16px; display: none; }
+    .success-box { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 20px; font-size: 14px; color: #6ee7b7; margin-bottom: 16px; display: none; text-align: center; }
+    .success-box .success-usn { font-size: 28px; font-weight: 800; font-family: monospace; color: var(--accent); margin: 8px 0; }
+
+    .login-link { text-align: center; font-size: 13px; color: var(--muted); }
+    .login-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Step indicators */
+    .steps { display: flex; gap: 6px; margin-bottom: 28px; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s; }
+    .step.done { background: var(--success); }
+    .step.active { background: var(--primary); }
+
+    /* AI extraction preview */
+    .ai-preview { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 16px; margin-top: 16px; display: none; }
+    .ai-preview h4 { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .ai-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .ai-stat:last-child { border: none; }
+    .ai-stat strong { color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .form-grid.cols-2, .form-grid.cols-3, .platform-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="page-wrap">
+    <div class="header">
+      <span class="logo-icon">🎓</span>
+      <div class="logo-title">AI Placement Predictor</div>
+      <div class="logo-sub">Create your account — takes 2 minutes</div>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-manual" onclick="switchMode('manual')">✏️ Manual Entry</button>
+      <button class="mode-btn" id="btn-cv" onclick="switchMode('cv')">📄 Upload CV (AI Auto-fill)</button>
+    </div>
+
+    <div style="width:100%;max-width:700px">
+      <!-- Error / Success boxes -->
+      <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
+      <div class="success-box" id="success-box">
+        <div>🎉 Account Created Successfully!</div>
+        <div class="success-usn" id="success-usn"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">Save your USN — you'll need it to log in</div>
+        <div id="success-redirect" style="margin-top:12px;font-size:13px">Redirecting to dashboard in <span id="redirect-count">3</span>s...</div>
+      </div>
+
+      <!-- ── MANUAL FORM ── -->
+      <div id="form-manual">
+        <form id="manual-form" onsubmit="submitManual(event)">
+          <div class="form-card">
+            <div class="section-title">👤 Personal Information</div>
+            <div class="form-grid cols-2">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input class="form-input" id="m-name" type="text" placeholder="Your full name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" id="m-email" type="email" placeholder="your@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input class="form-input" id="m-pass" type="password" placeholder="Min 6 characters" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input class="form-input" id="m-phone" type="tel" placeholder="+91 XXXXXXXXXX">
+              </div>
+            </div>
+
+            <div class="section-title">🎓 Academic Details</div>
+            <div class="form-grid cols-3">
+              <div class="form-group">
+                <label class="form-label">USN (optional)</label>
+                <input class="form-input" id="m-usn" type="text" placeholder="Auto-generated if blank" style="text-transform:uppercase">
+                <span class="form-hint">Leave blank to auto-assign</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Branch *</label>
+                <select class="form-select" id="m-branch">
+                  <option>Computer Science & Engineering</option>
+                  <option>Information Science & Engineering</option>
+                  <option>Electronics & Communication Engineering</option>
+                  <option>Mechanical Engineering</option>
+                  <option>Civil Engineering</option>
+                  <option>Electrical & Electronics Engineering</option>
+                  <option>AI & Machine Learning</option>
+                  <option>Data Science</option>
+                  <option>Chemical Engineering</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Semester *</label>
+                <select class="form-select" id="m-sem">
+                  <option value="1">1st</option><option value="2">2nd</option>
+                  <option value="3">3rd</option><option value="4">4th</option>
+                  <option value="5">5th</option><option value="6">6th</option>
+                  <option value="7" selected>7th</option><option value="8">8th</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">CGPA *</label>
+                <input class="form-input" id="m-cgpa" type="number" step="0.01" min="0" max="10" placeholder="e.g. 8.5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Active Backlogs</label>
+                <input class="form-input" id="m-backlogs" type="number" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target LPA</label>
+                <input class="form-input" id="m-lpa" type="number" step="0.5" min="3" value="10">
+              </div>
+            </div>
+
+            <div class="section-title">🎯 Target Role</div>
+            <div class="form-grid cols-2">
+              <div class="form-group">
+                <label class="form-label">Preferred Role</label>
+                <select class="form-select" id="m-role">
+                  <option value="SDE">Software Development Engineer</option>
+                  <option value="Data Scientist">Data Scientist / ML Engineer</option>
+                  <option value="Full Stack">Full Stack Developer</option>
+                  <option value="DevOps">DevOps / Cloud Engineer</option>
+                  <option value="Product Manager">Product Manager</option>
+                  <option value="Data Analyst">Data Analyst</option>
+                  <option value="Embedded">Embedded / IoT Engineer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Certifications (comma-separated)</label>
+                <input class="form-input" id="m-certs" type="text" placeholder="e.g. AWS Cloud Practitioner, NPTEL Python">
+              </div>
+            </div>
+
+            <div class="section-title">🛠️ Skills</div>
+            <div class="skill-add-row">
+              <input id="skill-name-input" type="text" placeholder="Skill name (e.g. Python, React, SQL)">
+              <select id="skill-level-select">
+                <option value="5">Beginner (5)</option>
+                <option value="6" selected>Intermediate (6)</option>
+                <option value="7">Good (7)</option>
+                <option value="8">Advanced (8)</option>
+                <option value="9">Expert (9)</option>
+              </select>
+              <button type="button" onclick="addSkill()">+ Add</button>
+            </div>
+            <div class="skill-builder" id="skill-builder">
+              <span style="color:var(--muted);font-size:12px;align-self:center">Add skills above ↑</span>
+            </div>
+
+            <div class="section-title" style="margin-top:24px">🔗 Platform Usernames (for progress tracking)</div>
+            <div class="platform-grid">
+              <div class="platform-input-wrap"><span class="platform-icon">🐙</span><input id="m-github" type="text" placeholder="GitHub username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="m-leetcode" type="text" placeholder="LeetCode username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="m-hackerrank" type="text" placeholder="HackerRank username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">🏆</span><input id="m-codeforces" type="text" placeholder="Codeforces username"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btn-manual-submit">
+            <span id="btn-manual-text">🚀 Create Account & Start Interview</span>
+            <div class="spinner" id="spinner-manual" style="display:none"></div>
+          </button>
+        </form>
+      </div>
+
+      <!-- ── CV UPLOAD FORM ── -->
+      <div id="form-cv" style="display:none">
+        <div class="form-card">
+          <div class="section-title">📄 Upload Your CV / Resume</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Our AI (Ollama llama3.2) will extract your name, skills, projects, certifications, and education automatically from your PDF resume.</p>
+
+          <div class="cv-dropzone" id="cv-dropzone" onclick="document.getElementById('cv-file').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <span class="cv-icon" id="cv-icon">📄</span>
+            <div class="cv-title" id="cv-title">Drop your CV here or click to browse</div>
+            <div class="cv-sub">PDF only • Max 10MB</div>
+            <div class="cv-file-name" id="cv-file-name" style="display:none"></div>
+          </div>
+          <input type="file" id="cv-file" accept=".pdf" style="display:none" onchange="handleFileSelect(event)">
+
+          <div class="ai-preview" id="ai-preview">
+            <h4>✅ AI Extraction Preview</h4>
+            <div id="ai-preview-content"></div>
+          </div>
+
+          <div style="margin-top:24px">
+            <div class="section-title">🔑 Account Security</div>
+            <div class="form-grid cols-2">
+              <div class="form-group">
+                <label class="form-label">Password *</label>
+                <input class="form-input" id="cv-pass" type="password" placeholder="Min 6 characters">
+              </div>
+              <div class="form-group">
+                <label class="form-label">USN (optional)</label>
+                <input class="form-input" id="cv-usn" type="text" placeholder="Auto-generated if blank" style="text-transform:uppercase">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div class="section-title">🔗 Platform Usernames</div>
+            <div class="platform-grid">
+              <div class="platform-input-wrap"><span class="platform-icon">🐙</span><input id="cv-github" type="text" placeholder="GitHub username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="cv-leetcode" type="text" placeholder="LeetCode username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="cv-hackerrank" type="text" placeholder="HackerRank username"></div>
+              <div class="platform-input-wrap"><span class="platform-icon">🏆</span><input id="cv-codeforces" type="text" placeholder="Codeforces username"></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="btn-cv-submit" onclick="submitCV()" disabled>
+          <span id="btn-cv-text">📄 Upload CV & Create Account</span>
+          <div class="spinner" id="spinner-cv" style="display:none"></div>
+        </button>
+      </div>
+
+      <div class="login-link" style="margin-top:16px">
+        Already have an account? <a href="/login">Sign in →</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8001';
+    let skills = {};
+    let selectedFile = null;
+
+    // ── Mode switch ──
+    function switchMode(mode) {
+      document.getElementById('form-manual').style.display = mode === 'manual' ? 'block' : 'none';
+      document.getElementById('form-cv').style.display = mode === 'cv' ? 'block' : 'none';
+      document.getElementById('btn-manual').classList.toggle('active', mode === 'manual');
+      document.getElementById('btn-cv').classList.toggle('active', mode === 'cv');
+      hideError();
+    }
+
+    // ── Skill builder ──
+    function addSkill() {
+      const name = document.getElementById('skill-name-input').value.trim();
+      const level = parseInt(document.getElementById('skill-level-select').value);
+      if (!name) return;
+      skills[name] = level;
+      renderSkills();
+      document.getElementById('skill-name-input').value = '';
+    }
+    document.getElementById('skill-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } });
+
+    function removeSkill(name) {
+      delete skills[name];
+      renderSkills();
+    }
+
+    function renderSkills() {
+      const container = document.getElementById('skill-builder');
+      if (Object.keys(skills).length === 0) {
+        container.innerHTML = '<span style="color:var(--muted);font-size:12px;align-self:center">Add skills above ↑</span>';
+        return;
+      }
+      container.innerHTML = Object.entries(skills).map(([name, level]) =>
+        `<div class="skill-chip">${name} <span style="opacity:0.7">${level}/10</span><button onclick="removeSkill('${name}')" type="button">×</button></div>`
+      ).join('');
+    }
+
+    // ── File handling ──
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('cv-dropzone').classList.add('drag-over'); }
+    function handleDragLeave() { document.getElementById('cv-dropzone').classList.remove('drag-over'); }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('cv-dropzone').classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) setFile(file);
+    }
+    function handleFileSelect(e) { const file = e.target.files[0]; if (file) setFile(file); }
+
+    function setFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are supported.'); return; }
+      if (file.size > 10 * 1024 * 1024) { showError('File too large (max 10MB).'); return; }
+      selectedFile = file;
+      const dz = document.getElementById('cv-dropzone');
+      dz.classList.add('has-file');
+      document.getElementById('cv-icon').textContent = '✅';
+      document.getElementById('cv-title').textContent = 'CV ready to upload!';
+      document.getElementById('cv-file-name').textContent = file.name;
+      document.getElementById('cv-file-name').style.display = 'block';
+      document.getElementById('btn-cv-submit').disabled = false;
+      hideError();
+    }
+
+    // ── Error/success handling ──
+    function showError(msg) {
+      const box = document.getElementById('error-box');
+      document.getElementById('error-msg').textContent = msg;
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function hideError() { document.getElementById('error-box').style.display = 'none'; }
+
+    function showSuccess(usn, name) {
+      document.getElementById('success-box').style.display = 'block';
+      document.getElementById('success-usn').textContent = usn;
+      document.getElementById('success-box').scrollIntoView({ behavior: 'smooth' });
+      let count = 3;
+      const interval = setInterval(() => {
+        count--;
+        document.getElementById('redirect-count').textContent = count;
+        if (count <= 0) { clearInterval(interval); window.location.href = '/student'; }
+      }, 1000);
+    }
+
+    function setLoading(mode, loading) {
+      const spinner = document.getElementById(`spinner-${mode}`);
+      const text = document.getElementById(`btn-${mode}-text`);
+      const btn = document.getElementById(`btn-${mode}-submit`);
+      spinner.style.display = loading ? 'block' : 'none';
+      text.style.display = loading ? 'none' : 'block';
+      btn.disabled = loading;
+    }
+
+    // ── Manual submit ──
+    async function submitManual(e) {
+      e.preventDefault();
+      hideError();
+
+      const name = document.getElementById('m-name').value.trim();
+      const password = document.getElementById('m-pass').value;
+      const cgpa = parseFloat(document.getElementById('m-cgpa').value);
+
+      if (!name || !password) { showError('Name and password are required.'); return; }
+      if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+      if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) { showError('CGPA must be between 0 and 10.'); return; }
+
+      setLoading('manual', true);
+
+      const payload = {
+        name,
+        email: document.getElementById('m-email').value.trim(),
+        phone: document.getElementById('m-phone').value.trim(),
+        password,
+        usn: document.getElementById('m-usn').value.trim().toUpperCase(),
+        branch: document.getElementById('m-branch').value,
+        semester: parseInt(document.getElementById('m-sem').value),
+        cgpa,
+        active_backlogs: parseInt(document.getElementById('m-backlogs').value) || 0,
+        target_role: document.getElementById('m-role').value,
+        target_lpa: parseFloat(document.getElementById('m-lpa').value) || 10,
+        skills,
+        certifications_text: document.getElementById('m-certs').value,
+        github_username: document.getElementById('m-github').value.trim(),
+        leetcode_username: document.getElementById('m-leetcode').value.trim(),
+        hackerrank_username: document.getElementById('m-hackerrank').value.trim(),
+        codeforces_username: document.getElementById('m-codeforces').value.trim()
+      };
+
+      try {
+        const res = await fetch(`${API}/api/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.detail || 'Registration failed'); return; }
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('usn', data.usn);
+        sessionStorage.setItem('role', 'student');
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+        showSuccess(data.usn, name);
+      } catch (e) {
+        showError('Cannot connect to server. Make sure the backend is running on port 8001.');
+      } finally {
+        setLoading('manual', false);
+      }
+    }
+
+    // ── CV submit ──
+    async function submitCV() {
+      hideError();
+      if (!selectedFile) { showError('Please select a PDF file.'); return; }
+      const password = document.getElementById('cv-pass').value;
+      if (!password || password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+
+      setLoading('cv', true);
+      document.getElementById('btn-cv-text').textContent = '🤖 AI is reading your CV...';
+
+      const formData = new FormData();
+      formData.append('cv_file', selectedFile);
+      formData.append('password', password);
+      formData.append('usn', document.getElementById('cv-usn').value.trim().toUpperCase());
+      formData.append('github_username', document.getElementById('cv-github').value.trim());
+      formData.append('leetcode_username', document.getElementById('cv-leetcode').value.trim());
+      formData.append('hackerrank_username', document.getElementById('cv-hackerrank').value.trim());
+      formData.append('codeforces_username', document.getElementById('cv-codeforces').value.trim());
+
+      try {
+        const res = await fetch(`${API}/api/auth/signup-cv`, { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) { showError(data.detail || 'CV processing failed. Try manual signup.'); return; }
+
+        // Show extraction preview
+        const preview = data.extracted_profile || {};
+        const previewEl = document.getElementById('ai-preview');
+        document.getElementById('ai-preview-content').innerHTML = `
+          <div class="ai-stat"><span>Name extracted</span><strong>${data.user?.name || '—'}</strong></div>
+          <div class="ai-stat"><span>Skills found</span><strong>${preview.skills_found || 0}</strong></div>
+          <div class="ai-stat"><span>Projects found</span><strong>${preview.projects_found || 0}</strong></div>
+          <div class="ai-stat"><span>Certifications</span><strong>${preview.certifications_found || 0}</strong></div>
+          <div class="ai-stat"><span>Internships</span><strong>${preview.internships_found || 0}</strong></div>
+        `;
+        previewEl.style.display = 'block';
+
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('usn', data.usn);
+        sessionStorage.setItem('role', 'student');
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+
+        setTimeout(() => showSuccess(data.usn, data.user?.name), 1500);
+      } catch (e) {
+        showError('Cannot connect to server. Make sure the backend is running on port 8001.');
+      } finally {
+        setLoading('cv', false);
+        document.getElementById('btn-cv-text').textContent = '📄 Upload CV & Create Account';
+      }
+    }
+  </script>
+</body>
+</html>
