@@ -334,15 +334,18 @@ async def generate_interviewer_speech(
         else:
             tests_summary = f"Code execution failed with error: {execution_result.get('error', '')[:80]}"
 
-    prompt = f"""You are a senior {company} engineer interviewing a candidate. Talk to them directly in a conversational tone.
+    is_project_q = "project" in question.lower() or "architecture" in question.lower() or "trade-off" in question.lower() or "data flow" in question.lower()
+    role_desc = f"You are a senior {company} engineering director assessing a candidate's real-world project defense and system architecture." if is_project_q else f"You are a senior {company} engineer interviewing a candidate."
+
+    prompt = f"""{role_desc} Talk to the candidate directly in a natural, conversational spoken tone.
 Question: "{question}"
 Candidate's response: "{answer or '[Code only]'}"
-Code submitted: "{code[:250] if code else 'None'}"
+Code submitted: "{code[:250] if code else 'None (Verbal defense)'}"
 Execution outcome: {tests_summary or 'None'}
 
 In 1 or 2 natural, spoken sentences (max 35 words):
-Acknowledge what they did or said, and either challenge an edge case, ask for their time complexity, or push on their reasoning.
-Do NOT introduce yourself. Speak directly like a real human interviewer during an interview.
+Acknowledge what they explained. If they described a project or architecture, challenge an engineering trade-off, data consistency, or scalability bottleneck under high traffic. If they answered a behavioral/coding question, push on their edge cases or time complexity.
+Do NOT introduce yourself. Speak directly like an interviewer in a real room.
 Return ONLY the spoken sentences."""
 
     try:

@@ -108,6 +108,7 @@ class InterviewStartRequest(BaseModel):
     usn: str
     company: str
     token: str
+    track: Optional[str] = "technical"
 
 class AnswerSubmitRequest(BaseModel):
     usn: Optional[str] = ""
@@ -505,7 +506,12 @@ def start_interview(req: InterviewStartRequest):
     if not company_profile:
         raise HTTPException(status_code=400, detail=f"Unknown company: {req.company}")
 
-    rounds = get_company_interview_rounds(req.company, student.get("skills", {}))
+    rounds = get_company_interview_rounds(
+        req.company,
+        student.get("skills", {}),
+        track=req.track or "technical",
+        student_projects=student.get("projects", [])
+    )
     flat_questions = []
     for r in rounds:
         for q in r["questions"]:
@@ -523,11 +529,12 @@ def start_interview(req: InterviewStartRequest):
         "company": req.company,
         "company_name": company_profile["name"],
         "interviewer_persona": company_profile["interviewer_persona"],
+        "track": req.track or "technical",
         "total_questions": len(flat_questions),
         "questions": flat_questions,
         "rounds": rounds,
         "student_name": student["name"],
-        "round": "Multi-Round Recruitment Simulation"
+        "round": "Project Defense & HR Interview" if req.track == "project_defense" else "Multi-Round Recruitment Simulation"
     }
 
 @app.post("/api/interview/talk-back")

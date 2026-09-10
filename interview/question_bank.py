@@ -586,13 +586,118 @@ def get_calibrated_questions(company: str, student_skills: dict, num_questions: 
     return questions
 
 
-def get_company_interview_rounds(company: str, student_skills: dict) -> list[dict]:
+def get_project_defense_interview_rounds(company: str, student_projects: list = None, student_skills: dict = None) -> list[dict]:
     """
-    Generate structured 3-round interview simulation for the specified company:
-    Round 1: Online Coding Assessment (OA) — algorithmic challenges with test cases
-    Round 2: Technical Deep Dive & System Architecture — core CS fundamentals & design
-    Round 3: Leadership & Behavioral (STAR Method) — company-specific values & culture fit
+    Generate structured 2-round verbal Project Defense & HR Communication interview:
+    Round 1: Project Architecture & Technical Defense (Conversational project defense — zero coding sandbox)
+    Round 2: Behavioral, Leadership & Industry Readiness (STAR Method & culture fit)
     """
+    profile = COMPANY_PROFILES.get(company) or COMPANY_PROFILES["TCS"]
+    projects = student_projects or []
+
+    r1_questions = []
+    if projects:
+        for p in projects[:2]:
+            p_name = p.get("name") if isinstance(p, dict) else str(p)
+            r1_questions.append({
+                "type": "project_defense",
+                "round_id": 1,
+                "round_name": "Round 1: Project Architecture & Technical Defense",
+                "round_type": "project_defense",
+                "project_name": p_name,
+                "question": f"Walk me through the system architecture of your project '{p_name}'. What real-world problem does it solve, and how did you design the data flow?",
+                "topic": f"Project Architecture ({p_name})",
+                "difficulty": "Medium",
+                "voice_prompt": f"Please walk me through the system architecture of your project '{p_name}'. Explain the problem statement and the core components you built."
+            })
+
+            r1_questions.append({
+                "type": "project_defense",
+                "round_id": 1,
+                "round_name": "Round 1: Project Architecture & Technical Defense",
+                "round_type": "project_defense",
+                "project_name": p_name,
+                "question": f"For your project '{p_name}', what were the key technical trade-offs you made (e.g. why this tech stack over alternatives)? What was the hardest failure mode or concurrency bottleneck you resolved?",
+                "topic": f"Trade-offs & Failure Modes ({p_name})",
+                "difficulty": "Hard",
+                "voice_prompt": f"In '{p_name}', what was the single hardest technical trade-off or bug you faced, and how did you resolve it?"
+            })
+    else:
+        r1_questions.extend([
+            {
+                "type": "project_defense",
+                "round_id": 1,
+                "round_name": "Round 1: Project Architecture & Technical Defense",
+                "round_type": "project_defense",
+                "project_name": "Engineering Portfolio",
+                "question": "Describe the most technically challenging software system or academic project you have engineered from scratch. What was the architecture and your specific role?",
+                "topic": "System Architecture",
+                "difficulty": "Medium",
+                "voice_prompt": "Describe the most challenging software system or project you have engineered. Walk me through the architecture."
+            },
+            {
+                "type": "project_defense",
+                "round_id": 1,
+                "round_name": "Round 1: Project Architecture & Technical Defense",
+                "round_type": "project_defense",
+                "project_name": "Scaling & Reliability",
+                "question": "If your primary project suddenly experienced a 100x spike in concurrent users tomorrow, what would break first (database, network, CPU, memory), and how would you re-architect it?",
+                "topic": "Scalability & Reliability",
+                "difficulty": "Hard",
+                "voice_prompt": "If your project experienced a 100x traffic spike tomorrow, what would break first, and how would you re-architect it?"
+            }
+        ])
+
+    r2_questions = [
+        {
+            "type": "hr",
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Industry Readiness",
+            "round_type": "behavioral",
+            "question": f"Tell me about a time you faced an ambiguous engineering problem or strict deadline with conflicting priorities. Use the STAR method (Situation, Task, Action, Result) to explain how you delivered.",
+            "topic": f"{company} Cultural Principles",
+            "difficulty": "Medium",
+            "voice_prompt": f"Using the STAR method, tell me about a time you faced a strict deadline or ambiguous problem, and how you delivered."
+        },
+        {
+            "type": "hr",
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Industry Readiness",
+            "round_type": "behavioral",
+            "question": f"When receiving critical code review feedback or disagreement from a team member or mentor, how do you handle the discussion constructively? Share a concrete example.",
+            "topic": "Collaboration & Feedback",
+            "difficulty": "Medium",
+            "voice_prompt": "How do you handle critical code review feedback or disagreement in an engineering team? Share a concrete example."
+        }
+    ]
+
+    return [
+        {
+            "round_id": 1,
+            "name": "Round 1: Project Architecture & Technical Defense",
+            "type": "project_defense",
+            "description": "Articulate project design, justify technology trade-offs, and defend failure modes aloud",
+            "questions": r1_questions
+        },
+        {
+            "round_id": 2,
+            "name": "Round 2: Behavioral & Industry Readiness",
+            "type": "behavioral",
+            "description": f"STAR method communication audit, collaboration under pressure, and {company} alignment",
+            "questions": r2_questions
+        }
+    ]
+
+
+def get_company_interview_rounds(company: str, student_skills: dict, track: str = "technical", student_projects: list = None) -> list[dict]:
+    """
+    Generate structured interview simulation for the specified company:
+    - If track == 'project_defense': 2-round verbal Project Architecture & STAR Behavioral evaluation (No coding sandbox).
+    - If track == 'technical': 3-round full pipeline (Coding OA in Monaco Sandbox -> Tech Deep Dive -> STAR Behavioral).
+    """
+    if track == "project_defense":
+        return get_project_defense_interview_rounds(company, student_projects, student_skills)
+
     import random
     profile = COMPANY_PROFILES.get(company) or COMPANY_PROFILES["TCS"]
     skill_qs = profile.get("skill_questions", {})

@@ -583,10 +583,33 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       </div>
     </div>
 
+    <!-- Assessment Track Selector -->
+    <div style="margin-bottom:22px">
+      <div class="section-title" style="text-align:left;margin-bottom:10px">2. Select Assessment Track</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left">
+        <div class="track-card selected" id="track-technical" onclick="selectTrack('technical')" style="padding:14px;background:var(--surface3);border:2px solid var(--accent);border-radius:12px;cursor:pointer;transition:all 0.2s">
+          <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+            💻 Full Technical Pipeline
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.4">
+            3 Rounds: Monaco Coding OA with live test cases + Technical Deep Dive + STAR Behavioral.
+          </div>
+        </div>
+        <div class="track-card" id="track-project_defense" onclick="selectTrack('project_defense')" style="padding:14px;background:var(--surface3);border:2px solid rgba(255,255,255,0.08);border-radius:12px;cursor:pointer;transition:all 0.2s">
+          <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+            🎙️ Project Defense & HR Interview
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.4">
+            Zero Coding Sandbox: Defend your actual project architecture, justify trade-offs, and assess industry communication baseline.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Company Pipeline Preview -->
     <div class="card-section" id="pipeline-preview" style="text-align:left;margin-bottom:24px">
-      <div class="section-title" style="margin-bottom:8px">Corporate Assessment Pipeline</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px">
+      <div class="section-title" style="margin-bottom:8px" id="pipeline-title">Corporate Assessment Pipeline</div>
+      <div id="pipeline-steps-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px">
         <div style="background:var(--surface3);padding:10px;border-radius:8px">
           <div style="color:var(--accent-light);font-weight:700;margin-bottom:4px">Round 1: Coding OA</div>
           <div style="color:var(--muted)">Monaco sandbox, algorithmic edge cases & live test execution.</div>
@@ -670,30 +693,76 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
 
   <div id="main">
-    <!-- Left: Monaco Code Editor Sandbox -->
+    <!-- Left: Monaco Code Editor Sandbox & Project Defense View -->
     <div id="left-panel">
-      <div id="editor-toolbar">
-        <span style="font-size:12px;color:var(--muted);margin-right:4px">Language:</span>
-        <select id="lang-select" onchange="changeLanguage(this.value)">
-          <option value="python">Python 3</option>
-          <option value="javascript">JavaScript (Node)</option>
-          <option value="java">Java</option>
-          <option value="cpp">C++</option>
-          <option value="c">C</option>
-        </select>
-        <div style="flex:1"></div>
-        <button class="editor-btn" onclick="resetCode()">↺ Reset</button>
-        <button class="editor-btn run" id="run-btn" onclick="runCode()">▶ Run Test Cases</button>
-      </div>
-      <div id="monaco-container"></div>
-      <div id="output-panel">
-        <div id="output-tabs">
-          <div class="output-tab active" onclick="switchTab('output')" id="tab-output">Output Console</div>
-          <div class="output-tab" onclick="switchTab('tests')" id="tab-tests">Test Cases</div>
+      <!-- Technical Track: Monaco Editor Sandbox -->
+      <div id="coding-editor-view" style="display:flex; flex-direction:column; flex:1; height:100%">
+        <div id="editor-toolbar">
+          <span style="font-size:12px;color:var(--muted);margin-right:4px">Language:</span>
+          <select id="lang-select" onchange="changeLanguage(this.value)">
+            <option value="python">Python 3</option>
+            <option value="javascript">JavaScript (Node)</option>
+            <option value="java">Java</option>
+            <option value="cpp">C++</option>
+            <option value="c">C</option>
+          </select>
+          <div style="flex:1"></div>
+          <button class="editor-btn" onclick="resetCode()">↺ Reset</button>
+          <button class="editor-btn run" id="run-btn" onclick="runCode()">▶ Run Test Cases</button>
         </div>
-        <div id="output-content">
-          <div id="run-output" style="color:var(--muted)">▶ Run code in sandbox to verify output and test cases</div>
-          <div id="test-output" style="display:none"></div>
+        <div id="monaco-container"></div>
+        <div id="output-panel">
+          <div id="output-tabs">
+            <div class="output-tab active" onclick="switchTab('output')" id="tab-output">Output Console</div>
+            <div class="output-tab" onclick="switchTab('tests')" id="tab-tests">Test Cases</div>
+          </div>
+          <div id="output-content">
+            <div id="run-output" style="color:var(--muted)">▶ Run code in sandbox to verify output and test cases</div>
+            <div id="test-output" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project Defense Track: Executive Architecture Briefing -->
+      <div id="project-defense-view" style="display:none; flex-direction:column; flex:1; padding:24px; overflow-y:auto; background:var(--surface2)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:24px">🏛️</span>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text)">Project Architecture Defense</div>
+            <div style="font-size:12px;color:var(--muted)">Industry Engineering Baseline Assessment</div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface3);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent-light);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Active Project Under Defense</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px" id="defense-project-title">Engineering Portfolio</div>
+          <div style="font-size:12px;color:var(--muted)" id="defense-project-desc">Walk through your system design, technical trade-offs, and scalability choices aloud.</div>
+        </div>
+
+        <div style="background:var(--surface3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Recruiter Evaluation Rubric</div>
+          <div style="display:grid;gap:10px;font-size:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <span>🏗️ System Architecture & Data Flow</span>
+              <strong style="color:var(--accent)">30%</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <span>⚖️ Tech Stack Trade-offs & Justification</span>
+              <strong style="color:var(--accent)">25%</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <span>💥 Failure Modes, Concurrency & Bottlenecks</span>
+              <strong style="color:var(--accent)">25%</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+              <span>🗣️ Structured Thought & STAR Clarity</span>
+              <strong style="color:var(--accent)">20%</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;font-size:12px;color:#fcd34d;line-height:1.5">
+          <strong>💡 Recruiter Pro-Tip:</strong> Use concrete numbers and metrics (e.g. <em>"We cached session data in Redis to reduce database read latency from 140ms to 8ms"</em>). Don't hide bugs—real interviewers probe how you handled system crashes!
         </div>
       </div>
     </div>
@@ -952,18 +1021,77 @@ function selectCompany(id) {
   document.getElementById('start-interview-btn').disabled = false;
 }
 
+let selectedTrack = 'technical';
+
+function selectTrack(track) {
+  selectedTrack = track;
+  document.querySelectorAll('.track-card').forEach(c => {
+    c.classList.remove('selected');
+    c.style.borderColor = 'rgba(255,255,255,0.08)';
+  });
+  const el = document.getElementById('track-' + track);
+  if (el) {
+    el.classList.add('selected');
+    el.style.borderColor = 'var(--accent)';
+  }
+
+  const pTitle = document.getElementById('pipeline-title');
+  const pGrid = document.getElementById('pipeline-steps-grid');
+  if (track === 'project_defense') {
+    pTitle.textContent = 'Project Defense & Communication Assessment';
+    pGrid.innerHTML = `
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--accent-light);font-weight:700;margin-bottom:4px">Round 1: Project Architecture</div>
+        <div style="color:var(--muted)">Defend your real project design, data flow, tech stack trade-offs & edge cases.</div>
+      </div>
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--accent2);font-weight:700;margin-bottom:4px">Round 2: STAR Behavioral</div>
+        <div style="color:var(--muted)">Conflict resolution, high-pressure deadlines, and industry culture fit.</div>
+      </div>
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--success);font-weight:700;margin-bottom:4px">Outcome: Speech Audit</div>
+        <div style="color:var(--muted)">Articulation, verbal fluency, and recruiter readiness report.</div>
+      </div>
+    `;
+  } else {
+    pTitle.textContent = 'Corporate Assessment Pipeline';
+    pGrid.innerHTML = `
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--accent-light);font-weight:700;margin-bottom:4px">Round 1: Coding OA</div>
+        <div style="color:var(--muted)">Monaco sandbox, algorithmic edge cases & live test execution.</div>
+      </div>
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--accent2);font-weight:700;margin-bottom:4px">Round 2: Tech Deep Dive</div>
+        <div style="color:var(--muted)">Systems, time/space complexity & CS fundamentals dialogue.</div>
+      </div>
+      <div style="background:var(--surface3);padding:10px;border-radius:8px">
+        <div style="color:var(--success);font-weight:700;margin-bottom:4px">Round 3: Behavioral/HR</div>
+        <div style="color:var(--muted)">STAR method leadership alignment & company culture fit.</div>
+      </div>
+    `;
+  }
+}
+
 // ── Start Interview Session ──
 async function startInterview() {
   if (!selectedCompany) return;
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('loading-screen').style.display = 'flex';
-  document.getElementById('loading-msg').textContent = `Configuring ${selectedCompany} Multi-Round Simulation...`;
+  document.getElementById('loading-msg').textContent = selectedTrack === 'project_defense'
+    ? `Configuring ${selectedCompany} Project Defense & HR Interview...`
+    : `Configuring ${selectedCompany} Multi-Round Simulation...`;
 
   try {
     const res = await fetch(`${API}/api/interview/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usn, token, company: selectedCompany, num_questions: 6 })
+      body: JSON.stringify({
+        usn,
+        token,
+        company: selectedCompany,
+        track: selectedTrack,
+        num_questions: selectedTrack === 'project_defense' ? 4 : 6
+      })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.detail || 'Failed to initialize');
@@ -975,7 +1103,25 @@ async function startInterview() {
     document.getElementById('tb-qtotal').textContent = questions.length;
     document.getElementById('ai-role-badge').textContent = `${selectedCompany} Engineering`;
 
-    await initMonaco();
+    if (selectedTrack === 'project_defense') {
+      document.getElementById('coding-editor-view').style.display = 'none';
+      document.getElementById('project-defense-view').style.display = 'flex';
+      document.getElementById('rounds-stepper').innerHTML = `
+        <div class="round-step-pill active" id="step-r1">
+          <span class="step-num">1</span>
+          <span>Project Defense</span>
+        </div>
+        <span class="step-divider">›</span>
+        <div class="round-step-pill" id="step-r2">
+          <span class="step-num">2</span>
+          <span>Behavioral & STAR</span>
+        </div>
+      `;
+    } else {
+      document.getElementById('coding-editor-view').style.display = 'flex';
+      document.getElementById('project-defense-view').style.display = 'none';
+      await initMonaco();
+    }
 
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -1081,7 +1227,12 @@ function loadQuestion(idx) {
 
   // Layout adjustment based on round type
   const leftPanel = document.getElementById('left-panel');
-  if (q.round_type === 'coding' || q.test_cases || q.starter_code) {
+  if (selectedTrack === 'project_defense') {
+    leftPanel.style.display = 'flex';
+    leftPanel.style.width = '48%';
+    document.getElementById('defense-project-title').textContent = q.project_name || 'Engineering Portfolio';
+    document.getElementById('defense-project-desc').textContent = q.topic || 'System Design & Problem Statement';
+  } else if (q.round_type === 'coding' || q.test_cases || q.starter_code) {
     leftPanel.style.display = 'flex';
     leftPanel.style.width = '52%';
     if (q.starter_code) {
