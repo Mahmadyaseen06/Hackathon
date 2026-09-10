@@ -72,7 +72,75 @@
     ],
     "github_username": "priya-dev-coder",
     "leetcode_username": "priya_codes",
-    "interview_history": []
+    "interview_history": [
+      {
+        "overall_score": 73,
+        "technical_score": 76,
+        "communication_score": 72,
+        "verdict": "RECOMMENDED",
+        "readiness_tier": "Interview Ready",
+        "skill_verification": [
+          {
+            "skill": "Python",
+            "claimed_level": 7,
+            "demonstrated_level": 6,
+            "status": "Verified"
+          },
+          {
+            "skill": "DSA",
+            "claimed_level": 8,
+            "demonstrated_level": 8,
+            "status": "Verified"
+          }
+        ],
+        "strengths": [
+          "Set up design syncs and documented tradeoffs in a team project"
+        ],
+        "critical_gaps": [
+          "Claimed Python skills at 7/10 but demonstrated only 6/10",
+          "Overstated DSA skills by 2 levels"
+        ],
+        "communication_observations": "Priya communicated clearly, but could have elaborated more on her design syncs.",
+        "technical_observations": "Priya demonstrated good understanding of GIL and its implications for multithreading in Python.",
+        "honest_verdict": "While Priya showed some strengths, her demonstrated skills don't quite match her claimed levels. She needs to improve her accuracy in assessing her abilities.",
+        "what_must_improve": [
+          "Improve self-assessment of technical skills",
+          "Be more accurate when claiming skill levels"
+        ],
+        "company": "Google",
+        "student_name": "Priya Patel",
+        "total_questions": 3,
+        "round_breakdown": [
+          {
+            "round_id": 1,
+            "round_name": "Round 1: Coding Assessment (OA)",
+            "score": 80,
+            "status": "Passed",
+            "questions_count": 1,
+            "code_submissions": 1
+          },
+          {
+            "round_id": 2,
+            "round_name": "Round 2: Technical Deep Dive",
+            "score": 70,
+            "status": "Passed",
+            "questions_count": 1,
+            "code_submissions": 0
+          },
+          {
+            "round_id": 3,
+            "round_name": "Round 3: Behavioral & Culture Fit",
+            "score": 70,
+            "status": "Passed",
+            "questions_count": 1,
+            "code_submissions": 0
+          }
+        ],
+        "powered_by": "Ollama llama3.2:3b (local, 100% private)",
+        "timestamp": "2026-09-11T02:31:23.573298",
+        "usn": "4JN25CS001"
+      }
+    ]
   },
   {
     "usn": "4JN25CS002",

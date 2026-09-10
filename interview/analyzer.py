@@ -446,11 +446,48 @@ Rules:
         report["company"] = company
         report["student_name"] = student_name
         report["total_questions"] = len(qa_pairs)
+        report["round_breakdown"] = _compute_round_breakdown(qa_pairs)
         report["powered_by"] = "Ollama llama3.2:3b (local, 100% private)"
         return report
 
     except Exception:
         return _fallback_report(student_name, company, qa_pairs, student_skills)
+
+
+def _compute_round_breakdown(qa_pairs: list) -> list[dict]:
+    """Compute round-specific scores for OA, Technical Deep Dive, and Behavioral."""
+    rounds_map = {}
+    for qa in qa_pairs:
+        rid = qa.get("round_id") or (1 if qa.get("code") or qa.get("language") else 2 if qa.get("topic") not in ["Behavioral", "HR", "Leadership"] else 3)
+        rname = qa.get("round_name") or ("Round 1: Online Coding (OA)" if rid == 1 else "Round 2: Technical Deep Dive" if rid == 2 else "Round 3: Leadership & Behavioral")
+        if rid not in rounds_map:
+            rounds_map[rid] = {
+                "round_id": rid,
+                "round_name": rname,
+                "scores": [],
+                "questions_count": 0,
+                "code_submissions": 0
+            }
+        rounds_map[rid]["scores"].append(qa.get("score", 0))
+        rounds_map[rid]["questions_count"] += 1
+        if qa.get("code"):
+            rounds_map[rid]["code_submissions"] += 1
+
+    breakdown = []
+    for rid in sorted(rounds_map.keys()):
+        item = rounds_map[rid]
+        avg_score = round(sum(item["scores"]) / max(1, len(item["scores"])), 1)
+        scaled_pct = min(100, int(avg_score * 10))
+        status = "Passed" if scaled_pct >= 65 else "Borderline" if scaled_pct >= 45 else "Needs Improvement"
+        breakdown.append({
+            "round_id": rid,
+            "round_name": item["round_name"],
+            "score": scaled_pct,
+            "status": status,
+            "questions_count": item["questions_count"],
+            "code_submissions": item["code_submissions"]
+        })
+    return breakdown
 
 
 def _fallback_analysis(question, answer, topic, claimed_level, q_type, comm_analysis=None):
@@ -547,5 +584,6 @@ def _fallback_report(student_name, company, qa_pairs, student_skills):
         "company": company,
         "student_name": student_name,
         "total_questions": len(qa_pairs),
+        "round_breakdown": _compute_round_breakdown(qa_pairs),
         "powered_by": "Rule-based fallback (Ollama offline)"
     }

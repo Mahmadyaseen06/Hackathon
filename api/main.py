@@ -513,6 +513,18 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
     spoken = (req.spoken_answer or "").strip()
     is_placeholder_spoken = spoken in ["[No verbal explanation provided]", "[No answer]", "[Code only]", ""]
 
+    try:
+        spoken_reply = await generate_interviewer_speech(
+            question=req.question,
+            answer=spoken if not is_placeholder_spoken else "[Candidate submitted code solution]",
+            topic=req.topic or "General",
+            company=req.company or "Company",
+            code=req.code,
+            execution_result=req.execution_result
+        )
+    except Exception as e:
+        spoken_reply = "I have noted your solution. Let us proceed to the next question."
+
     if is_placeholder_spoken and code_eval:
         return {
             "score": code_eval.get("code_score", 5),
@@ -524,7 +536,8 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
             "claim_vs_reality": code_eval.get("skill_match", "Matches Claim"),
             "red_flags": code_eval.get("code_score", 5) < 4,
             "honest_feedback": code_eval.get("better_approach") or f"Complexity: {code_eval.get('time_complexity', 'O(n)')}",
-            "code_analysis": code_eval
+            "code_analysis": code_eval,
+            "interviewer_speech": spoken_reply
         }
 
     if not spoken or len(spoken) < 3:
@@ -539,7 +552,8 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
                 "claim_vs_reality": code_eval.get("skill_match", "Matches Claim"),
                 "red_flags": code_eval.get("code_score", 5) < 4,
                 "honest_feedback": code_eval.get("better_approach") or "Add verbal explanation of your thought process.",
-                "code_analysis": code_eval
+                "code_analysis": code_eval,
+                "interviewer_speech": spoken_reply
             }
         return {
             "score": 0,
@@ -547,7 +561,8 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
             "technical_accuracy": 0,
             "communication_clarity": 0,
             "what_was_missing": "No answer was provided.",
-            "red_flags": True
+            "red_flags": True,
+            "interviewer_speech": "No response was recorded. Please attempt the question or move forward."
         }
 
     result = await analyze_answer(
@@ -565,18 +580,7 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
         blended = round(0.6 * code_eval.get("code_score", 5) + 0.4 * result.get("score", 5))
         result["score"] = blended
 
-    try:
-        spoken_reply = await generate_interviewer_speech(
-            question=req.question,
-            answer=spoken,
-            topic=req.topic or "General",
-            company=req.company or "Company",
-            code=req.code,
-            execution_result=req.execution_result
-        )
-        result["interviewer_speech"] = spoken_reply
-    except Exception as e:
-        result["interviewer_speech"] = "I have noted your solution. Let us proceed to the next question."
+    result["interviewer_speech"] = spoken_reply
 
     return result
 

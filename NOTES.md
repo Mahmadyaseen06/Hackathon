@@ -8,3 +8,5 @@
 - **Unlisted skills defaulting to 5.0 (Fake Job Ready bug)**: In `ml/pipeline.py`, unlisted skills were defaulting to 5.0 and aptitude to 70.0, causing students with only "basic python" to be falsely classified as "Ready". Fixed by defaulting unlisted skills to 0.0, parsing string skill levels, and applying reality-check penalty caps.
 - **Missing `success: true` in `/api/interview/start`**: `static/interview/index.html` threw an unhandled start error because the endpoint returned session details without an explicit `success: True` flag. Added `success: True` and `round` metadata.
 - **Browser subagent Playwright driver 404**: Playwright 1.57.0 macOS arm64 driver download failed from Azure CDN. Handled with full automated test coverage in `tests/test_interview_and_strict_ml.py` and curl verification.
+- **Interviewer Talking-Back & Multi-Round Pipeline**: Integrated local Ollama `llama3.2:3b` with browser SpeechSynthesis, Monaco sandbox test runner, Web Audio visualizer, live webcam proctoring HUD, and 3-round progression (Coding OA -> Tech Deep Dive -> Leadership STAR). Verified end-to-end with 17 passing pytest tests and live API execution.
+
