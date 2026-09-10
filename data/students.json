@@ -1687,7 +1687,59 @@
     "email": "test@gmail.com",
     "phone": "7876543219",
     "self_registered": true,
-    "interview_history": [],
+    "interview_history": [
+      {
+        "overall_score": 24,
+        "technical_score": 0,
+        "communication_score": 0,
+        "verdict": "NOT_RECOMMENDED",
+        "readiness_tier": "Needs Preparation",
+        "skill_verification": [
+          {
+            "skill": "python",
+            "claimed_level": 5,
+            "demonstrated_level": 4,
+            "status": "Overstated"
+          }
+        ],
+        "strengths": [],
+        "critical_gaps": [
+          "Lacked a clear and concise introduction of their background and technical expertise.",
+          "Failed to provide specific examples or details about projects they have built."
+        ],
+        "communication_observations": "The candidate struggled to articulate their thoughts clearly, often pausing excessively before responding.",
+        "technical_observations": "The candidate demonstrated no understanding of the engineering problems presented, failing to apply any relevant concepts or techniques.",
+        "honest_verdict": "Unfortunately, the candidate's performance was subpar across all aspects of the interview. They failed to demonstrate a clear understanding of their technical strengths and struggled with communication.",
+        "what_must_improve": [
+          "Improve their ability to articulate their background and technical expertise clearly.",
+          "Develop a deeper understanding of engineering concepts and problem-solving techniques."
+        ],
+        "company": "TCS",
+        "student_name": "test",
+        "total_questions": 4,
+        "round_breakdown": [
+          {
+            "round_id": 1,
+            "round_name": "Round 1: Project Architecture & Technical Defense",
+            "score": 20,
+            "status": "Needs Improvement",
+            "questions_count": 2,
+            "code_submissions": 0
+          },
+          {
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Industry Readiness",
+            "score": 0,
+            "status": "Needs Improvement",
+            "questions_count": 2,
+            "code_submissions": 0
+          }
+        ],
+        "powered_by": "Ollama llama3.2:3b (local, 100% private)",
+        "timestamp": "2026-09-11T05:17:01.321583",
+        "usn": "4JN25CS099"
+      }
+    ],
     "platform_stats": {},
     "platform_stats_history": []
   }
