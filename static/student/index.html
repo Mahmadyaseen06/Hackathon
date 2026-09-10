@@ -435,6 +435,8 @@
               <div class="gauge-score" id="gauge-score">—</div>
               <div id="gauge-tier" class="gauge-tier">Loading...</div>
             </div>
+            <!-- Reality check penalties injected here by JS -->
+            <div id="reality-checks"></div>
           </div>
           <div class="card">
             <div class="card-title">Score Factors (SHAP Analysis)</div>
@@ -443,13 +445,21 @@
             </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title">Interview Score Impact</div>
-          <div id="interview-score-impact" style="color:var(--muted); font-size:13px;">
-            Complete a mock interview to see how it affects your overall score.
+        <div class="card" style="background:rgba(99,102,241,0.06);border-color:rgba(99,102,241,0.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">🎤 Interview Score Impact</div>
+              <div id="interview-score-impact" style="color:var(--muted);font-size:13px">
+                Complete a mock interview — your voice responses are analyzed for technical depth, communication, and honesty. This directly affects your employability score.
+              </div>
+            </div>
+            <button onclick="showSection('interview')" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#5b5fe0);border:none;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+              🎤 Take Interview Now
+            </button>
           </div>
         </div>
       </div>
+
 
       <!-- ── INTERVIEW ── -->
       <div class="section" id="section-interview">
@@ -647,7 +657,47 @@
     checkSpeechSupport();
     loadCompanies();
     loadInterviewHistory();
+
+    // Post-signup: show interview CTA banner for new registrations
+    const isNewUser = sessionStorage.getItem('first_signup') === 'true';
+    if (isNewUser) {
+      sessionStorage.removeItem('first_signup');
+      showFirstInterviewBanner();
+    }
   }
+
+  function showFirstInterviewBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'first-interview-banner';
+    banner.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:linear-gradient(135deg,rgba(99,102,241,0.95),rgba(34,211,238,0.9));
+      border-radius:20px;padding:20px 28px;z-index:9999;
+      display:flex;align-items:center;gap:16px;
+      box-shadow:0 20px 60px rgba(99,102,241,0.5);
+      backdrop-filter:blur(10px);max-width:600px;width:calc(100% - 40px);
+      animation:slideUp 0.4s ease;
+    `;
+    banner.innerHTML = `
+      <div style="font-size:32px">🎤</div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:15px;margin-bottom:4px">Welcome! Take your first AI interview now</div>
+        <div style="font-size:12px;opacity:0.85">Our Ollama AI will test your actual knowledge — not just your claimed skills. Your answers directly affect your employability score.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
+        <button onclick="showSection('interview');document.getElementById('first-interview-banner').remove()" 
+          style="padding:10px 20px;background:white;color:#6366f1;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap">
+          Start Interview →
+        </button>
+        <button onclick="document.getElementById('first-interview-banner').remove()" 
+          style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:10px;padding:6px;font-size:12px;cursor:pointer">
+          Maybe later
+        </button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+  }
+
 
   function logout() {
     sessionStorage.clear();
@@ -912,6 +962,8 @@
     scoreData = await res.json();
     const score = scoreData.employability_score;
     const tier = scoreData.readiness_status;
+    const rawScore = scoreData.raw_ml_probability || score;
+    const penalties = scoreData.reality_check_penalties || [];
 
     document.getElementById('topbar-score').textContent = score + '%';
     document.getElementById('topbar-score').style.color = score >= 78 ? '#10b981' : score >= 55 ? '#f59e0b' : '#ef4444';
@@ -925,6 +977,26 @@
     const tierEl = document.getElementById('gauge-tier');
     tierEl.textContent = tier;
     tierEl.className = `gauge-tier tier-${tier === 'Ready' ? 'ready' : tier === 'Near-Ready' ? 'near' : 'needs'}`;
+
+    // Reality check penalties panel
+    const penaltyContainer = document.getElementById('reality-checks');
+    if (penaltyContainer) {
+      if (penalties.length > 0) {
+        penaltyContainer.innerHTML = `
+          <div style="margin-top:16px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:16px">
+            <div style="font-size:12px;font-weight:700;color:#fca5a5;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
+              ⚠️ Why Your Score Was Adjusted (Raw ML: ${rawScore}% → Final: ${score}%)
+            </div>
+            ${penalties.map(p => `<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:13px">
+              <span style="color:#f87171;flex-shrink:0">✗</span>
+              <span style="color:#fca5a5">${p}</span>
+            </div>`).join('')}
+            <div style="margin-top:10px;font-size:12px;color:rgba(252,165,165,0.7)">Fix these issues to raise your score.</div>
+          </div>`;
+      } else {
+        penaltyContainer.innerHTML = `<div style="margin-top:12px;font-size:12px;color:var(--success)">✅ No issues found — score reflects your true profile.</div>`;
+      }
+    }
 
     // SHAP factors
     const factors = scoreData.shap_factors || [];
@@ -941,6 +1013,7 @@
     }).join('');
     document.getElementById('shap-factors').innerHTML = shapHtml || '<p style="color:var(--muted);font-size:13px">Score factors unavailable.</p>';
   }
+
 
   // ── Companies ──
   async function loadCompanies() {

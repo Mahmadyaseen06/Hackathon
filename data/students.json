@@ -1124,7 +1124,8 @@
     "target_role": "SDE",
     "target_lpa": 50.0,
     "skills": {
-      "python": 5
+      "python": 5,
+      "JavaScript": 7
     },
     "certifications": [],
     "internships": [],
@@ -1136,8 +1137,178 @@
     "email": "mjeevan@gmail.com",
     "phone": "7975182162",
     "self_registered": true,
-    "interview_history": [],
-    "platform_stats": {},
-    "platform_stats_history": []
+    "interview_history": [
+      {
+        "overall_score": 0,
+        "technical_score": 0,
+        "communication_score": 0,
+        "verdict": "NOT_RECOMMENDED",
+        "readiness_tier": "Needs Preparation",
+        "skill_verification": [
+          {
+            "skill": "python",
+            "claimed_level": 5,
+            "demonstrated_level": 0,
+            "status": "Unverified"
+          },
+          {
+            "skill": "General CS",
+            "claimed_level": 5,
+            "demonstrated_level": 0,
+            "status": "Unverified"
+          }
+        ],
+        "strengths": [],
+        "critical_gaps": [
+          "Lack of understanding of Python's garbage collection mechanism",
+          "Inability to write a correct recursive function for finding the factorial of a number",
+          "Insufficient knowledge of debugging techniques and their application"
+        ],
+        "communication_observations": "The candidate struggled to articulate their thoughts clearly, often providing incomplete or inaccurate answers.",
+        "technical_observations": "The candidate demonstrated a lack of technical depth in their responses, failing to provide accurate explanations for complex concepts.",
+        "honest_verdict": "While the candidate attempted questions, their demonstrated skills and knowledge were woefully inadequate. They will need significant preparation and review before being considered for a role at TCS.",
+        "what_must_improve": [
+          "Develop a thorough understanding of Python's garbage collection mechanism",
+          "Practice writing correct recursive functions for common problems",
+          "Study debugging techniques and their application to software development"
+        ],
+        "company": "TCS",
+        "student_name": "jeevan",
+        "total_questions": 7,
+        "powered_by": "Ollama llama3.2:3b (local, 100% private)",
+        "timestamp": "2026-09-11T01:44:40.587529",
+        "usn": "4JN25CS087"
+      }
+    ],
+    "platform_stats": {
+      "fetched_at": "2026-09-10T20:18:21.960115+00:00",
+      "github": {
+        "username": "JeevanM26",
+        "profile_url": "https://github.com/JeevanM26",
+        "avatar_url": "https://avatars.githubusercontent.com/u/245731615?v=4",
+        "public_repos": 9,
+        "followers": 2,
+        "following": 3,
+        "total_stars": 0,
+        "top_languages": [
+          {
+            "language": "TypeScript",
+            "repos": 3
+          },
+          {
+            "language": "Python",
+            "repos": 1
+          },
+          {
+            "language": "HTML",
+            "repos": 1
+          }
+        ],
+        "recent_commits_30d": 0,
+        "recent_prs": 0,
+        "recent_issues": 0,
+        "recent_repos": [
+          {
+            "name": "neighbourly_trust2",
+            "language": "TypeScript",
+            "stars": 0,
+            "updated_at": "2026-09-08"
+          },
+          {
+            "name": "JeevanM26.github.io",
+            "language": null,
+            "stars": 0,
+            "updated_at": "2026-08-25"
+          },
+          {
+            "name": "neighborly-trust",
+            "language": "TypeScript",
+            "stars": 0,
+            "updated_at": "2026-08-06"
+          },
+          {
+            "name": "tripo-render-s3",
+            "language": "Python",
+            "stars": 0,
+            "updated_at": "2026-07-11"
+          },
+          {
+            "name": "HustlerShield",
+            "language": "HTML",
+            "stars": 0,
+            "updated_at": "2026-06-18"
+          }
+        ],
+        "activity_score": 0,
+        "fetched_at": "2026-09-10T20:18:21.960026+00:00"
+      },
+      "aggregate_activity_score": 0.0
+    },
+    "platform_stats_history": [
+      {
+        "fetched_at": "2026-09-10T20:18:21.960115+00:00",
+        "github": {
+          "username": "JeevanM26",
+          "profile_url": "https://github.com/JeevanM26",
+          "avatar_url": "https://avatars.githubusercontent.com/u/245731615?v=4",
+          "public_repos": 9,
+          "followers": 2,
+          "following": 3,
+          "total_stars": 0,
+          "top_languages": [
+            {
+              "language": "TypeScript",
+              "repos": 3
+            },
+            {
+              "language": "Python",
+              "repos": 1
+            },
+            {
+              "language": "HTML",
+              "repos": 1
+            }
+          ],
+          "recent_commits_30d": 0,
+          "recent_prs": 0,
+          "recent_issues": 0,
+          "recent_repos": [
+            {
+              "name": "neighbourly_trust2",
+              "language": "TypeScript",
+              "stars": 0,
+              "updated_at": "2026-09-08"
+            },
+            {
+              "name": "JeevanM26.github.io",
+              "language": null,
+              "stars": 0,
+              "updated_at": "2026-08-25"
+            },
+            {
+              "name": "neighborly-trust",
+              "language": "TypeScript",
+              "stars": 0,
+              "updated_at": "2026-08-06"
+            },
+            {
+              "name": "tripo-render-s3",
+              "language": "Python",
+              "stars": 0,
+              "updated_at": "2026-07-11"
+            },
+            {
+              "name": "HustlerShield",
+              "language": "HTML",
+              "stars": 0,
+              "updated_at": "2026-06-18"
+            }
+          ],
+          "activity_score": 0,
+          "fetched_at": "2026-09-10T20:18:21.960026+00:00"
+        },
+        "aggregate_activity_score": 0.0
+      }
+    ]
   }
 ]

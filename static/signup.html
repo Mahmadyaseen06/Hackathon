@@ -471,6 +471,7 @@
         sessionStorage.setItem('usn', data.usn);
         sessionStorage.setItem('role', 'student');
         sessionStorage.setItem('user', JSON.stringify(data.user));
+        sessionStorage.setItem('first_signup', 'true');  // triggers interview banner
         showSuccess(data.usn, name);
       } catch (e) {
         showError('Cannot connect to server. Make sure the backend is running on port 8001.');

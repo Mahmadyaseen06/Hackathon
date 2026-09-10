@@ -1,12 +1,19 @@
 """
-AI Interview Analyzer using Ollama (local, open-source, completely free).
-Uses llama3.2:3b running locally via Ollama REST API on port 11434.
-No API keys. No internet. 100% private. Runs on Apple Silicon Metal GPU.
+AI Interview Analyzer — STRICT MODE using Ollama (llama3.2:3b local).
 
-Falls back to rule-based scoring if Ollama is not available.
+Design principle: NEVER inflate scores. A student who claims Python level 8
+but gives a surface answer gets a 3/10 and "Overstated" verdict.
+
+Analyzes:
+- Technical accuracy (is the answer factually correct?)
+- Depth vs claimed level (did they actually demonstrate that skill?)
+- Communication clarity (grammar, structure, confidence, filler words)
+- Speaking patterns (from transcript: hesitation, vagueness, buzzword padding)
+- Claim vs reality gap
 """
 
 import json
+import re
 import httpx
 import asyncio
 from typing import Optional
@@ -14,24 +21,121 @@ from typing import Optional
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "llama3.2:3b"
 
+# ──────────────────────────────────────────────────────────────────────────────
+# STRICT SCORING RUBRIC (used in prompt + post-processing validation)
+# ──────────────────────────────────────────────────────────────────────────────
+STRICT_RUBRIC = """
+ABSOLUTE SCORING RULES — DO NOT DEVIATE:
 
-async def _ollama_chat(prompt: str, max_tokens: int = 600, json_mode: bool = True) -> str:
+10: Perfect answer. Complete, accurate, includes edge cases, real examples. Rare.
+9:  Excellent. Covers all key points with confidence and precision.
+8:  Good. Minor gaps but demonstrates solid understanding.
+7:  Decent. Covers most key points but lacks depth or misses one concept.
+6:  Average. Understands the basics but significant gaps.
+5:  Partial. Gets the surface but misses the core mechanism or use cases.
+4:  Weak. Knows the term but cannot explain it properly.
+3:  Very weak. Mostly wrong, vague, or confused.
+2:  Almost empty. One or two correct words with no substance.
+1:  Barely relevant. Doesn't really answer the question.
+0:  "I don't know", blank, completely off-topic, or gibberish.
+
+CLAIM VERIFICATION:
+- If student claims 8/10 in Python but gives a 4/10 answer → "Overstated", mark red_flags=true
+- If student claims 5/10 and gives a 5/10 answer → "Verified"
+- Never give higher score just because the student seems nice or tried hard
+- Buzzwords without substance = score -2 from where the answer would otherwise land
+- Vague generalities without examples = score -1
+
+COMMUNICATION SCORING (separate from technical):
+- Check grammar, sentence structure, clarity of thought
+- Check if answer is organized or rambling
+- Check for filler phrases: "basically", "like I said", "you know", "kind of", "sort of" = -1
+- Short, clear, precise answers score HIGHER than long rambling ones
+"""
+
+# ──────────────────────────────────────────────────────────────────────────────
+# COMMUNICATION PATTERN DETECTOR (rule-based, runs first)
+# ──────────────────────────────────────────────────────────────────────────────
+FILLER_WORDS = [
+    "basically", "you know", "kind of", "sort of", "like i said", "um", "uh",
+    "i think maybe", "i guess", "not sure but", "i believe maybe", "probably like",
+    "i mean", "and stuff", "et cetera", "etc etc"
+]
+
+def _analyze_communication_patterns(text: str) -> dict:
+    """
+    Rule-based communication pattern analysis from transcript.
+    Returns communication quality metrics.
+    """
+    text_lower = text.lower()
+    words = text.split()
+    word_count = len(words)
+    sentence_count = max(1, text.count('.') + text.count('!') + text.count('?'))
+
+    # Filler word count
+    filler_count = sum(1 for f in FILLER_WORDS if f in text_lower)
+
+    # Check for vagueness markers
+    vague_phrases = ["it does something", "basically works", "i think it", "not sure exactly",
+                     "something like that", "and so on", "etc", "similar stuff"]
+    vague_count = sum(1 for v in vague_phrases if v in text_lower)
+
+    # Check for concrete indicators
+    concrete_markers = ["for example", "for instance", "specifically", "in python",
+                       "when i", "i implemented", "in my project", "the syntax is",
+                       "the time complexity", "the reason is", "this means that"]
+    concrete_count = sum(1 for c in concrete_markers if c in text_lower)
+
+    # Communication score (out of 10)
+    base_comm = 5
+    if word_count < 10:
+        base_comm = 2  # too short
+    elif word_count > 20:
+        base_comm += 1  # answered properly
+    if word_count > 50:
+        base_comm += 1  # detailed
+
+    base_comm -= min(3, filler_count)      # penalize fillers
+    base_comm -= min(2, vague_count)        # penalize vagueness
+    base_comm += min(2, concrete_count)     # reward specificity
+
+    comm_score = max(1, min(10, base_comm))
+
+    # Avg words per sentence
+    avg_sentence_length = word_count / sentence_count
+
+    return {
+        "word_count": word_count,
+        "filler_words_detected": filler_count,
+        "vague_phrases_detected": vague_count,
+        "concrete_examples_detected": concrete_count,
+        "communication_score": comm_score,
+        "avg_sentence_length": round(avg_sentence_length, 1),
+        "verdict_hint": (
+            "Clear and structured" if comm_score >= 7 else
+            "Needs improvement" if comm_score >= 5 else
+            "Poor communication"
+        )
+    }
+
+
+async def _ollama_chat(prompt: str, max_tokens: int = 500) -> str:
     """Send a prompt to Ollama and get a response."""
     payload = {
         "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.15 if json_mode else 0.4,
+            "temperature": 0.05,  # Very low — we want deterministic strict judgment
             "num_predict": max_tokens,
-            "top_p": 0.9
+            "top_p": 0.8,
+            "repeat_penalty": 1.1
         }
     }
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=90.0) as client:
         response = await client.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload)
         response.raise_for_status()
-        data = response.json()
-        return data.get("response", "").strip()
+        return response.json().get("response", "").strip()
 
 
 async def _is_ollama_running() -> bool:
@@ -46,15 +150,16 @@ async def _is_ollama_running() -> bool:
 
 def _extract_json_from_response(text: str) -> dict:
     """Extract JSON from LLM response, handling markdown code blocks."""
-    import re
-    # Try to find JSON block
+    # Strip markdown code blocks
+    text = re.sub(r'```json\s*', '', text)
+    text = re.sub(r'```\s*', '', text)
+    # Find JSON object
     json_match = re.search(r'\{.*\}', text, re.DOTALL)
     if json_match:
         try:
             return json.loads(json_match.group())
         except json.JSONDecodeError:
             pass
-    # Try full text as JSON
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -70,206 +175,323 @@ async def analyze_answer(
     question_type: str = "technical"
 ) -> dict:
     """
-    Analyze one interview answer using Ollama (llama3.2:3b locally).
-    Returns structured analysis with score, verdict, skill verification.
+    STRICT analysis of one interview answer using Ollama.
+    Communication patterns analyzed separately by rule engine.
+    Technical accuracy judged by Ollama.
     """
+    # Always run communication analysis (no Ollama needed)
+    comm_analysis = _analyze_communication_patterns(spoken_answer)
+
     ollama_available = await _is_ollama_running()
     if not ollama_available:
-        return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level, question_type)
+        return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level,
+                                  question_type, comm_analysis)
 
-    prompt = f"""You are a strict {company} technical interviewer evaluating a candidate's answer.
+    prompt = f"""You are a STRICT {company} senior engineer conducting a technical interview. Your job is to evaluate honestly — NOT to encourage or be nice. Inflate nothing.
 
-Question: "{question}"
-Topic: {topic}
-Student's claimed skill level in {topic}: {claimed_skill_level}/10
+QUESTION ASKED: "{question}"
+TOPIC: {topic}
+CANDIDATE'S CLAIMED SKILL LEVEL IN {topic}: {claimed_skill_level}/10
 
-Student's answer: "{spoken_answer}"
+CANDIDATE'S SPOKEN ANSWER:
+"{spoken_answer}"
 
-Evaluate this answer STRICTLY and return ONLY valid JSON. No markdown, no explanation, just the JSON object:
+{STRICT_RUBRIC}
+
+Now evaluate this specific answer. Return ONLY a valid JSON object. No markdown fences, no explanation:
 
 {{
-  "score": <integer 0-10, be strict>,
-  "technical_accuracy": <integer 0-10>,
-  "communication_clarity": <integer 0-10>,
-  "depth_of_knowledge": <integer 0-10>,
-  "verdict": "<exactly one of: Verified, Partially Verified, Overstated, Insufficient Answer>",
-  "what_was_good": "<one sentence or null>",
-  "what_was_missing": "<one sentence about key missing knowledge>",
-  "claim_vs_reality": "<exactly one of: Matches Claim, Below Claim, Exceeds Claim>",
-  "red_flags": <true or false>
+  "score": <integer 0-10, follow rubric strictly>,
+  "technical_accuracy": <integer 0-10, how factually correct is the answer?>,
+  "depth_of_knowledge": <integer 0-10, does the depth match their claimed level?>,
+  "verdict": "<one of: Verified | Partially Verified | Overstated | Insufficient Answer>",
+  "what_was_good": "<one specific thing correct in their answer, or null if nothing>",
+  "what_was_missing": "<the single most important concept they missed or got wrong>",
+  "claim_vs_reality": "<one of: Matches Claim | Below Claim | Exceeds Claim>",
+  "red_flags": <true if score < 5 OR claim_vs_reality is Below Claim, else false>,
+  "honest_feedback": "<one sentence of direct honest feedback a real interviewer would say>"
 }}
 
-Scoring rules:
-- 9-10: Expert level, complete accurate answer
-- 7-8: Good answer, minor gaps
-- 5-6: Partial understanding, key concepts missing
-- 3-4: Mostly wrong but shows some awareness
-- 0-2: Completely wrong, blank, or "don't know"
-
-Student claims {claimed_skill_level}/10 in {topic}. If their answer doesn't match that level, mark claim_vs_reality as "Below Claim" and lower the score accordingly. Be honest."""
+Important: The candidate claims {claimed_skill_level}/10. If score < claimed_level - 2, verdict MUST be "Overstated" and claim_vs_reality MUST be "Below Claim"."""
 
     try:
-        raw = await _ollama_chat(prompt, max_tokens=300, json_mode=True)
+        raw = await _ollama_chat(prompt, max_tokens=350)
         result = _extract_json_from_response(raw)
+
         if not result or "score" not in result:
-            return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level, question_type)
-        # Ensure all required fields exist
-        result.setdefault("verdict", "Partially Verified")
-        result.setdefault("claim_vs_reality", "Matches Claim")
-        result.setdefault("red_flags", False)
-        result.setdefault("what_was_good", None)
-        result.setdefault("what_was_missing", "Could not parse details.")
+            return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level,
+                                      question_type, comm_analysis)
+
+        # ── POST-PROCESSING HARD RULES (cannot be overridden by LLM) ──
+        score = int(result.get("score", 5))
+        tech_acc = int(result.get("technical_accuracy", score))
+
+        # Rule: blank or "I don't know" answers cannot score > 0
+        answer_lower = spoken_answer.lower().strip()
+        if not answer_lower or len(answer_lower) < 5 or any(
+            x in answer_lower for x in ["i don't know", "idk", "no idea", "not sure", "i have no", "i cannot"]
+        ):
+            score = 0
+            tech_acc = 0
+            result["verdict"] = "Insufficient Answer"
+            result["claim_vs_reality"] = "Below Claim"
+            result["red_flags"] = True
+
+        # Rule: if score < claimed_level - 2, enforce Below Claim
+        if score < claimed_skill_level - 2:
+            result["claim_vs_reality"] = "Below Claim"
+            result["red_flags"] = True
+            if score < claimed_skill_level - 4:
+                result["verdict"] = "Overstated"
+
+        # Rule: apply communication penalty to overall score
+        comm_score = comm_analysis["communication_score"]
+        # Weight: 70% technical + 30% communication
+        combined_score = round(score * 0.70 + comm_score * 0.30)
+        combined_score = max(0, min(10, combined_score))
+
+        result["score"] = combined_score
+        result["technical_accuracy"] = tech_acc
+        result["communication_clarity"] = comm_score
+        result["communication_analysis"] = comm_analysis
+        result.setdefault("honest_feedback", "No specific feedback available.")
         return result
+
     except Exception as e:
-        return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level, question_type)
+        return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level,
+                                  question_type, comm_analysis)
 
 
 async def generate_followup(
     question: str,
     spoken_answer: str,
     topic: str,
-    company: str
+    company: str,
+    score: int = 5
 ) -> str:
-    """Generate a natural follow-up question based on the student's answer."""
+    """
+    Generate a follow-up that PROBES DEEPER or CHALLENGES the weakness.
+    If score < 5, ask them to prove they know what they claimed.
+    """
     ollama_available = await _is_ollama_running()
     if not ollama_available:
-        return "Can you give me a specific example where you applied this concept in a real project?"
+        probes = [
+            "Can you write the actual code for that? Walk me through it line by line.",
+            "You mentioned that concept — what's the time complexity, and why?",
+            "Give me a real example from a project you built. Be specific.",
+            "What would break if that assumption was wrong? Think about edge cases."
+        ]
+        import random
+        return random.choice(probes)
 
-    prompt = f"""You are a {company} technical interviewer. The candidate was asked:
-"{question}"
+    # If the score was low, ask a challenging follow-up
+    if score <= 4:
+        probe_instruction = "The candidate's answer was weak or incomplete. Ask a simpler version of the same concept to test if they know the basics at all. Be direct, not gentle."
+    elif score <= 6:
+        probe_instruction = "The candidate's answer was partial. Ask a follow-up that tests the specific concept they got wrong or missed."
+    else:
+        probe_instruction = "The candidate's answer was decent. Ask a deeper follow-up about edge cases, trade-offs, or real-world application."
 
-They answered: "{spoken_answer}"
+    prompt = f"""You are a {company} technical interviewer. {probe_instruction}
 
-Write ONE follow-up question (1-2 sentences only) that probes deeper into what they said or tests if they truly understand it. Be direct and specific. Return only the question text, no explanation."""
+Original question: "{question}"
+Candidate answered: "{spoken_answer}"
+
+Write ONE follow-up question (1-2 sentences max). Be direct. No preamble, no "Good answer", just the question. Return only the question text."""
 
     try:
-        result = await _ollama_chat(prompt, max_tokens=80, json_mode=False)
-        # Clean up the response
+        result = await _ollama_chat(prompt, max_tokens=80)
         result = result.strip().strip('"').strip()
         if len(result) < 10:
-            return "Can you walk me through a concrete example of this in practice?"
+            return "Can you walk me through the actual implementation? Be specific."
         return result
     except Exception:
-        return "Interesting — can you walk me through a real project where you applied this?"
+        return "Interesting — can you walk me through a real example where this applies, step by step?"
 
 
 async def generate_full_interview_report(
     student_name: str,
     company: str,
-    qa_pairs: list[dict],
+    qa_pairs: list,
     student_skills: dict
 ) -> dict:
     """
-    Generate comprehensive interview report using Ollama after all questions answered.
+    STRICT comprehensive interview report.
+    Includes: technical score, communication score, skill verification,
+    honest assessment, what must change for the student to be hireable.
     """
     ollama_available = await _is_ollama_running()
     if not ollama_available:
         return _fallback_report(student_name, company, qa_pairs, student_skills)
 
-    # Build a summary of the Q&A session
+    # Build transcript
     qa_text = ""
     for i, qa in enumerate(qa_pairs):
-        qa_text += f"\nQ{i+1} [{qa.get('topic','General')}] (Claimed: {qa.get('claimed_level','?')}/10): {qa.get('question','')}\n"
-        qa_text += f"Answer: {qa.get('answer', 'No answer')}\n"
-        qa_text += f"Score: {qa.get('score', '?')}/10, Verdict: {qa.get('verdict','?')}\n"
+        qa_text += f"\nQ{i+1} [{qa.get('topic','General')}] (Claimed: {qa.get('claimed_level','?')}/10):\n"
+        qa_text += f"Question: {qa.get('question', '')}\n"
+        qa_text += f"Answer: {qa.get('answer', 'No answer given')}\n"
+        qa_text += f"Score: {qa.get('score', '?')}/10 | Verdict: {qa.get('verdict','?')} | Claim: {qa.get('claim_vs_reality','?')}\n"
 
-    prompt = f"""You are a senior {company} interviewer. You just finished interviewing {student_name}.
+    prompt = f"""You are a senior {company} hiring manager. You just interviewed {student_name}.
 
-Interview transcript:
+FULL INTERVIEW TRANSCRIPT:
 {qa_text}
 
-Student's claimed skills: {json.dumps(student_skills)}
+STUDENT'S CLAIMED SKILLS: {json.dumps(student_skills)}
 
-Write a final interview report. Return ONLY valid JSON (no markdown):
+Write a hiring decision report. Be brutally honest. Do not inflate. If the student performed poorly, say so clearly.
+Return ONLY valid JSON (no markdown):
 
 {{
-  "overall_score": <integer 0-100>,
+  "overall_score": <integer 0-100, weighted avg of all scores>,
   "technical_score": <integer 0-100>,
   "communication_score": <integer 0-100>,
-  "verdict": "<one of: STRONGLY_RECOMMENDED, RECOMMENDED, BORDERLINE, NOT_RECOMMENDED>",
-  "readiness_tier": "<one of: Interview Ready, Near Ready, Needs Preparation>",
+  "verdict": "<STRONGLY_RECOMMENDED | RECOMMENDED | BORDERLINE | NOT_RECOMMENDED>",
+  "readiness_tier": "<Interview Ready | Near Ready | Needs Preparation>",
   "skill_verification": [
-    {{"skill": "<name>", "claimed_level": <1-10>, "demonstrated_level": <1-10>, "status": "<Verified|Partially Verified|Overstated>"}}
+    {{"skill": "<name>", "claimed_level": <1-10>, "demonstrated_level": <1-10>, "status": "<Verified|Partially Verified|Overstated|Unverified>"}}
   ],
-  "strengths": ["<strength1>", "<strength2>"],
-  "gaps": ["<gap1>", "<gap2>"],
-  "communication_observations": "<2 sentences>",
-  "technical_observations": "<2 sentences>",
-  "recommendation": "<specific advice for this student, 2 sentences>"
+  "strengths": ["<strength1 - only real ones seen in transcript>"],
+  "critical_gaps": ["<gap1 - specific things they clearly don't know>"],
+  "communication_observations": "<2 specific sentences about how they communicated>",
+  "technical_observations": "<2 specific sentences about their technical depth>",
+  "honest_verdict": "<1-2 sentences a real hiring manager would say, no sugarcoating>",
+  "what_must_improve": ["<specific actionable improvement 1>", "<specific actionable improvement 2>"]
 }}
 
-Be honest. Base scores strictly on answers shown. Include top 3-4 skills in skill_verification."""
+Rules:
+- overall_score >= 80 → STRONGLY_RECOMMENDED
+- overall_score 65-79 → RECOMMENDED
+- overall_score 45-64 → BORDERLINE
+- overall_score < 45 → NOT_RECOMMENDED
+- If ANY skill was "Overstated" by more than 3 levels, flag it clearly in critical_gaps
+- Do NOT be kind just because they attempted questions. Score what was demonstrated."""
 
     try:
-        raw = await _ollama_chat(prompt, max_tokens=600, json_mode=True)
+        raw = await _ollama_chat(prompt, max_tokens=700)
         report = _extract_json_from_response(raw)
+
         if not report or "overall_score" not in report:
             return _fallback_report(student_name, company, qa_pairs, student_skills)
+
+        # Hard rule: enforce verdict consistency
+        overall = int(report.get("overall_score", 50))
+        if overall >= 80:
+            report["verdict"] = "STRONGLY_RECOMMENDED"
+            report["readiness_tier"] = "Interview Ready"
+        elif overall >= 65:
+            report["verdict"] = "RECOMMENDED"
+            report["readiness_tier"] = "Interview Ready"
+        elif overall >= 45:
+            report["verdict"] = "BORDERLINE"
+            report["readiness_tier"] = "Near Ready"
+        else:
+            report["verdict"] = "NOT_RECOMMENDED"
+            report["readiness_tier"] = "Needs Preparation"
+
         report["company"] = company
         report["student_name"] = student_name
         report["total_questions"] = len(qa_pairs)
-        report["powered_by"] = "Ollama llama3.2:3b (local)"
+        report["powered_by"] = "Ollama llama3.2:3b (local, 100% private)"
         return report
+
     except Exception:
         return _fallback_report(student_name, company, qa_pairs, student_skills)
 
 
-def _fallback_analysis(question, answer, topic, claimed_level, q_type):
-    """Rule-based fallback when Ollama is not available."""
+def _fallback_analysis(question, answer, topic, claimed_level, q_type, comm_analysis=None):
+    """Rule-based fallback when Ollama is not available. Also strict."""
     answer_lower = answer.lower().strip()
     word_count = len(answer_lower.split()) if answer_lower else 0
 
-    if word_count < 5 or any(x in answer_lower for x in ["i don't know", "not sure", "no idea", "idk"]):
+    # Blank / "I don't know"
+    if word_count < 3 or any(x in answer_lower for x in ["i don't know", "idk", "not sure", "no idea"]):
         score, verdict = 0, "Insufficient Answer"
-    elif word_count > 60 and any(w in answer_lower for w in ["because", "example", "for instance", "specifically", "when i"]):
+        claim_reality = "Below Claim"
+        red_flag = True
+    elif word_count > 50 and any(w in answer_lower for w in ["because", "example", "for instance", "when i", "specifically"]):
         score = min(7, claimed_level)
-        verdict = "Verified" if claimed_level <= 7 else "Partially Verified"
-    elif word_count > 25:
-        score = min(5, claimed_level - 1)
+        verdict = "Verified" if claimed_level <= 6 else "Partially Verified"
+        claim_reality = "Matches Claim" if score >= claimed_level - 1 else "Below Claim"
+        red_flag = score < 4
+    elif word_count > 20:
+        score = min(5, max(2, claimed_level - 2))
         verdict = "Partially Verified"
+        claim_reality = "Below Claim" if score < claimed_level - 1 else "Matches Claim"
+        red_flag = score < 4
     else:
         score = 2
         verdict = "Overstated"
+        claim_reality = "Below Claim"
+        red_flag = True
 
     score = max(0, min(10, score))
+    comm = comm_analysis or {"communication_score": 5 if word_count > 15 else 2}
+    combined = round(score * 0.70 + comm["communication_score"] * 0.30)
+
     return {
-        "score": score,
+        "score": combined,
         "technical_accuracy": score,
-        "communication_clarity": 5 if word_count > 15 else 2,
+        "communication_clarity": comm.get("communication_score", 5),
         "depth_of_knowledge": max(0, score - 1),
         "verdict": verdict,
-        "what_was_good": "Answer provided." if score > 3 else None,
-        "what_was_missing": "Start Ollama service for AI-powered evaluation.",
-        "claim_vs_reality": "Matches Claim" if score >= claimed_level - 2 else "Below Claim",
-        "red_flags": score < 3,
-        "note": "⚠️ Rule-based fallback — Ollama not running. Start with: brew services start ollama"
+        "what_was_good": None if score < 4 else "Some relevant points mentioned.",
+        "what_was_missing": "Ollama not running — start it for full AI analysis.",
+        "claim_vs_reality": claim_reality,
+        "red_flags": red_flag,
+        "communication_analysis": comm,
+        "honest_feedback": "Start Ollama for accurate AI feedback: `brew services start ollama`",
+        "note": "⚠️ Fallback scoring (Ollama offline)"
     }
 
 
 def _fallback_report(student_name, company, qa_pairs, student_skills):
-    """Simple fallback report when Ollama is unavailable."""
-    scores = [qa.get("score", 5) for qa in qa_pairs if qa.get("score") is not None]
-    avg = sum(scores) / len(scores) if scores else 5
-    overall = int(avg * 10)
-    verdict = "RECOMMENDED" if overall >= 70 else "BORDERLINE" if overall >= 50 else "NOT_RECOMMENDED"
+    """Strict fallback report."""
+    scores = [qa.get("score", 0) for qa in qa_pairs if "score" in qa]
+    avg_score = (sum(scores) / len(scores)) if scores else 0
+    overall = int(avg_score * 10)
+
+    # Count overstated skills
+    overstated = [qa for qa in qa_pairs if qa.get("claim_vs_reality") == "Below Claim"]
+    if len(overstated) >= 2:
+        overall = min(overall, 45)  # Cap if skills were overstated
+
+    if overall >= 80:
+        verdict = "STRONGLY_RECOMMENDED"
+        tier = "Interview Ready"
+    elif overall >= 65:
+        verdict = "RECOMMENDED"
+        tier = "Interview Ready"
+    elif overall >= 45:
+        verdict = "BORDERLINE"
+        tier = "Near Ready"
+    else:
+        verdict = "NOT_RECOMMENDED"
+        tier = "Needs Preparation"
 
     return {
         "overall_score": overall,
         "technical_score": overall,
-        "communication_score": 55,
+        "communication_score": 45,
         "verdict": verdict,
-        "readiness_tier": "Interview Ready" if overall >= 75 else "Near Ready" if overall >= 55 else "Needs Preparation",
+        "readiness_tier": tier,
         "skill_verification": [
-            {"skill": s, "claimed_level": l, "demonstrated_level": max(1, l - 2), "status": "Partially Verified"}
+            {
+                "skill": s,
+                "claimed_level": l,
+                "demonstrated_level": max(1, l - 2),
+                "status": "Partially Verified"
+            }
             for s, l in list(student_skills.items())[:4]
         ],
-        "strengths": ["Attempted all questions", "Showed willingness to engage"],
-        "gaps": ["Start Ollama for detailed skill gap analysis"],
-        "communication_observations": "Detailed analysis unavailable — Ollama not running.",
-        "technical_observations": f"Rule-based average score: {avg:.1f}/10.",
-        "recommendation": "Run 'brew services start ollama' for full AI-powered analysis.",
+        "strengths": ["Attempted questions"] if scores else ["No answers recorded"],
+        "critical_gaps": ["Start Ollama for detailed gap analysis. Run: brew services start ollama"],
+        "communication_observations": "Detailed analysis requires Ollama AI (not running).",
+        "technical_observations": f"Avg score: {avg_score:.1f}/10 across {len(qa_pairs)} questions.",
+        "honest_verdict": "Ollama not available. Scores based on rule-based fallback only.",
+        "what_must_improve": ["Start Ollama for specific improvement recommendations"],
         "company": company,
         "student_name": student_name,
         "total_questions": len(qa_pairs),
-        "powered_by": "Rule-based fallback (Ollama not running)"
+        "powered_by": "Rule-based fallback (Ollama offline)"
     }

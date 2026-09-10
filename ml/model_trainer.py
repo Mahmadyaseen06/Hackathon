@@ -140,37 +140,144 @@ def load_or_train_model() -> Dict[str, Any]:
     _GLOBAL_CACHE = bundle
     return bundle
 
+def _apply_strict_reality_checks(prob: float, student_data: Dict[str, Any]) -> tuple:
+    """
+    Apply hard reality-check rules AFTER ML probability is computed.
+    These are non-negotiable caps based on real hiring criteria.
+    Returns (adjusted_prob, list_of_penalties_applied).
+    """
+    penalties = []
+    original = prob
+
+    skills = student_data.get("skills", {})
+    cgpa = float(student_data.get("cgpa", 0.0))
+    active_backlogs = int(student_data.get("active_backlogs", 0))
+    backlogs_history = int(student_data.get("backlogs_history", 0))
+    certifications = student_data.get("certifications", [])
+    internships = student_data.get("internships", [])
+    projects = student_data.get("projects", [])
+    interview_history = student_data.get("interview_history", [])
+
+    skill_values = list(skills.values()) if skills else []
+    avg_skill = sum(skill_values) / len(skill_values) if skill_values else 0
+    max_skill = max(skill_values) if skill_values else 0
+    num_skills = len(skill_values)
+
+    # ── HARD CAPS ──────────────────────────────────────────────────────────────
+
+    # 1. No skills or only 1 skill → cannot be job ready
+    if num_skills == 0:
+        prob = min(prob, 20.0)
+        penalties.append("No skills recorded — cannot evaluate employability")
+
+    elif num_skills == 1:
+        prob = min(prob, 35.0)
+        penalties.append(f"Only 1 skill listed ({list(skills.keys())[0]}) — severely limited profile")
+
+    # 2. All skills are basic (avg ≤ 4/10)
+    if skill_values and avg_skill <= 4.0:
+        prob = min(prob, 30.0)
+        penalties.append(f"All skills at beginner level (avg {avg_skill:.1f}/10) — not industry-ready")
+
+    # 3. Max skill level is only 5 or below → beginner across the board
+    if skill_values and max_skill <= 5:
+        prob = min(prob, 42.0)
+        penalties.append(f"Highest skill is only {max_skill}/10 — insufficient for placements")
+
+    # 4. Active backlogs → major penalty
+    if active_backlogs > 0:
+        backlog_penalty = min(25.0, active_backlogs * 8.0)
+        prob -= backlog_penalty
+        penalties.append(f"{active_backlogs} active backlog(s) → -{backlog_penalty:.0f}% (most companies hard-filter this)")
+
+    # 5. Low CGPA
+    if cgpa < 6.0:
+        prob = min(prob, 55.0)
+        penalties.append(f"CGPA {cgpa:.2f} < 6.0 — below most company cutoffs")
+    elif cgpa < 6.5:
+        prob = min(prob, 65.0)
+        penalties.append(f"CGPA {cgpa:.2f} is borderline for many companies")
+
+    # 6. No internships AND no projects → cannot claim readiness
+    if len(internships) == 0 and len(projects) == 0:
+        prob = min(prob, 48.0)
+        penalties.append("No internships and no projects — no real-world experience demonstrated")
+
+    elif len(internships) == 0 and num_skills > 0:
+        prob = min(prob, 70.0)  # cap: 70% without internship experience
+        penalties.append("No internship experience — theoretical knowledge only")
+
+    # 7. No certifications AND avg skill ≤ 6 → can't claim intermediate readiness
+    if len(certifications) == 0 and avg_skill <= 6.0 and num_skills > 0:
+        prob = min(prob, 60.0)
+        penalties.append("No certifications and intermediate skills only — unverified claims")
+
+    # 8. Interview history: if student scored poorly in AI interviews
+    if interview_history:
+        recent_interviews = interview_history[-3:]  # last 3
+        interview_scores = []
+        for iv in recent_interviews:
+            s = iv.get("overall_score") or iv.get("score")
+            if s is not None:
+                interview_scores.append(float(s))
+
+        if interview_scores:
+            avg_interview = sum(interview_scores) / len(interview_scores)
+            # Interview score is normalized to 0-100
+            if avg_interview < 30:
+                prob = min(prob, 35.0)
+                penalties.append(f"AI interview avg score {avg_interview:.0f}/100 — very poor performance")
+            elif avg_interview < 50:
+                prob = min(prob, 55.0)
+                penalties.append(f"AI interview avg score {avg_interview:.0f}/100 — below average")
+            elif avg_interview >= 75:
+                # Reward good interview performance
+                prob = min(95.0, prob + 5.0)
+
+    # 9. Absolute floor: never below 5%
+    prob = max(5.0, prob)
+
+    return round(prob, 1), penalties
+
+
 def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Main inference interface.
-    Returns placement probability, readiness tier, career track alignments,
-    and SHAP factor attributions.
+    STRICT inference interface.
+    Step 1: ML ensemble gives raw probability.
+    Step 2: Hard reality-check rules apply caps and penalties.
+    Step 3: Final score is the lower of ML or rule-adjusted.
+
+    This prevents fake "job ready" results for students with basic skills only.
     """
     bundle = load_or_train_model()
     ensemble = bundle["ensemble"]
     explainer = bundle["explainer"]
     base_val = bundle.get("base_value", 0.0)
-    
+
     features_df = extract_features_from_student(student_data)
     feature_vals = features_df.iloc[0].values
-    
-    prob = float(ensemble.predict_proba(features_df)[0, 1]) * 100.0
+
+    # Step 1: Raw ML probability
+    raw_prob = float(ensemble.predict_proba(features_df)[0, 1]) * 100.0
+
+    # Step 2: Apply strict reality checks
+    prob, penalties = _apply_strict_reality_checks(raw_prob, student_data)
     prob = round(prob, 1)
-    
-    # Readiness Tier
-    if prob >= 75.0:
+
+    # Step 3: Readiness Tier — stricter thresholds
+    if prob >= 78.0:
         readiness = "Ready"
         readiness_badge = "success"
-    elif prob >= 60.0:
+    elif prob >= 62.0:
         readiness = "Near-Ready"
         readiness_badge = "warning"
     else:
         readiness = "Needs Training"
         readiness_badge = "error"
-        
+
     # Multi-track alignment
     tracks = predict_career_track_alignment(features_df)
-    
+
     # SHAP calculation
     try:
         raw_shap = explainer.shap_values(features_df)
@@ -178,23 +285,29 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
             raw_shap = raw_shap[1] if len(raw_shap) > 1 else raw_shap[0]
         shap_vals = np.ravel(raw_shap)
     except Exception:
-        # Fallback approximation based on feature deltas if shap encounters format issue
         shap_vals = (feature_vals - np.array([7.0, 75.0, 75.0, 1.0, 0.0, 70.0, 70.0, 65.0, 5.0, 5.0, 4.0, 5.0, 5.0, 5.0, 4.0, 4.0, 1.0, 2.0, 1.0, 1.0, 7.0, 7.0, 1.0])) * 0.03
-        
+
     xai_factors = translate_shap_to_factors(
         FEATURE_COLUMNS,
         feature_vals,
         shap_vals,
         base_value=base_val
     )
-    
+
     return {
         "student_id": student_data.get("student_id", "STU-UNKNOWN"),
         "placement_probability": prob,
+        "raw_ml_probability": round(raw_prob, 1),
         "readiness_status": readiness,
         "readiness_badge": readiness_badge,
         "career_track_alignments": tracks,
         "primary_recommended_track": tracks[0]["track"] if tracks else "Full-Stack Developer",
         "factor_transparency": xai_factors,
-        "model_evaluation_metrics": bundle["metrics"]
+        "model_evaluation_metrics": bundle["metrics"],
+        "reality_check_penalties": penalties,  # Transparent: show user WHY score was adjusted
+        "scoring_note": (
+            "Score reflects real hiring criteria. ML model + rule-based checks applied."
+            if penalties else
+            "Score based on ML ensemble analysis only."
+        )
     }
