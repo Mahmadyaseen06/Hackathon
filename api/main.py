@@ -573,13 +573,20 @@ def predict_employability(req: PredictRequest):
         score = result.get("placement_probability", 50.0)
         tier = result.get("readiness_status", "Needs Training")
 
-        # Blend interview score if available (20% weight)
+        # Blend interview score if available (20% weight, respecting hard caps)
+        penalties = result.get("reality_check_penalties", [])
         if req.usn:
             s = get_student_by_usn(req.usn)
             history = s.get("interview_history", []) if s else []
             if history:
                 interview_score = history[-1].get("overall_score", 0)
-                score = round(score * 0.8 + interview_score * 0.2, 1)
+                if penalties:
+                    # When hard screening or market caps are active, good interviews provide an authentic slight boost (+2%)
+                    # but cannot bypass the hard prerequisite barrier
+                    if interview_score >= 70:
+                        score = min(54.0, score + 2.0)
+                else:
+                    score = round(score * 0.8 + interview_score * 0.2, 1)
                 tier = "Ready" if score >= 78 else "Near-Ready" if score >= 62 else "Needs Training"
 
         factors = result.get("factor_transparency", result.get("shap_factors", []))

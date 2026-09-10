@@ -241,6 +241,61 @@ def _apply_strict_reality_checks(prob: float, student_data: Dict[str, Any]) -> t
     # 9. Absolute floor: never below 5%
     prob = max(5.0, prob)
 
+    # 10. Technical Screening OA Gate (DSA / Core Foundation)
+    # Universal prerequisite for 90%+ engineering & campus technical assessments
+    dsa_val = 0.0
+    sql_val = 0.0
+    for k, v in skills.items():
+        k_low = k.lower()
+        if k_low in ("dsa", "data structures", "algorithms", "data structures & algorithms"):
+            try:
+                dsa_val = max(dsa_val, float(v))
+            except (ValueError, TypeError):
+                pass
+        if k_low in ("sql", "mysql", "postgresql", "database"):
+            try:
+                sql_val = max(sql_val, float(v))
+            except (ValueError, TypeError):
+                pass
+
+    leetcode_solved = 0
+    pstats = student_data.get("platform_stats", {})
+    if isinstance(pstats, dict):
+        lc = pstats.get("leetcode", {})
+        if isinstance(lc, dict):
+            leetcode_solved = int(lc.get("total_solved", 0) or 0)
+
+    has_oa_capability = (dsa_val >= 4.0) or (leetcode_solved >= 35) or (sql_val >= 6.0 and any(k.lower() == "python" for k in skills))
+
+    if not has_oa_capability:
+        prob = min(prob, 52.0)
+        penalties.append(
+            "Missing core Data Structures & Algorithms (DSA) screening competency — universal prerequisite for 90%+ campus technical assessments (OA gate)"
+        )
+
+    # 11. Real-World Job Market Grounding (Market Feasibility Gate)
+    # If a candidate qualifies for ZERO Best Matches and ZERO Near Matches in active campus/corporate drives,
+    # they cannot be classified as "Ready" (>= 78%) because no corporate recruiter would shortlist them today.
+    try:
+        from job_intelligence.market_evaluator import evaluate_market_grounding
+        market = evaluate_market_grounding(student_data)
+        if market and market.get("total_jobs", 0) > 0:
+            best_cnt = market.get("best_matches", 0)
+            near_cnt = market.get("near_matches", 0)
+            top_fit = market.get("top_fit_score", 50.0)
+            top_co = market.get("top_job_company", "Corporate")
+            top_role = market.get("top_job_title", "Role")
+
+            if best_cnt == 0 and near_cnt == 0:
+                market_cap = max(42.0, min(54.0, top_fit + 3.0))
+                if prob > market_cap:
+                    prob = market_cap
+                    penalties.append(
+                        f"Zero qualified campus job matches (max role fit {top_fit:.1f}% for {top_role} at {top_co}) — upskilling in missing critical requisites (DSA, SQL) required before placement readiness"
+                    )
+    except Exception:
+        pass
+
     return round(prob, 1), penalties
 
 

@@ -36,15 +36,23 @@ def generate_student_dataset(n_samples: int = 15000, random_seed: int = 42) -> p
     cs_bias = np.isin(student_branches, ["CSE", "ISE"]).astype(float) * 12.0
     coding = np.clip(cgpa * 7.5 + cs_bias + np.random.normal(loc=10.0, scale=14.0, size=n_samples), 20.0, 99.0)
     
-    # Technical competencies (0 to 10 scale)
-    skills_python = np.clip((coding / 10.0) + np.random.normal(0, 1.2, n_samples), 1.0, 10.0)
-    skills_java = np.clip((coding / 10.5) + np.random.normal(0, 1.3, n_samples), 1.0, 10.0)
-    skills_cpp = np.clip((coding / 11.0) + np.random.normal(0, 1.4, n_samples), 1.0, 10.0)
-    skills_dsa = np.clip((coding / 10.0) * 0.8 + (cgpa / 10.0) * 2.0 + np.random.normal(0, 1.0, n_samples), 1.0, 10.0)
-    skills_sql = np.clip((quant / 12.0) + (cgpa / 2.5) + np.random.normal(0, 1.1, n_samples), 1.0, 10.0)
-    skills_web = np.clip((cs_bias / 2.0) + np.random.normal(5.0, 2.2, n_samples), 1.0, 10.0)
-    skills_cloud = np.clip(np.random.normal(3.8, 2.0, n_samples), 1.0, 10.0)
-    skills_ml = np.clip((quant / 15.0) + np.random.normal(3.5, 2.1, n_samples), 1.0, 10.0)
+    # Technical competencies (0 to 10 scale) — allow realistic zeroes for unlearned stacks
+    skills_python = np.clip((coding / 10.0) + np.random.normal(0, 1.2, n_samples), 0.0, 10.0)
+    skills_java = np.clip((coding / 10.5) + np.random.normal(0, 1.3, n_samples), 0.0, 10.0)
+    skills_cpp = np.clip((coding / 11.0) + np.random.normal(0, 1.4, n_samples), 0.0, 10.0)
+    skills_dsa = np.clip((coding / 10.0) * 0.8 + (cgpa / 10.0) * 2.0 + np.random.normal(0, 1.0, n_samples), 0.0, 10.0)
+    skills_sql = np.clip((quant / 12.0) + (cgpa / 2.5) + np.random.normal(0, 1.1, n_samples), 0.0, 10.0)
+    skills_web = np.clip((cs_bias / 2.0) + np.random.normal(5.0, 2.2, n_samples), 0.0, 10.0)
+    skills_cloud = np.clip(np.random.normal(3.8, 2.0, n_samples), 0.0, 10.0)
+    skills_ml = np.clip((quant / 15.0) + np.random.normal(3.5, 2.1, n_samples), 0.0, 10.0)
+
+    # 18% of students have zero or unstudied DSA
+    dsa_zero_mask = np.random.binomial(1, 0.18, n_samples).astype(bool)
+    skills_dsa = np.where(dsa_zero_mask, 0.0, skills_dsa)
+
+    # 20% of students have zero database / SQL
+    sql_zero_mask = np.random.binomial(1, 0.20, n_samples).astype(bool)
+    skills_sql = np.where(sql_zero_mask, 0.0, skills_sql)
     
     # Experience & Practical Work
     internships = np.random.choice([0, 1, 2, 3], size=n_samples, p=[0.45, 0.35, 0.15, 0.05])
@@ -56,21 +64,33 @@ def generate_student_dataset(n_samples: int = 15000, random_seed: int = 42) -> p
     comm_score = np.clip(np.random.normal(loc=7.0, scale=1.4, size=n_samples), 3.0, 10.0)
     interview_score = np.clip(comm_score * 0.6 + (logical / 25.0) + np.random.normal(0, 0.9, n_samples), 3.0, 10.0)
     
+    # Online Assessment (OA) Hard Screening Barrier:
+    # In corporate drives (Google, Amazon, TCS Digital, Cisco, Oracle), DSA >= 4.0
+    # OR (SQL >= 5.5 and Python >= 5.5 for Data roles) is mandatory to clear Round 1.
+    oa_cleared = (skills_dsa >= 4.0) | ((skills_sql >= 5.5) & (skills_python >= 5.5))
+    oa_penalty = np.where(~oa_cleared, -3.2, 0.0)
+
+    # Academic-only trap: High CGPA (>= 8.5) but zero practical problem-solving (DSA < 3.0 & SQL < 3.0)
+    academic_only_penalty = np.where((cgpa >= 8.5) & (skills_dsa < 3.0) & (skills_sql < 3.0), -2.2, 0.0)
+
     # Employability Probability Logit (latent ground truth)
     z = (
-        0.55 * (cgpa - 7.0)
-        + 0.030 * (coding - 55.0)
-        + 0.015 * (quant - 55.0)
-        + 0.015 * (logical - 55.0)
-        + 0.65 * internships
+        0.45 * (cgpa - 7.0)
+        + 0.025 * (coding - 55.0)
+        + 0.012 * (quant - 55.0)
+        + 0.012 * (logical - 55.0)
+        + 0.60 * internships
         + 0.20 * projects_count
-        + 0.25 * certifications_count
-        + 0.30 * (skills_dsa - 5.0)
-        + 0.20 * (comm_score - 6.0)
-        + 0.25 * (interview_score - 6.0)
+        + 0.20 * certifications_count
+        + 0.40 * (skills_dsa - 5.0)
+        + 0.25 * (skills_sql - 5.0)
+        + 0.18 * (comm_score - 6.0)
+        + 0.20 * (interview_score - 6.0)
         - 1.10 * active_backlogs
         - 0.35 * backlogs_history
-        + np.random.normal(0, 0.55, n_samples)
+        + oa_penalty
+        + academic_only_penalty
+        + np.random.normal(0, 0.45, n_samples)
     )
     
     placement_prob = 1.0 / (1.0 + np.exp(-z))
