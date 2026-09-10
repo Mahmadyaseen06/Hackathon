@@ -1038,19 +1038,19 @@ function selectTrack(track) {
   const pTitle = document.getElementById('pipeline-title');
   const pGrid = document.getElementById('pipeline-steps-grid');
   if (track === 'project_defense') {
-    pTitle.textContent = 'Project Defense & Communication Assessment';
+    pTitle.textContent = 'Project Defense & Professional HR Interview';
     pGrid.innerHTML = `
       <div style="background:var(--surface3);padding:10px;border-radius:8px">
-        <div style="color:var(--accent-light);font-weight:700;margin-bottom:4px">Round 1: Project Architecture</div>
-        <div style="color:var(--muted)">Defend your real project design, data flow, tech stack trade-offs & edge cases.</div>
+        <div style="color:var(--accent-light);font-weight:700;margin-bottom:4px">Round 1: Intro & Project Defense</div>
+        <div style="color:var(--muted)">Executive self-introduction, system architecture defense & engineering trade-offs.</div>
       </div>
       <div style="background:var(--surface3);padding:10px;border-radius:8px">
-        <div style="color:var(--accent2);font-weight:700;margin-bottom:4px">Round 2: STAR Behavioral</div>
-        <div style="color:var(--muted)">Conflict resolution, high-pressure deadlines, and industry culture fit.</div>
+        <div style="color:var(--accent2);font-weight:700;margin-bottom:4px">Round 2: STAR Behavioral & HR</div>
+        <div style="color:var(--muted)">STAR situational conflict resolution, high-pressure deadlines, and company culture fit.</div>
       </div>
       <div style="background:var(--surface3);padding:10px;border-radius:8px">
-        <div style="color:var(--success);font-weight:700;margin-bottom:4px">Outcome: Speech Audit</div>
-        <div style="color:var(--muted)">Articulation, verbal fluency, and recruiter readiness report.</div>
+        <div style="color:var(--success);font-weight:700;margin-bottom:4px">Outcome: Hiring Report</div>
+        <div style="color:var(--muted)">Articulation, verbal fluency, and recruiter readiness report with Ollama feedback.</div>
       </div>
     `;
   } else {
@@ -1090,7 +1090,7 @@ async function startInterview() {
         token,
         company: selectedCompany,
         track: selectedTrack,
-        num_questions: selectedTrack === 'project_defense' ? 4 : 6
+        num_questions: selectedTrack === 'project_defense' ? 5 : 6
       })
     });
     const data = await res.json();
@@ -1799,11 +1799,11 @@ async function submitAnswer() {
     if (analysis.interviewer_speech) {
       updateInterviewerDialogue(analysis.interviewer_speech);
       speakInterviewerText(analysis.interviewer_speech, () => {
-        advanceTimer = setTimeout(triggerAdvance, 1200);
+        advanceTimer = setTimeout(triggerAdvance, 4500);
       });
-      advanceTimer = setTimeout(triggerAdvance, 15000);
+      advanceTimer = setTimeout(triggerAdvance, 25000);
     } else {
-      advanceTimer = setTimeout(triggerAdvance, 1800);
+      advanceTimer = setTimeout(triggerAdvance, 4500);
     }
 
   } catch(e) {

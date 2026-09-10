@@ -145,3 +145,37 @@ def test_api_tpo_4_tier_alerts_and_actions(tpo_auth):
     )
     assert action_resp.status_code == 200
     assert action_resp.json()["success"] is True
+
+def test_professional_hr_progression_and_self_intro(student_auth):
+    resp = client.post(
+        "/api/interview/start",
+        json={
+            "usn": student_auth["usn"],
+            "token": student_auth["token"],
+            "company": "Google",
+            "track": "project_defense"
+        }
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["track"] == "project_defense"
+    questions = data["questions"]
+    assert len(questions) == 5
+
+    # Q1 must be Self-Introduction & Background
+    assert "introduce yourself" in questions[0]["question"].lower()
+    assert questions[0]["topic"] == "Self-Introduction & Background"
+
+    # Q2 must be Project Architecture walkthrough
+    assert "architecture" in questions[1]["question"].lower()
+
+    # Q3 must be Trade-offs & Failure Modes
+    assert "trade-off" in questions[2]["question"].lower() or "failure mode" in questions[2]["question"].lower()
+
+    # Q4 must be STAR Behavioral
+    assert "star" in questions[3]["question"].lower() or "deadline" in questions[3]["question"].lower()
+
+    # Q5 must be Company Alignment
+    assert "google" in questions[4]["question"].lower()
+

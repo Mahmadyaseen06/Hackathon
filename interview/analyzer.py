@@ -334,18 +334,36 @@ async def generate_interviewer_speech(
         else:
             tests_summary = f"Code execution failed with error: {execution_result.get('error', '')[:80]}"
 
-    is_project_q = "project" in question.lower() or "architecture" in question.lower() or "trade-off" in question.lower() or "data flow" in question.lower()
-    role_desc = f"You are a senior {company} engineering director assessing a candidate's real-world project defense and system architecture." if is_project_q else f"You are a senior {company} engineer interviewing a candidate."
+    is_intro_q = "introduce yourself" in question.lower() or "about yourself" in question.lower() or "background" in question.lower()
+    is_arch_q = "system architecture" in question.lower() or "architecture" in question.lower()
+    is_tradeoff_q = "trade-off" in question.lower() or "failure mode" in question.lower() or "bottleneck" in question.lower() or "100x" in question.lower()
+    is_star_q = "star" in question.lower() or "deadline" in question.lower() or "conflict" in question.lower()
+    is_company_q = f"why {company.lower()}" in question.lower() or "targeting" in question.lower() or "culture" in question.lower()
 
-    prompt = f"""{role_desc} Talk to the candidate directly in a natural, conversational spoken tone.
-Question: "{question}"
-Candidate's response: "{answer or '[Code only]'}"
+    if is_intro_q:
+        stage_goal = "Acknowledge the candidate's introduction and background in 1 sentence. Then smoothly invite them into defending their technical projects."
+    elif is_arch_q:
+        stage_goal = "Acknowledge their architectural choices. Challenge them on one real-world edge case, data consistency issue, or trade-off."
+    elif is_tradeoff_q:
+        stage_goal = "Acknowledge how they debugged the bottleneck or handled failure modes. Transition smoothly toward their collaboration and team delivery."
+    elif is_star_q:
+        stage_goal = "Acknowledge their resolution under pressure using STAR. Then transition to asking about their alignment with the company."
+    elif is_company_q:
+        stage_goal = f"Conclude professionally, expressing appreciation for their interest in {company} and stating their responses have been logged."
+    else:
+        stage_goal = "Acknowledge the answer and challenge edge cases, time complexity, or architectural trade-offs."
+
+    role_desc = f"You are a senior {company} engineering director conducting a live professional recruitment interview."
+
+    prompt = f"""{role_desc} Talk to the candidate directly in a natural, professional spoken tone.
+Question asked: "{question}"
+Candidate's response: "{answer or '[No verbal answer provided]'}"
 Code submitted: "{code[:250] if code else 'None (Verbal defense)'}"
 Execution outcome: {tests_summary or 'None'}
 
+Goal: {stage_goal}
 In 1 or 2 natural, spoken sentences (max 35 words):
-Acknowledge what they explained. If they described a project or architecture, challenge an engineering trade-off, data consistency, or scalability bottleneck under high traffic. If they answered a behavioral/coding question, push on their edge cases or time complexity.
-Do NOT introduce yourself. Speak directly like an interviewer in a real room.
+Speak directly like an interviewer sitting across the table. Be professional, authentic, and direct. Do NOT introduce yourself or say "Hello candidate".
 Return ONLY the spoken sentences."""
 
     try:
@@ -355,6 +373,17 @@ Return ONLY the spoken sentences."""
             return cleaned
     except Exception:
         pass
+
+    if is_intro_q:
+        return f"Thank you for sharing your background and engineering trajectory. Let's move on to the systems and projects you have engineered."
+    if is_arch_q:
+        return "Good breakdown of the system components and data flow. What was the single most difficult technical trade-off or failure mode you hit?"
+    if is_tradeoff_q:
+        return "That shows solid engineering maturity and resilience. Now let's explore how you handle situational pressure and team dynamics."
+    if is_star_q:
+        return f"Strong explanation of how you delivered under pressure. To wrap up, why are you interested in {company} and how do our engineering values fit your goals?"
+    if is_company_q:
+        return f"Thank you for sharing your perspective and enthusiasm for {company}. We have logged your assessment and will compile your hiring report."
 
     if execution_result and execution_result.get("test_results"):
         passed = execution_result.get("tests_passed", 0)
