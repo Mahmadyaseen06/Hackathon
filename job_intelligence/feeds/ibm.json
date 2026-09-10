@@ -1,0 +1,13 @@
+[
+  {
+    "job_id": "ibm-cloud-dev-2026",
+    "title": "Associate Cloud Developer",
+    "official_url": "https://www.ibm.com/careers/in-en/job/1928301/associate-cloud-developer",
+    "location": "Kochi, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["Java", "SQL", "REST APIs", "Linux"],
+    "preferred_skills": ["Docker", "Kubernetes", "Microservices"],
+    "description": "Cloud application developer role at IBM Software Labs. Develop microservices and containerized software on Hybrid Cloud."
+  }
+]

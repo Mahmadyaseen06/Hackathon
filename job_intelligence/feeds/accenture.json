@@ -1,0 +1,13 @@
+[
+  {
+    "job_id": "accenture-ase-2026",
+    "title": "Associate Software Engineer (ASE)",
+    "official_url": "https://www.accenture.com/in-en/careers/jobdetails?id=ASE_INDIA_2026",
+    "location": "Bangalore, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["Java", "SQL", "Communication", "REST APIs"],
+    "preferred_skills": ["Git", "Cloud", "Agile"],
+    "description": "Associate Software Engineer role at Accenture Technology India. Build, test, and deploy enterprise applications."
+  }
+]

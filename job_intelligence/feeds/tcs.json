@@ -1,0 +1,24 @@
+[
+  {
+    "job_id": "tcs-digital-2026",
+    "title": "Digital Developer (TCS Digital Track)",
+    "official_url": "https://www.tcs.com/careers/india/entry-level/digital-track",
+    "location": "Mumbai, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["Java", "SQL", "Communication", "Python"],
+    "preferred_skills": ["Spring Boot", "Docker", "Git"],
+    "description": "TCS Digital flagship career track. Requires analytical problem solving, proficiency in high-level programming languages, and modern development frameworks."
+  },
+  {
+    "job_id": "tcs-data-ai-2026",
+    "title": "Data & AI Associate",
+    "official_url": "https://www.tcs.com/careers/india/entry-level/ai-data",
+    "location": "Chennai, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["Python", "SQL", "Machine Learning", "Data Visualization"],
+    "preferred_skills": ["Pandas", "AWS", "Statistics"],
+    "description": "Enterprise Data and AI solutions role developing predictive models, ETL pipelines, and business dashboards."
+  }
+]

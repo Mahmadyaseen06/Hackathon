@@ -100,6 +100,14 @@ def train_and_evaluate() -> Dict[str, Any]:
     # SHAP Explainer on XGBoost
     explainer = shap.TreeExplainer(xgb)
     
+    exp_val = getattr(explainer, "expected_value", 0.0)
+    if isinstance(exp_val, (list, np.ndarray)):
+        base_val = float(np.ravel(exp_val)[0])
+    elif exp_val is not None:
+        base_val = float(exp_val)
+    else:
+        base_val = 0.0
+
     bundle = {
         "ensemble": ensemble,
         "xgb": xgb,
@@ -108,7 +116,7 @@ def train_and_evaluate() -> Dict[str, Any]:
         "explainer": explainer,
         "feature_names": FEATURE_COLUMNS,
         "metrics": metrics,
-        "base_value": float(explainer.expected_value) if hasattr(explainer, "expected_value") else 0.0
+        "base_value": base_val
     }
     
     joblib.dump(bundle, MODEL_FILE)
@@ -165,7 +173,10 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
     
     # SHAP calculation
     try:
-        shap_vals = explainer.shap_values(features_df)[0]
+        raw_shap = explainer.shap_values(features_df)
+        if isinstance(raw_shap, list):
+            raw_shap = raw_shap[1] if len(raw_shap) > 1 else raw_shap[0]
+        shap_vals = np.ravel(raw_shap)
     except Exception:
         # Fallback approximation based on feature deltas if shap encounters format issue
         shap_vals = (feature_vals - np.array([7.0, 75.0, 75.0, 1.0, 0.0, 70.0, 70.0, 65.0, 5.0, 5.0, 4.0, 5.0, 5.0, 5.0, 4.0, 4.0, 1.0, 2.0, 1.0, 1.0, 7.0, 7.0, 1.0])) * 0.03

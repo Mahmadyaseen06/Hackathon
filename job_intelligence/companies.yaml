@@ -1,0 +1,62 @@
+companies:
+  - id: amazon
+    name: Amazon
+    source_type: amazon_official
+    config: {}
+
+  - id: microsoft
+    name: Microsoft
+    source_type: microsoft_official
+    config: {}
+
+  - id: nvidia
+    name: NVIDIA
+    source_type: workday
+    config:
+      host: nvidia.wd5.myworkdayjobs.com
+      tenant: nvidia
+      site: NVIDIAExternalCareerSite
+      max_pages: 1
+      page_size: 15
+
+  - id: google
+    name: Google
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/google.json
+
+  - id: infosys
+    name: Infosys
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/infosys.json
+
+  - id: tcs
+    name: TCS
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/tcs.json
+
+  - id: wipro
+    name: Wipro
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/wipro.json
+
+  - id: accenture
+    name: Accenture
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/accenture.json
+
+  - id: ibm
+    name: IBM
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/ibm.json
+
+  - id: deloitte
+    name: Deloitte
+    source_type: curated_config
+    config:
+      feed_path: job_intelligence/feeds/deloitte.json

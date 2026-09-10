@@ -1,0 +1,24 @@
+[
+  {
+    "job_id": "goog-swe-intern-2026",
+    "title": "Software Engineering Intern (Summer 2026)",
+    "official_url": "https://careers.google.com/jobs/results/128391823901/",
+    "location": "Bangalore, Karnataka, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Internship",
+    "required_skills": ["DSA", "C++", "Python", "System Design"],
+    "preferred_skills": ["Machine Learning", "Distributed Systems", "Go"],
+    "description": "Software Engineering Internships at Google India. Minimum qualifications: Experience with data structures, algorithms, and software development in C++, Python, or Java."
+  },
+  {
+    "job_id": "goog-da-intern-2026",
+    "title": "Data Science & Analytics Intern",
+    "official_url": "https://careers.google.com/jobs/results/98712938120/",
+    "location": "Hyderabad, Telangana, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Internship",
+    "required_skills": ["Python", "SQL", "Statistics", "Machine Learning"],
+    "preferred_skills": ["Pandas", "Data Visualization", "Deep Learning"],
+    "description": "Data Analytics Internships at Google India. Minimum qualifications: Working knowledge of SQL, Python data analysis, and statistical modeling."
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "job_id": "infy-se-2026",
+    "title": "Systems Engineer",
+    "official_url": "https://career.infosys.com/jobdesc?jobReferenceCode=PROGEN-HRO-10293",
+    "location": "Multiple, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["Java", "SQL", "Communication", "Problem Solving"],
+    "preferred_skills": ["Spring Boot", "REST APIs", "Git"],
+    "description": "Systems Engineer campus drive for engineering graduates. Strong foundation in object-oriented programming, relational databases, and logical problem solving."
+  },
+  {
+    "job_id": "infy-pp-2026",
+    "title": "Specialist Programmer (Power Programmer)",
+    "official_url": "https://career.infosys.com/jobdesc?jobReferenceCode=PROGEN-HRO-10499",
+    "location": "Bangalore, India",
+    "work_mode": "Hybrid",
+    "employment_type": "Full-time",
+    "required_skills": ["DSA", "Java", "Python", "OOP", "System Design"],
+    "preferred_skills": ["Microservices", "Docker", "AWS"],
+    "description": "Specialist Programmer role for elite competitive coders with deep algorithmic proficiency and full-stack software architecture capabilities."
+  }
+]
