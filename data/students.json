@@ -10,28 +10,22 @@
     "twelfth_percentage": 89.0,
     "backlogs_history": 0,
     "active_backlogs": 0,
-    "quantitative_aptitude": 88.0,
+    "quantitative_aptitude": 88,
     "logical_reasoning": 92,
-    "coding_benchmark": 85.0,
+    "coding_benchmark": 85,
     "communication_rating": 8.2,
     "interview_rating": 8.0,
     "target_role": "Full-Stack Developer",
     "target_lpa": 16.0,
     "skills": {
-      "Python": 9.0,
-      "DSA": 8.0,
-      "SQL": 8.0,
-      "Kubernetes": 7.0
+      "Python": 4,
+      "DSA": 1,
+      "SQL": 1,
+      "Kubernetes": 1
     },
-    "certifications": [
-      "AWS Solution Architect"
-    ],
-    "internships": [
-      "Stripe:Intern:6"
-    ],
-    "projects": [
-      "Cluster Manager"
-    ],
+    "certifications": [],
+    "internships": [],
+    "projects": [],
     "github_username": "priya-dev-coder",
     "leetcode_username": "priya_codes",
     "interview_history": [
