@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TPO Command Center — AI Placement Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070b14; --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08); --primary: #6366f1; --primary-glow: rgba(99,102,241,0.2);
+      --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --text: #f1f5f9; --muted: #94a3b8; --sidebar-w: 260px;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+    .sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: rgba(10,14,28,0.97);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 100; backdrop-filter: blur(20px);
+    }
+    .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+    .logo-mark { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2px; }
+    .logo-sub { font-size: 11px; color: var(--muted); }
+    .sidebar-user { padding: 16px 20px; background: rgba(245,158,11,0.06); margin: 12px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.15); }
+    .user-role { font-size: 11px; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; }
+    .user-name { font-size: 14px; font-weight: 600; margin-top: 2px; }
+    .user-id { font-size: 12px; color: var(--muted); font-family: monospace; }
+    .nav { padding: 12px; flex: 1; }
+    .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 8px 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+    .nav-item:hover { background: var(--surface); color: var(--text); }
+    .nav-item.active { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-bottom { padding: 16px; border-top: 1px solid var(--border); }
+    .btn-logout { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .btn-logout:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); color: var(--danger); }
+
+    .main { margin-left: var(--sidebar-w); flex: 1; }
+    .topbar { padding: 16px 32px; border-bottom: 1px solid var(--border); background: rgba(7,11,20,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .page-title { font-size: 20px; font-weight: 700; }
+    .page-subtitle { font-size: 13px; color: var(--muted); }
+
+    .content { padding: 28px 32px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card { background: rgba(13,18,32,0.8); border: 1px solid var(--border); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+    .card:hover { border-color: rgba(245,158,11,0.2); transition: border-color 0.2s; }
+    .card-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+    .card-grid { display: grid; gap: 16px; }
+    .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .kpi-icon { font-size: 28px; margin-bottom: 8px; }
+    .kpi-value { font-size: 34px; font-weight: 800; margin-bottom: 4px; }
+    .kpi-label { font-size: 12px; color: var(--muted); }
+    .kpi-delta { font-size: 11px; margin-top: 4px; }
+
+    /* ── Table ── */
+    .student-table { width: 100%; border-collapse: collapse; }
+    .student-table th { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .student-table td { padding: 12px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .student-table tr:hover td { background: var(--surface); }
+    .student-table tr { cursor: pointer; }
+
+    .tier-badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .tier-Ready { background: rgba(16,185,129,0.15); color: var(--success); }
+    .tier-Near-Ready { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .tier-Needs-Training { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    .score-cell { font-size: 16px; font-weight: 800; }
+
+    /* ── Alert cards ── */
+    .alert-card { border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; }
+    .alert-green { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+    .alert-red { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+    .alert-orange { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .alert-icon { font-size: 20px; flex-shrink: 0; }
+    .alert-body h4 { font-size: 13px; font-weight: 700; }
+    .alert-body p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .alert-score { margin-left: auto; font-size: 18px; font-weight: 800; flex-shrink: 0; }
+
+    /* ── Heatmap ── */
+    .heatmap-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .heatmap-skill { width: 140px; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+    .heatmap-bar-wrap { flex: 1; height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden; }
+    .heatmap-bar { height: 100%; border-radius: 5px; transition: width 0.8s ease; }
+    .severity-Critical { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .severity-High { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .severity-Medium { background: linear-gradient(90deg, #6366f1, #818cf8); }
+    .severity-Low { background: linear-gradient(90deg, #10b981, #34d399); }
+    .heatmap-pct { font-size: 12px; font-weight: 700; width: 44px; text-align: right; }
+    .severity-chip { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+    .chip-Critical { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .chip-High { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .chip-Medium { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .chip-Low { background: rgba(16,185,129,0.15); color: var(--success); }
+
+    /* ── Donut chart ── */
+    .donut-wrap { display: flex; align-items: center; gap: 24px; }
+    .donut-svg { width: 140px; height: 140px; flex-shrink: 0; }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Branch bars ── */
+    .branch-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .branch-name { width: 260px; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+    .branch-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .branch-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #6366f1, #22d3ee); transition: width 0.8s ease; }
+    .branch-score { font-size: 13px; font-weight: 700; width: 48px; text-align: right; }
+
+    /* ── Student Drill-down modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; backdrop-filter: blur(4px); }
+    .modal { background: rgba(13,18,32,0.98); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 700px; max-width: 95vw; max-height: 85vh; overflow-y: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; color: var(--muted); font-size: 13px; }
+    .modal-close:hover { color: var(--text); }
+
+    /* ── Interview table ── */
+    .interview-table { width: 100%; border-collapse: collapse; }
+    .interview-table th { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .interview-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+    /* Search + Filter */
+    .table-controls { display: flex; gap: 12px; margin-bottom: 16px; }
+    .search-input { flex: 1; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; outline: none; }
+    .search-input:focus { border-color: var(--primary); }
+    .filter-select { padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; }
+
+    .loader { display: flex; gap: 6px; align-items: center; }
+    .loader span { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); animation: bounce 1.2s infinite; }
+    .loader span:nth-child(2) { animation-delay: 0.2s; }
+    .loader span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; } 40% { transform: scale(1.2); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">🏛️ PlaceIQ TPO</div>
+      <div class="logo-sub">Command Center v3</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-role">TPO / Placement Officer</div>
+      <div class="user-name" id="sb-name">Loading...</div>
+      <div class="user-id" id="sb-empid">—</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showSection('overview')" id="nav-overview"><span class="nav-icon">📊</span> Batch Overview</div>
+      <div class="nav-item" onclick="showSection('students')" id="nav-students"><span class="nav-icon">👥</span> All Students</div>
+      <div class="nav-section">Analytics</div>
+      <div class="nav-item" onclick="showSection('heatmap')" id="nav-heatmap"><span class="nav-icon">🌡️</span> Skill Heatmap</div>
+      <div class="nav-item" onclick="showSection('branches')" id="nav-branches"><span class="nav-icon">🏫</span> Branch Breakdown</div>
+      <div class="nav-item" onclick="showSection('interviews')" id="nav-interviews"><span class="nav-icon">🎤</span> Interview Results</div>
+      <div class="nav-section">Actions</div>
+      <div class="nav-item" onclick="showSection('alerts')" id="nav-alerts"><span class="nav-icon">🔔</span> Alerts <span id="alert-count" style="margin-left:auto; background:var(--danger); color:white; font-size:10px; padding:2px 6px; border-radius:10px; display:none"></span></div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title">Batch Overview</div>
+        <div class="page-subtitle" id="page-subtitle">JNNCSE Placement Intelligence Dashboard</div>
+      </div>
+      <div style="font-size:13px; color:var(--muted)" id="last-updated">Loading data...</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── OVERVIEW ── -->
+      <div class="section active" id="section-overview">
+        <div class="card-grid cols-4" style="margin-bottom:20px">
+          <div class="kpi-card">
+            <div class="kpi-icon">👥</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+            <div class="kpi-label">Total Students</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">📊</div>
+            <div class="kpi-value" id="kpi-avg" style="color:var(--primary)">—</div>
+            <div class="kpi-label">Avg Employability</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">✅</div>
+            <div class="kpi-value" id="kpi-ready" style="color:var(--success)">—</div>
+            <div class="kpi-label">Placement Ready</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-value" id="kpi-risk" style="color:var(--danger)">—</div>
+            <div class="kpi-label">Needs Training</div>
+          </div>
+        </div>
+
+        <div class="card-grid cols-2">
+          <div class="card">
+            <div class="card-title">📊 Readiness Distribution</div>
+            <div class="donut-wrap" id="donut-wrap">
+              <div class="loader"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📈 Quick Stats</div>
+            <div id="quick-stats">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Top Students -->
+        <div class="card">
+          <div class="card-title">🏆 Top 5 Performers</div>
+          <table class="student-table" id="top-table">
+            <thead><tr><th>Rank</th><th>Name</th><th>USN</th><th>Branch</th><th>Score</th><th>Status</th></tr></thead>
+            <tbody id="top-tbody">
+              <tr><td colspan="6"><div class="loader"><span></span><span></span><span></span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Vulnerable -->
+        <div class="card">
+          <div class="card-title">🚨 Students Needing Immediate Attention (Score &lt; 60%)</div>
+          <table class="student-table">
+            <thead><tr><th>Name</th><th>USN</th><th>Branch</th><th>Score</th><th>Backlogs</th><th>Action</th></tr></thead>
+            <tbody id="vulnerable-tbody">
+              <tr><td colspan="6"><div class="loader"><span></span><span></span><span></span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ALL STUDENTS ── -->
+      <div class="section" id="section-students">
+        <div class="card">
+          <div class="table-controls">
+            <input class="search-input" id="student-search" placeholder="🔍  Search by name, USN, or branch..." oninput="filterTable()">
+            <select class="filter-select" id="tier-filter" onchange="filterTable()">
+              <option value="">All Tiers</option>
+              <option value="Ready">✅ Ready</option>
+              <option value="Near-Ready">🟡 Near-Ready</option>
+              <option value="Needs Training">🔴 Needs Training</option>
+            </select>
+          </div>
+          <table class="student-table" id="all-students-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>USN</th><th>Branch</th><th>CGPA</th>
+                <th>Score</th><th>Status</th><th>Internships</th><th>Interviews</th>
+              </tr>
+            </thead>
+            <tbody id="all-tbody">
+              <tr><td colspan="8"><div class="loader"><span></span><span></span><span></span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── HEATMAP ── -->
+      <div class="section" id="section-heatmap">
+        <div class="card">
+          <div class="card-title">🌡️ Institutional Skill Deficit Heatmap</div>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:16px">Percentage of students with proficiency &lt; 6/10 in each skill. Higher = more students struggling.</p>
+          <div id="heatmap-content">
+            <div class="loader"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BRANCH BREAKDOWN ── -->
+      <div class="section" id="section-branches">
+        <div class="card">
+          <div class="card-title">🏫 Branch-wise Average Score</div>
+          <div id="branches-content">
+            <div class="loader"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INTERVIEWS ── -->
+      <div class="section" id="section-interviews">
+        <div class="card">
+          <div class="card-title">🎤 All Mock Interview Results</div>
+          <table class="interview-table">
+            <thead>
+              <tr><th>Name</th><th>USN</th><th>Company</th><th>Score</th><th>Verdict</th><th>Date</th></tr>
+            </thead>
+            <tbody id="interviews-tbody">
+              <tr><td colspan="6"><div class="loader"><span></span><span></span><span></span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ALERTS ── -->
+      <div class="section" id="section-alerts">
+        <div class="card">
+          <div class="card-title">🔔 Active Alerts</div>
+          <div id="alerts-content">
+            <div class="loader"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Student Detail Modal -->
+  <div class="modal-overlay" id="student-modal" onclick="closeModal(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModalBtn()">✕ Close</button>
+      <div id="modal-content">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+  const API = 'http://127.0.0.1:8001';
+  let token, tpoUser;
+  let allStudentsData = [];
+
+  function init() {
+    token = sessionStorage.getItem('token');
+    const role = sessionStorage.getItem('role');
+    if (!token || role !== 'tpo') { window.location.href = '/login'; return; }
+    tpoUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+    document.getElementById('sb-name').textContent = tpoUser.name || 'TPO';
+    document.getElementById('sb-empid').textContent = tpoUser.employee_id || '';
+    loadAll();
+  }
+
+  function logout() { sessionStorage.clear(); window.location.href = '/login'; }
+
+  const titles = {
+    overview: ['Batch Overview', 'JNNCSE Placement Intelligence Dashboard'],
+    students: ['All Students', 'Complete batch with employability scores'],
+    heatmap: ['Skill Heatmap', 'Institutional skill gaps across the cohort'],
+    branches: ['Branch Breakdown', 'Average scores by department'],
+    interviews: ['Interview Results', 'All mock interview sessions'],
+    alerts: ['Alerts & Actions', 'Students needing attention or fast-tracking']
+  };
+
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    document.getElementById('page-title').textContent = titles[name][0];
+    document.getElementById('page-subtitle').textContent = titles[name][1];
+  }
+
+  async function loadAll() {
+    document.getElementById('last-updated').textContent = 'Loading...';
+    const [overview, students, alerts, heatmap, branches, interviews] = await Promise.all([
+      fetch(`${API}/api/tpo/overview?token=${token}`).then(r=>r.json()).catch(()=>({})),
+      fetch(`${API}/api/tpo/students-with-scores?token=${token}`).then(r=>r.json()).catch(()=>[]),
+      fetch(`${API}/api/tpo/alerts?token=${token}`).then(r=>r.json()).catch(()=>[]),
+      fetch(`${API}/api/tpo/skill-heatmap?token=${token}`).then(r=>r.json()).catch(()=>[]),
+      fetch(`${API}/api/tpo/branch-breakdown?token=${token}`).then(r=>r.json()).catch(()=>[]),
+      fetch(`${API}/api/tpo/interview-summary?token=${token}`).then(r=>r.json()).catch(()=>[])
+    ]);
+
+    allStudentsData = students;
+    renderOverview(overview, students);
+    renderAllStudents(students);
+    renderAlerts(alerts);
+    renderHeatmap(heatmap);
+    renderBranches(branches);
+    renderInterviews(interviews);
+    document.getElementById('last-updated').textContent = `Updated: ${new Date().toLocaleTimeString('en-IN')}`;
+  }
+
+  function renderOverview(ov, students) {
+    document.getElementById('kpi-total').textContent = ov.cohort_size || students.length;
+    document.getElementById('kpi-avg').textContent = (ov.average_employability || 0) + '%';
+    document.getElementById('kpi-ready').textContent = ov.ready_count || 0;
+    document.getElementById('kpi-risk').textContent = ov.needs_training_count || 0;
+
+    // Donut chart
+    const rd = ov.readiness_distribution || {};
+    const ready = rd['Ready'] || 0, near = rd['Near-Ready'] || 0, needs = rd['Needs Training'] || 0;
+    const total = ready + near + needs;
+    const readyDeg = (ready / 100) * 360, nearDeg = (near / 100) * 360;
+
+    const circumference = 2 * Math.PI * 50;
+    const readyOffset = circumference - (ready / 100) * circumference;
+    const nearOffset = circumference - (near / 100) * circumference;
+    const needsOffset = circumference - (needs / 100) * circumference;
+
+    document.getElementById('donut-wrap').innerHTML = `
+      <svg class="donut-svg" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="50" fill="none" stroke="rgba(239,68,68,0.3)" stroke-width="20"/>
+        <circle cx="70" cy="70" r="50" fill="none" stroke="#f59e0b" stroke-width="20"
+          stroke-dasharray="${circumference}" stroke-dashoffset="${circumference - (near/100)*circumference + (needs/100)*circumference}"
+          stroke-linecap="butt" transform="rotate(-90 70 70)"/>
+        <circle cx="70" cy="70" r="50" fill="none" stroke="#10b981" stroke-width="20"
+          stroke-dasharray="${(ready/100)*circumference} ${circumference}"
+          stroke-dashoffset="${circumference * (needs+near)/100}"
+          stroke-linecap="butt" transform="rotate(-90 70 70)"/>
+        <text x="70" y="68" text-anchor="middle" fill="white" font-size="18" font-weight="800" font-family="Inter">${ov.average_employability || 0}%</text>
+        <text x="70" y="82" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Inter">Avg Score</text>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span><span>Ready: <strong>${ready}%</strong> (${ov.ready_count||0})</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span><span>Near-Ready: <strong>${near}%</strong> (${ov.near_ready_count||0})</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span><span>Needs Training: <strong>${needs}%</strong> (${ov.needs_training_count||0})</span></div>
+      </div>`;
+
+    document.getElementById('quick-stats').innerHTML = `
+      <div style="display:grid; gap:10px">
+        <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
+          <span style="color:var(--muted)">Interviews Taken</span><strong>${ov.total_interviews_taken || 0}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
+          <span style="color:var(--muted)">Students with Internships</span><strong>${ov.students_with_internships || 0}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
+          <span style="color:var(--muted)">Batch Size</span><strong>${ov.cohort_size || 0} students</strong>
+        </div>
+      </div>`;
+
+    // Top 5
+    const top5 = [...students].slice(0, 5);
+    document.getElementById('top-tbody').innerHTML = top5.map((s, i) => `
+      <tr onclick="openStudent('${s.usn}')">
+        <td>${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</td>
+        <td><strong>${s.name}</strong></td>
+        <td style="font-family:monospace; color:var(--accent); font-size:12px">${s.usn}</td>
+        <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
+        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</td>
+        <td><span class="tier-badge tier-${s.readiness_tier.replace(' ','-')}">${s.readiness_tier}</span></td>
+      </tr>`).join('');
+
+    // Vulnerable
+    const vulnerable = students.filter(s => s.employability_score < 60);
+    document.getElementById('vulnerable-tbody').innerHTML = vulnerable.length
+      ? vulnerable.map(s => `
+          <tr onclick="openStudent('${s.usn}')">
+            <td><strong>${s.name}</strong></td>
+            <td style="font-family:monospace;color:var(--accent);font-size:12px">${s.usn}</td>
+            <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
+            <td class="score-cell" style="color:var(--danger)">${s.employability_score}%</td>
+            <td>${s.active_backlogs > 0 ? `<span style="color:var(--danger);font-weight:700">${s.active_backlogs} ⚠️</span>` : '—'}</td>
+            <td><button onclick="event.stopPropagation()" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">Alert Mentor</button></td>
+          </tr>`).join('')
+      : '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No students below 60% — great batch! 🎉</td></tr>';
+  }
+
+  function renderAllStudents(students) {
+    renderStudentTable(students);
+  }
+
+  function renderStudentTable(students) {
+    document.getElementById('all-tbody').innerHTML = students.map(s => `
+      <tr onclick="openStudent('${s.usn}')">
+        <td><strong>${s.name}</strong></td>
+        <td style="font-family:monospace;color:var(--accent);font-size:12px">${s.usn}</td>
+        <td style="color:var(--muted);font-size:12px">${s.branch}</td>
+        <td>${s.cgpa}</td>
+        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</td>
+        <td><span class="tier-badge tier-${s.readiness_tier.replace(' ','-')}">${s.readiness_tier}</span></td>
+        <td>${s.internships_count > 0 ? `✅ ${s.internships_count}` : '—'}</td>
+        <td>${s.interview_attempts > 0 ? `🎤 ${s.interview_attempts}` : '—'}</td>
+      </tr>`).join('');
+  }
+
+  function filterTable() {
+    const query = document.getElementById('student-search').value.toLowerCase();
+    const tier = document.getElementById('tier-filter').value;
+    let filtered = allStudentsData;
+    if (query) filtered = filtered.filter(s => s.name.toLowerCase().includes(query) || s.usn.toLowerCase().includes(query) || s.branch.toLowerCase().includes(query));
+    if (tier) filtered = filtered.filter(s => s.readiness_tier === tier);
+    renderStudentTable(filtered);
+  }
+
+  function renderAlerts(alerts) {
+    const count = alerts.length;
+    const countEl = document.getElementById('alert-count');
+    if (count > 0) { countEl.style.display = 'inline'; countEl.textContent = count; }
+    document.getElementById('alerts-content').innerHTML = alerts.length
+      ? alerts.map(a => `
+          <div class="alert-card alert-${a.color}">
+            <div class="alert-icon">${a.type === 'OUTPERFORMING' ? '🌟' : a.type === 'AT_RISK' ? '🚨' : '📋'}</div>
+            <div class="alert-body">
+              <h4>${a.name} (${a.usn})</h4>
+              <p>${a.message}</p>
+            </div>
+            <div class="alert-score" style="color:${a.color === 'green' ? '#10b981' : a.color === 'red' ? '#ef4444' : '#f59e0b'}">${a.score}%</div>
+          </div>`).join('')
+      : '<p style="color:var(--muted);font-size:13px">No active alerts — all students are on track! ✅</p>';
+  }
+
+  function renderHeatmap(data) {
+    document.getElementById('heatmap-content').innerHTML = data.map(d => `
+      <div class="heatmap-row">
+        <div class="heatmap-skill">${d.skill}</div>
+        <div class="heatmap-bar-wrap"><div class="heatmap-bar severity-${d.severity}" style="width:${d.deficit_percentage}%"></div></div>
+        <div class="heatmap-pct" style="color:${d.severity==='Critical'?'#ef4444':d.severity==='High'?'#f59e0b':'#6366f1'}">${d.deficit_percentage}%</div>
+        <span class="severity-chip chip-${d.severity}">${d.severity}</span>
+      </div>`).join('') || '<p style="color:var(--muted)">No skill data.</p>';
+  }
+
+  function renderBranches(data) {
+    const maxScore = Math.max(...data.map(d => d.avg_score), 1);
+    document.getElementById('branches-content').innerHTML = data.map(d => `
+      <div class="branch-row">
+        <div class="branch-name">${d.branch} <span style="color:var(--muted);font-size:11px">(${d.student_count} students)</span></div>
+        <div class="branch-bar-wrap"><div class="branch-bar" style="width:${(d.avg_score/maxScore)*100}%"></div></div>
+        <div class="branch-score" style="color:${d.avg_score>=78?'#10b981':d.avg_score>=55?'#f59e0b':'#ef4444'}">${d.avg_score}%</div>
+        <div style="margin-left:8px; font-size:12px; color:var(--muted)">${d.ready_count}/${d.student_count} ready</div>
+      </div>`).join('') || '<p style="color:var(--muted)">No branch data.</p>';
+  }
+
+  function renderInterviews(data) {
+    const verdictColors = { 'STRONGLY_RECOMMENDED':'#10b981','RECOMMENDED':'#6366f1','BORDERLINE':'#f59e0b','NOT_RECOMMENDED':'#ef4444' };
+    document.getElementById('interviews-tbody').innerHTML = data.length
+      ? data.map(i => `
+          <tr>
+            <td><strong>${i.name}</strong></td>
+            <td style="font-family:monospace;color:var(--accent);font-size:12px">${i.usn}</td>
+            <td>${i.company}</td>
+            <td style="font-size:16px;font-weight:800;color:${i.overall_score>=70?'#10b981':i.overall_score>=50?'#f59e0b':'#ef4444'}">${i.overall_score}%</td>
+            <td style="color:${verdictColors[i.verdict]||'#6366f1'};font-weight:700;font-size:12px">${i.verdict?.replace(/_/g,' ')}</td>
+            <td style="color:var(--muted)">${new Date(i.timestamp).toLocaleDateString('en-IN')}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No mock interviews taken yet.</td></tr>';
+  }
+
+  // Student modal
+  async function openStudent(usn) {
+    document.getElementById('student-modal').style.display = 'block';
+    document.getElementById('modal-content').innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+    const s = allStudentsData.find(x => x.usn === usn);
+    if (!s) { document.getElementById('modal-content').innerHTML = 'Student not found.'; return; }
+    const skillsHtml = Object.entries(s.skills || {}).map(([sk, lv]) =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:12px;margin:3px">${sk} <strong style="color:var(--accent)">${lv}/10</strong></span>`
+    ).join('');
+    const latestInterview = s.latest_interview ? `
+      <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">Latest Interview: ${s.latest_interview.company}</div>
+        <div style="font-size:22px;font-weight:800;margin:4px 0">${s.latest_interview.overall_score}% <span style="font-size:13px;color:var(--muted)">${s.latest_interview.verdict?.replace(/_/g,' ')}</span></div>
+      </div>` : '<p style="color:var(--muted);font-size:13px;margin-top:8px">No interviews taken yet.</p>';
+
+    document.getElementById('modal-content').innerHTML = `
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:4px">${s.name}</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px">${s.branch} • ${s.usn}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.cgpa}</div><div style="font-size:11px;color:var(--muted)">CGPA</div></div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</div><div style="font-size:11px;color:var(--muted)">Score</div></div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.interview_attempts}</div><div style="font-size:11px;color:var(--muted)">Interviews</div></div>
+      </div>
+      <div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Skills</div>${skillsHtml}</div>
+      ${latestInterview}`;
+  }
+
+  function closeModal(e) { if (e.target.id === 'student-modal') closeModalBtn(); }
+  function closeModalBtn() { document.getElementById('student-modal').style.display = 'none'; }
+
+  init();
+  </script>
+</body>
+</html>

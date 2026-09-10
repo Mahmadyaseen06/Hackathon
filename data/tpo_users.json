@@ -1,0 +1,26 @@
+[
+  {
+    "employee_id": "TPO-001",
+    "password": "tpo@admin",
+    "name": "Dr. Ramesh Bhat",
+    "role": "Training & Placement Officer",
+    "department": "Training & Placement Cell",
+    "college": "JNNCSE"
+  },
+  {
+    "employee_id": "TPO-002",
+    "password": "tpo@staff",
+    "name": "Prof. Sunitha Rao",
+    "role": "Placement Coordinator",
+    "department": "Training & Placement Cell",
+    "college": "JNNCSE"
+  },
+  {
+    "employee_id": "FAC-001",
+    "password": "fac@001",
+    "name": "Prof. Manjunath K",
+    "role": "Faculty Mentor",
+    "department": "Computer Science & Engineering",
+    "college": "JNNCSE"
+  }
+]
