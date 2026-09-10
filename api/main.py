@@ -869,6 +869,43 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
 
     return result
 
+@app.post("/api/interview/transcribe-audio")
+async def transcribe_interview_audio(audio: UploadFile = File(...)):
+    """Transcribe uploaded audio file (WAV/PCM) using local SpeechRecognition."""
+    import tempfile
+    import os
+    try:
+        import speech_recognition as sr
+        r = sr.Recognizer()
+        file_bytes = await audio.read()
+        if len(file_bytes) < 100:
+            return {"success": False, "transcript": "", "error": "Audio stream too short"}
+
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+
+        try:
+            with sr.AudioFile(tmp_path) as source:
+                r.adjust_for_ambient_noise(source, duration=0.2)
+                audio_data = r.record(source)
+            text = r.recognize_google(audio_data)
+            return {"success": True, "transcript": text}
+        except sr.UnknownValueError:
+            return {"success": False, "transcript": "", "error": "No clear speech detected in audio"}
+        except sr.RequestError as e:
+            return {"success": False, "transcript": "", "error": f"Speech API error: {e}"}
+        except Exception as e:
+            return {"success": False, "transcript": "", "error": str(e)}
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+    except Exception as e:
+        return {"success": False, "transcript": "", "error": str(e)}
+
 @app.post("/api/interview/followup")
 async def get_followup_question(req: AnswerSubmitRequest):
     """Get a natural AI-generated follow-up question."""
