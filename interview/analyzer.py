@@ -309,6 +309,60 @@ Write ONE follow-up question (1-2 sentences max). Be direct. No preamble, no "Go
         return "Interesting — can you walk me through a real example where this applies, step by step?"
 
 
+async def generate_interviewer_speech(
+    question: str,
+    answer: str,
+    topic: str,
+    company: str,
+    code: Optional[str] = None,
+    execution_result: Optional[dict] = None
+) -> str:
+    """
+    Generate a realistic conversational remark from the company interviewer
+    acknowledging the candidate's answer, challenging edge cases, or probing trade-offs.
+    Kept concise (1-2 sentences) for human-like Text-To-Speech output.
+    """
+    tests_summary = ""
+    if execution_result:
+        passed = execution_result.get("tests_passed", 0)
+        total = execution_result.get("tests_total", 0)
+        success = execution_result.get("success", False)
+        if total > 0:
+            tests_summary = f"Passed {passed} out of {total} test cases."
+        elif success:
+            tests_summary = "Code executed with 0 runtime errors."
+        else:
+            tests_summary = f"Code execution failed with error: {execution_result.get('error', '')[:80]}"
+
+    prompt = f"""You are a senior {company} engineer interviewing a candidate. Talk to them directly in a conversational tone.
+Question: "{question}"
+Candidate's response: "{answer or '[Code only]'}"
+Code submitted: "{code[:250] if code else 'None'}"
+Execution outcome: {tests_summary or 'None'}
+
+In 1 or 2 natural, spoken sentences (max 35 words):
+Acknowledge what they did or said, and either challenge an edge case, ask for their time complexity, or push on their reasoning.
+Do NOT introduce yourself. Speak directly like a real human interviewer during an interview.
+Return ONLY the spoken sentences."""
+
+    try:
+        reply = await _ollama_chat(prompt, max_tokens=70)
+        cleaned = reply.strip().strip('"').replace('\n', ' ').strip()
+        if len(cleaned) > 15:
+            return cleaned
+    except Exception:
+        pass
+
+    if execution_result and execution_result.get("test_results"):
+        passed = execution_result.get("tests_passed", 0)
+        total = execution_result.get("tests_total", 0)
+        if passed == total:
+            return f"Your solution passed all {total} test cases. What is the worst-case space and time complexity?"
+        return f"Your code passed {passed} of {total} test cases. Which edge case do you think is failing?"
+
+    return "Good explanation. Can you give me a specific real-world scenario where that trade-off would become a bottleneck?"
+
+
 async def generate_full_interview_report(
     student_name: str,
     company: str,

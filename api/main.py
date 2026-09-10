@@ -40,8 +40,8 @@ from auth import (
     get_student_by_usn, get_all_students, save_interview_result,
     register_student, usn_exists, save_platform_stats, update_student_skills_from_platforms
 )
-from interview.question_bank import get_calibrated_questions, COMPANY_PROFILES
-from interview.analyzer import analyze_answer, generate_followup, generate_full_interview_report
+from interview.question_bank import get_calibrated_questions, get_company_interview_rounds, COMPANY_PROFILES
+from interview.analyzer import analyze_answer, generate_followup, generate_full_interview_report, generate_interviewer_speech
 
 # ML imports (preserved from v2)
 from ml.pipeline import extract_features_from_student as extract_features
@@ -130,6 +130,14 @@ class CodeExecuteRequest(BaseModel):
     stdin: Optional[str] = ""
     test_cases: Optional[list] = None
     question_id: Optional[int] = None
+
+class TalkBackRequest(BaseModel):
+    question: str
+    spoken_answer: Optional[str] = ""
+    topic: Optional[str] = "General"
+    company: str
+    code: Optional[str] = None
+    execution_result: Optional[dict] = None
 
 class InterviewCompleteRequest(BaseModel):
     usn: str
@@ -434,7 +442,14 @@ def start_interview(req: InterviewStartRequest):
     if not company_profile:
         raise HTTPException(status_code=400, detail=f"Unknown company: {req.company}")
 
-    questions = get_calibrated_questions(req.company, student.get("skills", {}), num_questions=7)
+    rounds = get_company_interview_rounds(req.company, student.get("skills", {}))
+    flat_questions = []
+    for r in rounds:
+        for q in r["questions"]:
+            q_copy = q.copy()
+            q_copy["round_id"] = r["round_id"]
+            q_copy["round_name"] = r["name"]
+            flat_questions.append(q_copy)
 
     import uuid
     session_id = str(uuid.uuid4())[:8]
@@ -445,11 +460,25 @@ def start_interview(req: InterviewStartRequest):
         "company": req.company,
         "company_name": company_profile["name"],
         "interviewer_persona": company_profile["interviewer_persona"],
-        "total_questions": len(questions),
-        "questions": questions,
+        "total_questions": len(flat_questions),
+        "questions": flat_questions,
+        "rounds": rounds,
         "student_name": student["name"],
-        "round": "Technical & Coding Simulation"
+        "round": "Multi-Round Recruitment Simulation"
     }
+
+@app.post("/api/interview/talk-back")
+async def interview_talk_back(req: TalkBackRequest):
+    """Generate instant conversational spoken response from the AI interviewer."""
+    reply = await generate_interviewer_speech(
+        question=req.question,
+        answer=req.spoken_answer or "",
+        topic=req.topic or "General",
+        company=req.company,
+        code=req.code,
+        execution_result=req.execution_result
+    )
+    return {"spoken_reply": reply}
 
 @app.post("/api/code/execute")
 def run_code_sandbox(req: CodeExecuteRequest):
@@ -535,6 +564,19 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
         # Blend score: 60% code, 40% explanation
         blended = round(0.6 * code_eval.get("code_score", 5) + 0.4 * result.get("score", 5))
         result["score"] = blended
+
+    try:
+        spoken_reply = await generate_interviewer_speech(
+            question=req.question,
+            answer=spoken,
+            topic=req.topic or "General",
+            company=req.company or "Company",
+            code=req.code,
+            execution_result=req.execution_result
+        )
+        result["interviewer_speech"] = spoken_reply
+    except Exception as e:
+        result["interviewer_speech"] = "I have noted your solution. Let us proceed to the next question."
 
     return result
 

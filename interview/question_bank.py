@@ -584,3 +584,99 @@ def get_calibrated_questions(company: str, student_skills: dict, num_questions: 
     questions.append({"type": "hr", "question": hr_q, "topic": "Behavioral", "difficulty": "Easy"})
 
     return questions
+
+
+def get_company_interview_rounds(company: str, student_skills: dict) -> list[dict]:
+    """
+    Generate structured 3-round interview simulation for the specified company:
+    Round 1: Online Coding Assessment (OA) — algorithmic challenges with test cases
+    Round 2: Technical Deep Dive & System Architecture — core CS fundamentals & design
+    Round 3: Leadership & Behavioral (STAR Method) — company-specific values & culture fit
+    """
+    import random
+    profile = COMPANY_PROFILES.get(company) or COMPANY_PROFILES["TCS"]
+    skill_qs = profile.get("skill_questions", {})
+
+    # Round 1: Online Coding Assessment (HackerRank OA)
+    coding_samples = random.sample(CODING_CHALLENGES, min(2, len(CODING_CHALLENGES)))
+    r1_questions = []
+    for q in coding_samples:
+        item = q.copy()
+        item["round_id"] = 1
+        item["round_name"] = "Round 1: Coding Assessment (OA)"
+        item["round_type"] = "coding"
+        r1_questions.append(item)
+
+    # Round 2: Technical Deep Dive & System Fundamentals
+    r2_questions = []
+    top_skills = sorted(student_skills.items(), key=lambda x: x[1], reverse=True)[:3]
+    for skill_name, skill_level in top_skills:
+        matched_key = next((k for k in skill_qs if k.lower() == skill_name.lower()), None)
+        pool = skill_qs.get(matched_key, skill_qs.get("default", []))
+        if pool:
+            q_text = random.choice(pool)
+            r2_questions.append({
+                "type": "technical",
+                "round_id": 2,
+                "round_name": "Round 2: Technical Deep Dive",
+                "round_type": "technical",
+                "question": q_text,
+                "topic": skill_name,
+                "difficulty": "Hard" if skill_level >= 8 else "Medium" if skill_level >= 6 else "Easy",
+                "claimed_level": skill_level,
+                "voice_prompt": f"Explain in detail your technical understanding of: {q_text}"
+            })
+
+    if len(r2_questions) < 2:
+        for q_text in skill_qs.get("default", [])[:2]:
+            r2_questions.append({
+                "type": "technical",
+                "round_id": 2,
+                "round_name": "Round 2: Technical Deep Dive",
+                "round_type": "technical",
+                "question": q_text,
+                "topic": "System Design & CS",
+                "difficulty": "Medium",
+                "claimed_level": 6,
+                "voice_prompt": f"Explain your approach to: {q_text}"
+            })
+
+    # Round 3: Leadership & Behavioral (STAR Method)
+    r3_questions = []
+    hr_pool = profile.get("hr_questions", ["Tell me about a challenging project and how you solved it."])
+    for hr_q in random.sample(hr_pool, min(2, len(hr_pool))):
+        r3_questions.append({
+            "type": "hr",
+            "round_id": 3,
+            "round_name": "Round 3: Behavioral & Culture Fit",
+            "round_type": "behavioral",
+            "question": hr_q,
+            "topic": f"{company} Culture & Principles",
+            "difficulty": "Medium",
+            "claimed_level": 7,
+            "voice_prompt": f"Answer using the STAR method (Situation, Task, Action, Result): {hr_q}"
+        })
+
+    return [
+        {
+            "round_id": 1,
+            "name": "Round 1: Coding Assessment (OA)",
+            "type": "coding",
+            "description": "Solve algorithmic challenges with live test cases in Monaco Sandbox",
+            "questions": r1_questions
+        },
+        {
+            "round_id": 2,
+            "name": "Round 2: Technical Deep Dive",
+            "type": "technical",
+            "description": "Core CS concepts, time complexity, and architectural reasoning",
+            "questions": r2_questions
+        },
+        {
+            "round_id": 3,
+            "name": "Round 3: Leadership & Behavioral",
+            "type": "behavioral",
+            "description": f"STAR method behavioral evaluation and {company} culture fit",
+            "questions": r3_questions
+        }
+    ]
