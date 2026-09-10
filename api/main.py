@@ -54,6 +54,7 @@ from upskilling.project_ladder import get_project_recommendations as get_project
 from upskilling.internship_matcher import match_internships
 from api.cv_parser import parse_cv
 from api.progress_tracker import fetch_all_platform_stats
+from api.code_executor import execute_code, analyze_code_with_ollama
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 STATIC_DIR = Path(__file__).parent.parent / "static"

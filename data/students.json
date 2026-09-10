@@ -1181,7 +1181,7 @@
       }
     ],
     "platform_stats": {
-      "fetched_at": "2026-09-10T20:18:21.960115+00:00",
+      "fetched_at": "2026-09-10T20:31:25.130985+00:00",
       "github": {
         "username": "JeevanM26",
         "profile_url": "https://github.com/JeevanM26",
@@ -1240,7 +1240,7 @@
           }
         ],
         "activity_score": 0,
-        "fetched_at": "2026-09-10T20:18:21.960026+00:00"
+        "fetched_at": "2026-09-10T20:31:25.130901+00:00"
       },
       "aggregate_activity_score": 0.0
     },
@@ -1306,6 +1306,70 @@
           ],
           "activity_score": 0,
           "fetched_at": "2026-09-10T20:18:21.960026+00:00"
+        },
+        "aggregate_activity_score": 0.0
+      },
+      {
+        "fetched_at": "2026-09-10T20:31:25.130985+00:00",
+        "github": {
+          "username": "JeevanM26",
+          "profile_url": "https://github.com/JeevanM26",
+          "avatar_url": "https://avatars.githubusercontent.com/u/245731615?v=4",
+          "public_repos": 9,
+          "followers": 2,
+          "following": 3,
+          "total_stars": 0,
+          "top_languages": [
+            {
+              "language": "TypeScript",
+              "repos": 3
+            },
+            {
+              "language": "Python",
+              "repos": 1
+            },
+            {
+              "language": "HTML",
+              "repos": 1
+            }
+          ],
+          "recent_commits_30d": 0,
+          "recent_prs": 0,
+          "recent_issues": 0,
+          "recent_repos": [
+            {
+              "name": "neighbourly_trust2",
+              "language": "TypeScript",
+              "stars": 0,
+              "updated_at": "2026-09-08"
+            },
+            {
+              "name": "JeevanM26.github.io",
+              "language": null,
+              "stars": 0,
+              "updated_at": "2026-08-25"
+            },
+            {
+              "name": "neighborly-trust",
+              "language": "TypeScript",
+              "stars": 0,
+              "updated_at": "2026-08-06"
+            },
+            {
+              "name": "tripo-render-s3",
+              "language": "Python",
+              "stars": 0,
+              "updated_at": "2026-07-11"
+            },
+            {
+              "name": "HustlerShield",
+              "language": "HTML",
+              "stars": 0,
+              "updated_at": "2026-06-18"
+            }
+          ],
+          "activity_score": 0,
+          "fetched_at": "2026-09-10T20:31:25.130901+00:00"
         },
         "aggregate_activity_score": 0.0
       }
