@@ -143,11 +143,29 @@
     <div style="width:100%;max-width:700px">
       <!-- Error / Success boxes -->
       <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
-      <div class="success-box" id="success-box">
-        <div>🎉 Account Created Successfully!</div>
-        <div class="success-usn" id="success-usn"></div>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px">Save your USN — you'll need it to log in</div>
-        <div id="success-redirect" style="margin-top:12px;font-size:13px">Redirecting to dashboard in <span id="redirect-count">3</span>s...</div>
+      <div class="success-box" id="success-box" style="display:none;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:16px;padding:26px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <div style="font-size:24px;font-weight:800;color:#10b981;margin-bottom:6px">🎉 Account Created Successfully!</div>
+        <div style="font-size:13px;color:var(--muted)">Your permanent USN has been generated:</div>
+        <div class="success-usn" id="success-usn" style="font-size:26px;font-weight:800;color:#fff;background:rgba(255,255,255,0.06);padding:10px 20px;border-radius:10px;display:inline-block;margin:12px 0;letter-spacing:1px;border:1px solid rgba(255,255,255,0.1);"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Save this USN to log in to your account anytime.</div>
+
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:18px;margin-bottom:24px;text-align:left;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#818cf8;margin-bottom:6px">
+            <span>🎙️</span> <span>Mandatory Calibrated AI Mock Interview</span>
+          </div>
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.5;">
+            According to institutional placement policy, your claimed skills must be calibrated through the <strong>HackerRank-style AI Interview Room</strong> powered by local Ollama AI. Includes real-time code execution, speech clarity analysis, and company simulation.
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+          <a id="btn-take-interview" href="/interview" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:transform 0.15s ease;">
+            ⚡ Start AI Mock Interview Now (Recommended)
+          </a>
+          <a href="/student" style="background:rgba(255,255,255,0.08);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,0.1);">
+            Go to Student Dashboard →
+          </a>
+        </div>
       </div>
 
       <!-- ── MANUAL FORM ── -->
@@ -404,15 +422,11 @@
     function hideError() { document.getElementById('error-box').style.display = 'none'; }
 
     function showSuccess(usn, name) {
+      document.getElementById('form-manual').style.display = 'none';
+      if (document.getElementById('form-cv')) document.getElementById('form-cv').style.display = 'none';
       document.getElementById('success-box').style.display = 'block';
       document.getElementById('success-usn').textContent = usn;
       document.getElementById('success-box').scrollIntoView({ behavior: 'smooth' });
-      let count = 3;
-      const interval = setInterval(() => {
-        count--;
-        document.getElementById('redirect-count').textContent = count;
-        if (count <= 0) { clearInterval(interval); window.location.href = '/student'; }
-      }, 1000);
     }
 
     function setLoading(mode, loading) {

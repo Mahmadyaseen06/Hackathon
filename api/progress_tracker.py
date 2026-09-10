@@ -39,9 +39,51 @@ async def fetch_github_stats(username: str) -> dict:
             repos_res = await client.get(f"{base}/users/{username}/repos?per_page=100&sort=updated")
             repos = repos_res.json() if repos_res.status_code == 200 else []
 
-            # Events (recent activity)
+            # Events (recent activity fallback)
             events_res = await client.get(f"{base}/users/{username}/events/public?per_page=30")
             events = events_res.json() if events_res.status_code == 200 else []
+
+            # Deep commit analysis across top repos
+            top_repos = [r["name"] for r in repos[:5] if not r.get("fork")]
+            if not top_repos and repos:
+                top_repos = [repos[0]["name"]]
+
+            commit_items = []
+            commit_dates = set()
+            meaningful_commits = 0
+
+            for rname in top_repos[:3]:
+                try:
+                    c_res = await client.get(f"{base}/repos/{username}/{rname}/commits?author={username}&per_page=10")
+                    if c_res.status_code == 200:
+                        raw_c = c_res.json()
+                        for c in raw_c:
+                            c_obj = c.get("commit", {})
+                            msg = c_obj.get("message", "").split("\n")[0].strip()
+                            a_date = c_obj.get("author", {}).get("date", "")
+                            if a_date:
+                                commit_dates.add(a_date[:10])
+                            is_good = len(msg) > 10 and not any(w == msg.lower() for w in ["update", "test", "fix", ".", "temp", "changes"])
+                            if is_good:
+                                meaningful_commits += 1
+                            commit_items.append({
+                                "repo": rname,
+                                "sha": c.get("sha", "")[:7],
+                                "message": msg[:100],
+                                "date": a_date[:10] if a_date else "",
+                                "url": c.get("html_url", ""),
+                                "is_meaningful": is_good
+                            })
+                except Exception:
+                    pass
+
+        # Fallback to push events if repo commits endpoint was rate limited
+        push_events = [e for e in events if e.get("type") == "PushEvent"]
+        event_commits_count = sum(
+            len(e.get("payload", {}).get("commits", []))
+            for e in push_events[:10]
+        )
+        total_commits = max(len(commit_items), event_commits_count)
 
         # Analyze repos
         languages = {}
@@ -59,17 +101,11 @@ async def fetch_github_stats(username: str) -> dict:
                 "updated_at": repo.get("updated_at", "")[:10]
             })
 
-        # Analyze recent activity
-        push_events = [e for e in events if e.get("type") == "PushEvent"]
-        recent_commits = sum(
-            len(e.get("payload", {}).get("commits", []))
-            for e in push_events[:10]
-        )
-
         pr_events = len([e for e in events if e.get("type") == "PullRequestEvent"])
         issue_events = len([e for e in events if e.get("type") == "IssuesEvent"])
-
         top_languages = sorted(languages.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        commit_quality = round((meaningful_commits / max(1, len(commit_items))) * 100) if commit_items else 70
 
         return {
             "username": username,
@@ -80,11 +116,14 @@ async def fetch_github_stats(username: str) -> dict:
             "following": user.get("following", 0),
             "total_stars": total_stars,
             "top_languages": [{"language": l, "repos": c} for l, c in top_languages],
-            "recent_commits_30d": recent_commits,
+            "recent_commits_30d": total_commits,
+            "recent_commits": commit_items[:10],
+            "commit_quality_score": commit_quality,
+            "active_days_count": len(commit_dates),
             "recent_prs": pr_events,
             "recent_issues": issue_events,
             "recent_repos": recent_repos[:5],
-            "activity_score": min(100, recent_commits * 3 + pr_events * 5 + issue_events * 2),
+            "activity_score": min(100, total_commits * 3 + pr_events * 5 + issue_events * 2),
             "fetched_at": datetime.now(timezone.utc).isoformat()
         }
 

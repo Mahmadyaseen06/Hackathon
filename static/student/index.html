@@ -317,8 +317,11 @@
         <span class="nav-icon">📊</span> Employability Score
       </div>
       <div class="nav-section">AI Interview</div>
+      <div class="nav-item" onclick="window.location.href='/interview'" id="nav-interview-fullscreen" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);color:#818cf8;font-weight:700;">
+        <span class="nav-icon">⚡</span> HackerRank Mock Room
+      </div>
       <div class="nav-item" onclick="showSection('interview')" id="nav-interview">
-        <span class="nav-icon">🎤</span> Voice Interview
+        <span class="nav-icon">🎤</span> Quick Voice Q&A
       </div>
       <div class="nav-section">Preparation</div>
       <div class="nav-item" onclick="showSection('roadmap')" id="nav-roadmap">
@@ -685,9 +688,9 @@
         <div style="font-size:12px;opacity:0.85">Our Ollama AI will test your actual knowledge — not just your claimed skills. Your answers directly affect your employability score.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
-        <button onclick="showSection('interview');document.getElementById('first-interview-banner').remove()" 
+        <button onclick="window.location.href='/interview';document.getElementById('first-interview-banner').remove()" 
           style="padding:10px 20px;background:white;color:#6366f1;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap">
-          Start Interview →
+          Launch AI Interview Room →
         </button>
         <button onclick="document.getElementById('first-interview-banner').remove()" 
           style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:10px;padding:6px;font-size:12px;cursor:pointer">
@@ -783,6 +786,21 @@
     // GitHub
     const gh = stats.github;
     if (gh && !gh.error) {
+      const commitListHtml = (gh.recent_commits && gh.recent_commits.length > 0) ? `
+        <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+            <span>Recent Commits (${gh.recent_commits.length})</span>
+            <span style="color:${gh.commit_quality_score>=70?'#10b981':'#f59e0b'};font-weight:600">Commit Quality: ${gh.commit_quality_score}%</span>
+          </div>
+          ${gh.recent_commits.slice(0, 4).map(c => `
+            <div style="font-size:11px;padding:4px 0;display:flex;gap:6px;align-items:center;color:#cbd5e1">
+              <span style="color:var(--accent);font-family:monospace;font-size:10px;background:rgba(99,102,241,0.15);padding:1px 4px;border-radius:4px">${c.sha}</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${c.message}">${c.message}</span>
+              <span style="color:var(--muted);font-size:10px">${c.date}</span>
+            </div>
+          `).join('')}
+        </div>` : '';
+
       cards.push(`
         <div style="background:rgba(13,18,32,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -797,6 +815,7 @@
             <div style="background:var(--surface);padding:8px;border-radius:8px"><div style="color:var(--muted);font-size:11px">Activity</div><strong style="color:${gh.activity_score>50?'#10b981':'#f59e0b'}">${gh.activity_score}%</strong></div>
           </div>
           <div style="margin-top:10px;font-size:12px;color:var(--muted)">Top languages: ${(gh.top_languages||[]).slice(0,3).map(l=>l.language).join(', ')||'—'}</div>
+          ${commitListHtml}
         </div>`);
     } else if (gh && gh.error) {
       cards.push(`<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:16px;padding:20px"><span style="font-size:20px">🐙</span> <strong>GitHub:</strong> <span style="color:var(--danger);font-size:13px">${gh.error}</span></div>`);
@@ -999,16 +1018,27 @@
     }
 
     // SHAP factors
-    const factors = scoreData.shap_factors || [];
-    const shapHtml = factors.slice(0, 8).map(f => {
-      const val = f.value || 0;
-      const pct = Math.min(100, Math.abs(val) * 150);
-      const cls = val > 0 ? 'positive' : 'negative';
-      const color = val > 0 ? '#10b981' : '#ef4444';
+    let factorList = [];
+    if (Array.isArray(scoreData.shap_factors)) {
+      factorList = scoreData.shap_factors;
+    } else if (scoreData.shap_factors && typeof scoreData.shap_factors === 'object') {
+      factorList = scoreData.shap_factors.waterfall || [
+        ...(scoreData.shap_factors.positive_factors || []),
+        ...(scoreData.shap_factors.negative_factors || [])
+      ];
+    }
+
+    const shapHtml = factorList.slice(0, 8).map(f => {
+      const impactVal = f.impact !== undefined ? f.impact : (f.impact_pct !== undefined ? f.impact_pct : (f.shap_value || f.value || 0) * 100);
+      const pct = Math.min(100, Math.abs(impactVal) * 2.5);
+      const isPositive = impactVal >= 0;
+      const cls = isPositive ? 'positive' : 'negative';
+      const color = isPositive ? '#10b981' : '#ef4444';
+      const label = f.name || f.feature || 'Factor';
       return `<div class="factor-row">
-        <div class="factor-label">${f.feature || f.name}</div>
+        <div class="factor-label">${label}</div>
         <div class="factor-bar-wrap"><div class="factor-bar ${cls}" style="width:${pct}%"></div></div>
-        <div class="factor-val" style="color:${color}">${val > 0 ? '+' : ''}${(val * 100).toFixed(1)}%</div>
+        <div class="factor-val" style="color:${color}">${isPositive ? '+' : ''}${impactVal.toFixed(1)}%</div>
       </div>`;
     }).join('');
     document.getElementById('shap-factors').innerHTML = shapHtml || '<p style="color:var(--muted);font-size:13px">Score factors unavailable.</p>';

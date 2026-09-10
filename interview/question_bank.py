@@ -427,12 +427,110 @@ COMPANY_PROFILES["Microsoft"] = {
 }
 
 
+CODING_CHALLENGES = [
+    {
+        "type": "technical",
+        "question": "Two Sum: Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. Each input has exactly one solution.",
+        "topic": "Python / DSA",
+        "difficulty": "Easy",
+        "claimed_level": 6,
+        "examples": [
+            {"input": "target = 9, nums = [2, 7, 11, 15]", "output": "[0, 1]", "explanation": "nums[0] + nums[1] == 9"}
+        ],
+        "constraints": ["2 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9", "O(n) time complexity required"],
+        "starter_code": """import sys
+
+def two_sum(nums, target):
+    # Complete this function using a dictionary
+    seen = {}
+    for i, num in enumerate(nums):
+        diff = target - num
+        if diff in seen:
+            return [seen[diff], i]
+        seen[num] = i
+    return []
+
+if __name__ == '__main__':
+    lines = sys.stdin.read().strip().split('\\n')
+    if len(lines) >= 2:
+        t = int(lines[0])
+        arr = [int(x) for x in lines[1].split()]
+        print(two_sum(arr, t))
+""",
+        "test_cases": [
+            {"input": "9\\n2 7 11 15", "expected_output": "[0, 1]"},
+            {"input": "6\\n3 2 4", "expected_output": "[1, 2]"}
+        ]
+    },
+    {
+        "type": "technical",
+        "question": "Valid Palindrome: A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward.",
+        "topic": "Python / Strings",
+        "difficulty": "Easy",
+        "claimed_level": 5,
+        "examples": [
+            {"input": "s = 'A man, a plan, a canal: Panama'", "output": "true", "explanation": "'amanaplanacanalpanama' is a palindrome."}
+        ],
+        "constraints": ["1 <= s.length <= 2 * 10^5", "Return true or false"],
+        "starter_code": """import sys
+
+def is_palindrome(s):
+    # Complete this function
+    cleaned = [c.lower() for c in s if c.isalnum()]
+    return cleaned == cleaned[::-1]
+
+if __name__ == '__main__':
+    inp = sys.stdin.read().strip()
+    print("true" if is_palindrome(inp) else "false")
+""",
+        "test_cases": [
+            {"input": "A man, a plan, a canal: Panama", "expected_output": "true"},
+            {"input": "race a car", "expected_output": "false"}
+        ]
+    },
+    {
+        "type": "technical",
+        "question": "Maximum Subarray (Kadane's Algorithm): Given an integer array nums, find the subarray with the largest sum and return its sum in O(n) time.",
+        "topic": "DSA / Algorithms",
+        "difficulty": "Medium",
+        "claimed_level": 7,
+        "examples": [
+            {"input": "nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]", "output": "6", "explanation": "[4, -1, 2, 1] has largest sum 6."}
+        ],
+        "constraints": ["1 <= nums.length <= 10^5", "-10^4 <= nums[i] <= 10^4", "O(n) time complexity"],
+        "starter_code": """import sys
+
+def max_subarray(nums):
+    # Implement Kadane's Algorithm
+    max_so_far = nums[0]
+    curr_max = nums[0]
+    for x in nums[1:]:
+        curr_max = max(x, curr_max + x)
+        max_so_far = max(max_so_far, curr_max)
+    return max_so_far
+
+if __name__ == '__main__':
+    lines = sys.stdin.read().strip().split('\\n')
+    if lines and lines[0]:
+        arr = [int(x) for x in lines[0].split()]
+        print(max_subarray(arr))
+""",
+        "test_cases": [
+            {"input": "-2 1 -3 4 -1 2 1 -5 4", "expected_output": "6"},
+            {"input": "1", "expected_output": "1"},
+            {"input": "5 4 -1 7 8", "expected_output": "23"}
+        ]
+    }
+]
+
+
 def get_calibrated_questions(company: str, student_skills: dict, num_questions: int = 7) -> list[dict]:
     """
     Select and calibrate interview questions based on:
     1. Company interview style
     2. Student's claimed skill levels (harder questions for higher claimed proficiency)
     3. Number of questions requested
+    4. Includes real HackerRank-style live coding challenges with test cases
     """
     import random
     profile = COMPANY_PROFILES.get(company)
@@ -446,22 +544,25 @@ def get_calibrated_questions(company: str, student_skills: dict, num_questions: 
     intro = random.choice(profile.get("intro_questions", ["Tell me about yourself."]))
     questions.append({"type": "intro", "question": intro, "topic": "Introduction", "difficulty": "Easy"})
 
+    # Always include 1-2 practical coding challenges with test cases
+    coding_challenge = random.choice(CODING_CHALLENGES)
+    questions.append(coding_challenge.copy())
+
     # Pick technical questions calibrated to the student's claimed skills
     top_skills = sorted(student_skills.items(), key=lambda x: x[1], reverse=True)[:4]
-    tech_count = num_questions - 2  # reserve 1 intro + 1 HR
+    tech_count = max(1, num_questions - 3)  # reserve 1 intro + 1 coding + 1 HR
 
     skill_question_pool = []
     for skill_name, skill_level in top_skills:
         matched_key = next((k for k in skill_qs if k.lower() == skill_name.lower()), None)
         pool = skill_qs.get(matched_key, skill_qs.get("default", []))
         if pool:
-            # For high claimed skills (7+), pick harder (later in list) questions
             if skill_level >= 8:
-                q_set = pool[-3:]  # last 3 = hardest
+                q_set = pool[-3:]
             elif skill_level >= 6:
-                q_set = pool[1:4]  # middle
+                q_set = pool[1:4]
             else:
-                q_set = pool[:3]   # first 3 = easiest
+                q_set = pool[:3]
             for q in random.sample(q_set, min(2, len(q_set))):
                 skill_question_pool.append({
                     "type": "technical",
@@ -471,7 +572,6 @@ def get_calibrated_questions(company: str, student_skills: dict, num_questions: 
                     "claimed_level": skill_level
                 })
 
-    # Add default questions if pool is thin
     if len(skill_question_pool) < tech_count:
         for q in skill_qs.get("default", []):
             skill_question_pool.append({"type": "technical", "question": q, "topic": "General CS", "difficulty": "Medium", "claimed_level": 5})

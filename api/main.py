@@ -109,15 +109,27 @@ class InterviewStartRequest(BaseModel):
     token: str
 
 class AnswerSubmitRequest(BaseModel):
-    usn: str
-    company: str
-    session_id: str
-    question_index: int
+    usn: Optional[str] = ""
+    company: Optional[str] = ""
+    session_id: Optional[str] = ""
+    question_index: Optional[int] = 0
     question: str
-    topic: str
-    claimed_level: int
-    spoken_answer: str
-    token: str
+    topic: Optional[str] = "General"
+    claimed_level: Optional[int] = 5
+    claimed_skill_level: Optional[int] = None
+    spoken_answer: Optional[str] = ""
+    token: Optional[str] = ""
+    code: Optional[str] = None
+    language: Optional[str] = None
+    execution_result: Optional[dict] = None
+    question_type: Optional[str] = "technical"
+
+class CodeExecuteRequest(BaseModel):
+    code: str
+    language: str = "python"
+    stdin: Optional[str] = ""
+    test_cases: Optional[list] = None
+    question_id: Optional[int] = None
 
 class InterviewCompleteRequest(BaseModel):
     usn: str
@@ -186,6 +198,13 @@ def serve_tpo_dashboard():
     if tpo_file.exists():
         return FileResponse(str(tpo_file))
     return {"error": "TPO dashboard not found."}
+
+@app.get("/interview")
+def serve_interview():
+    interview_file = STATIC_DIR / "interview" / "index.html"
+    if interview_file.exists():
+        return FileResponse(str(interview_file))
+    return {"error": "Interview page not found."}
 
 @app.post("/api/auth/login")
 def auth_login(req: LoginRequest):
@@ -290,7 +309,7 @@ def predict_employability(req: PredictRequest):
     try:
         result = predict_student_employability(profile)
         score = result.get("placement_probability", 50.0)
-        tier = result.get("readiness_tier", "Near-Ready")
+        tier = result.get("readiness_status", "Needs Training")
 
         # Blend interview score if available (20% weight)
         if req.usn:
@@ -299,16 +318,27 @@ def predict_employability(req: PredictRequest):
             if history:
                 interview_score = history[-1].get("overall_score", 0)
                 score = round(score * 0.8 + interview_score * 0.2, 1)
-                tier = "Ready" if score >= 78 else "Near-Ready" if score >= 55 else "Needs Training"
+                tier = "Ready" if score >= 78 else "Near-Ready" if score >= 62 else "Needs Training"
 
-        factors = result.get("shap_factors", result.get("factors", []))
+        factors = result.get("factor_transparency", result.get("shap_factors", []))
+        tracks = result.get("career_track_alignments", [])
+        top_track = result.get("primary_recommended_track", tracks[0]["track"] if tracks else "Full-Stack Developer")
+        track_scores = {t["track"]: t.get("match_pct", 0) for t in tracks}
+
         return {
             "employability_score": score,
+            "placement_probability": score,
             "readiness_status": tier,
+            "readiness_badge": result.get("readiness_badge", "error" if tier == "Needs Training" else "warning"),
             "probability": score / 100.0,
             "shap_factors": factors,
-            "top_track": result.get("top_track", result.get("best_track", "SDE")),
-            "track_scores": result.get("track_scores", {})
+            "factor_transparency": factors,
+            "reality_check_penalties": result.get("reality_check_penalties", []),
+            "top_track": top_track,
+            "primary_recommended_track": top_track,
+            "career_track_alignments": tracks,
+            "track_scores": track_scores,
+            "scoring_note": result.get("scoring_note", "")
         }
     except Exception as e:
         log.error(f"Prediction error: {e}")
@@ -410,23 +440,78 @@ def start_interview(req: InterviewStartRequest):
     session_id = str(uuid.uuid4())[:8]
 
     return {
+        "success": True,
         "session_id": session_id,
         "company": req.company,
         "company_name": company_profile["name"],
         "interviewer_persona": company_profile["interviewer_persona"],
         "total_questions": len(questions),
         "questions": questions,
-        "student_name": student["name"]
+        "student_name": student["name"],
+        "round": "Technical & Coding Simulation"
     }
+
+@app.post("/api/code/execute")
+def run_code_sandbox(req: CodeExecuteRequest):
+    """Execute code in a secure subprocess sandbox."""
+    res = execute_code(
+        code=req.code,
+        language=req.language,
+        stdin=req.stdin or "",
+        test_cases=req.test_cases or []
+    )
+    return res
 
 @app.post("/api/interview/analyze-answer")
 async def analyze_single_answer(req: AnswerSubmitRequest):
-    """Analyze one interview answer using Gemini Flash AI."""
-    session = verify_session_token(req.token)
-    if not session:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Analyze one interview answer (spoken and/or code) using local Ollama & strict analyzer."""
+    if req.token:
+        verify_session_token(req.token)
 
-    if not req.spoken_answer or len(req.spoken_answer.strip()) < 3:
+    code_eval = None
+    if req.code and req.code.strip():
+        try:
+            code_eval = await analyze_code_with_ollama(
+                code=req.code,
+                question=req.question,
+                language=req.language or "python",
+                execution_result=req.execution_result or {},
+                claimed_skill_level=req.claimed_skill_level or req.claimed_level or 5
+            )
+        except Exception as e:
+            log.warning(f"Ollama code analysis failed: {e}")
+
+    spoken = (req.spoken_answer or "").strip()
+    is_placeholder_spoken = spoken in ["[No verbal explanation provided]", "[No answer]", "[Code only]", ""]
+
+    if is_placeholder_spoken and code_eval:
+        return {
+            "score": code_eval.get("code_score", 5),
+            "technical_accuracy": code_eval.get("correctness", 5),
+            "communication_clarity": 7,
+            "verdict": code_eval.get("verdict", "Partially Verified"),
+            "what_was_good": f"Approach: {code_eval.get('approach', 'Code solution submitted')}",
+            "what_was_missing": code_eval.get("what_is_wrong") or "None",
+            "claim_vs_reality": code_eval.get("skill_match", "Matches Claim"),
+            "red_flags": code_eval.get("code_score", 5) < 4,
+            "honest_feedback": code_eval.get("better_approach") or f"Complexity: {code_eval.get('time_complexity', 'O(n)')}",
+            "code_analysis": code_eval
+        }
+
+    if not spoken or len(spoken) < 3:
+        if code_eval:
+            return {
+                "score": code_eval.get("code_score", 5),
+                "technical_accuracy": code_eval.get("correctness", 5),
+                "communication_clarity": 6,
+                "verdict": code_eval.get("verdict", "Partially Verified"),
+                "what_was_good": code_eval.get("approach", "Code solution"),
+                "what_was_missing": code_eval.get("what_is_wrong") or "No verbal explanation provided",
+                "claim_vs_reality": code_eval.get("skill_match", "Matches Claim"),
+                "red_flags": code_eval.get("code_score", 5) < 4,
+                "honest_feedback": code_eval.get("better_approach") or "Add verbal explanation of your thought process.",
+                "code_analysis": code_eval
+            }
         return {
             "score": 0,
             "verdict": "Insufficient Answer",
@@ -438,12 +523,19 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
 
     result = await analyze_answer(
         question=req.question,
-        spoken_answer=req.spoken_answer,
-        topic=req.topic,
-        claimed_skill_level=req.claimed_level,
-        company=req.company,
-        question_type="technical"
+        spoken_answer=spoken,
+        topic=req.topic or "General",
+        claimed_skill_level=req.claimed_skill_level or req.claimed_level or 5,
+        company=req.company or "Company",
+        question_type=req.question_type or "technical"
     )
+
+    if code_eval:
+        result["code_analysis"] = code_eval
+        # Blend score: 60% code, 40% explanation
+        blended = round(0.6 * code_eval.get("code_score", 5) + 0.4 * result.get("score", 5))
+        result["score"] = blended
+
     return result
 
 @app.post("/api/interview/followup")

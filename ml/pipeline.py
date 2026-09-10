@@ -52,60 +52,101 @@ BRANCH_MAPPING = {
 def extract_features_from_student(student_data: Dict[str, Any]) -> pd.DataFrame:
     """Extract standard numerical feature vector from rich student profile dictionary."""
     skills = student_data.get("skills", {})
+    if not isinstance(skills, dict):
+        skills = {}
     aptitude = student_data.get("aptitude", {})
+    if not isinstance(aptitude, dict):
+        aptitude = {}
     soft_skills = student_data.get("soft_skills", {})
-    
+    if not isinstance(soft_skills, dict):
+        soft_skills = {}
+
+    level_map = {
+        "beginner": 3.0, "basic": 3.0, "novice": 2.0,
+        "intermediate": 6.0, "moderate": 5.0,
+        "good": 7.0, "advanced": 8.5, "expert": 9.5
+    }
+
+    def _get_skill(*aliases) -> float:
+        for a in aliases:
+            for k, v in skills.items():
+                if k.lower() == a.lower():
+                    if isinstance(v, (int, float)):
+                        return float(v)
+                    if isinstance(v, str):
+                        v_lower = v.strip().lower()
+                        if v_lower in level_map:
+                            return level_map[v_lower]
+                        try:
+                            return float(v)
+                        except ValueError:
+                            pass
+        return 0.0
+
     # Branch
-    raw_branch = student_data.get("branch", "CSE")
-    is_cs = BRANCH_MAPPING.get(raw_branch, 1 if "computer" in raw_branch.lower() or "information" in raw_branch.lower() else 0)
-    
-    # Aptitude fallback
-    quant = aptitude.get("Quantitative", student_data.get("quantitative_aptitude", 70.0))
-    logical = aptitude.get("Logical", student_data.get("logical_reasoning", 70.0))
-    coding = aptitude.get("Coding", student_data.get("coding_benchmark", 65.0))
-    
-    # Soft skills
-    comm = soft_skills.get("Communication", student_data.get("communication_rating", 7.0))
-    interview = soft_skills.get("Interview", student_data.get("interview_rating", 7.0))
-    
+    raw_branch = str(student_data.get("branch", "CSE"))
+    is_cs = BRANCH_MAPPING.get(raw_branch, 1 if "computer" in raw_branch.lower() or "information" in raw_branch.lower() or "data" in raw_branch.lower() or "ai" in raw_branch.lower() else 0)
+
+    # Programming competency drives coding benchmark if untested
+    p_skill = _get_skill("Python")
+    j_skill = _get_skill("Java")
+    c_skill = _get_skill("C++", "C")
+    dsa_skill = _get_skill("DSA", "Data Structures", "Algorithms")
+    sql_skill = _get_skill("SQL", "MySQL", "PostgreSQL", "Database")
+    web_skill = _get_skill("React", "JavaScript", "Web", "Node.js", "HTML/CSS")
+    cloud_skill = _get_skill("AWS", "Docker", "Cloud", "Azure", "GCP")
+    ml_skill = _get_skill("Machine Learning", "Pandas", "AI", "Data Science")
+
+    max_core_skill = max(p_skill, j_skill, c_skill, dsa_skill)
+    estimated_coding = max(15.0, min(95.0, max_core_skill * 9.0 + dsa_skill * 3.0))
+
+    # Aptitude fallback (neutral 45 if unassessed)
+    quant = float(aptitude.get("Quantitative", student_data.get("quantitative_aptitude", 45.0)))
+    logical = float(aptitude.get("Logical", student_data.get("logical_reasoning", 45.0)))
+    coding = float(aptitude.get("Coding", student_data.get("coding_benchmark", estimated_coding)))
+
+    # Soft skills fallback
+    comm = float(soft_skills.get("Communication", student_data.get("communication_rating", 5.0)))
+    interview = float(soft_skills.get("Interview", student_data.get("interview_rating", 5.0)))
+
     # Internships count
     raw_internships = student_data.get("internships", [])
     intern_count = len(raw_internships) if isinstance(raw_internships, list) else int(raw_internships or 0)
-    
+
     # Projects count
     raw_projects = student_data.get("projects", [])
     proj_count = len(raw_projects) if isinstance(raw_projects, list) else int(raw_projects or 0)
-    
+
     # Certifications count
     raw_certs = student_data.get("certifications", [])
     cert_count = len(raw_certs) if isinstance(raw_certs, list) else int(raw_certs or 0)
-    
+
     row = {
         "cgpa": float(student_data.get("cgpa", 7.0)),
         "tenth_percentage": float(student_data.get("tenth_percentage", 75.0)),
         "twelfth_percentage": float(student_data.get("twelfth_percentage", 75.0)),
         "backlogs_history": int(student_data.get("backlogs_history", 0)),
         "active_backlogs": int(student_data.get("active_backlogs", 0)),
-        "quantitative_aptitude": float(quant),
-        "logical_reasoning": float(logical),
-        "coding_benchmark": float(coding),
-        "skills_python": float(skills.get("Python", 5.0)),
-        "skills_java": float(skills.get("Java", 5.0)),
-        "skills_cpp": float(skills.get("C++", skills.get("C", 4.0))),
-        "skills_dsa": float(skills.get("DSA", 5.0)),
-        "skills_sql": float(skills.get("SQL", 5.0)),
-        "skills_web": float(skills.get("React", skills.get("JavaScript", skills.get("Web", 5.0)))),
-        "skills_cloud": float(skills.get("AWS", skills.get("Docker", skills.get("Cloud", 4.0)))),
-        "skills_ml": float(skills.get("Machine Learning", skills.get("Pandas", 4.0))),
+        "quantitative_aptitude": quant,
+        "logical_reasoning": logical,
+        "coding_benchmark": coding,
+        "skills_python": p_skill,
+        "skills_java": j_skill,
+        "skills_cpp": c_skill,
+        "skills_dsa": dsa_skill,
+        "skills_sql": sql_skill,
+        "skills_web": web_skill,
+        "skills_cloud": cloud_skill,
+        "skills_ml": ml_skill,
         "internships": intern_count,
         "projects_count": proj_count,
         "certifications_count": cert_count,
         "hackathons": int(student_data.get("hackathons", 0)),
-        "communication_rating": float(comm),
-        "interview_rating": float(interview),
+        "communication_rating": comm,
+        "interview_rating": interview,
         "is_cs_branch": int(is_cs)
     }
-    
+
     return pd.DataFrame([row])[FEATURE_COLUMNS]
 
 def predict_career_track_alignment(features: pd.DataFrame) -> List[Dict[str, Any]]:
