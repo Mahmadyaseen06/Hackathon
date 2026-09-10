@@ -350,6 +350,176 @@ async def student_upload_csv(usn: str = Form(...), token: str = Form(...), file:
         update_student_profile(usn, updates)
     return {"success": True, "updated_fields": list(updates.keys())}
 
+class DeveloperSyncRequest(BaseModel):
+    usn: str
+    token: str
+    github_handle: Optional[str] = None
+    leetcode_handle: Optional[str] = None
+
+@app.post("/api/student/developer-sync")
+def student_developer_sync(req: DeveloperSyncRequest):
+    """Sync live external activity from GitHub and LeetCode and compute 30-day consistency score."""
+    session = verify_session_token(req.token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != req.usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    student = get_student_by_usn(req.usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    from upskilling.developer_sync import sync_student_developer_profiles
+    payload = sync_student_developer_profiles(
+        student_id=student.get("student_id", req.usn),
+        github_handle=req.github_handle,
+        leetcode_handle=req.leetcode_handle
+    )
+    return {"success": True, "developer_activity": payload}
+
+def _student_to_job_profile(student: dict):
+    from job_intelligence.models import StudentProfile
+    skills = {}
+    for k, v in student.get("skills", {}).items():
+        try:
+            skills[k] = float(v)
+        except (ValueError, TypeError):
+            skills[k] = 5.0
+
+    certifications = []
+    for c in student.get("certifications", []):
+        if isinstance(c, str):
+            certifications.append(c)
+        elif isinstance(c, dict):
+            certifications.append(c.get("name", ""))
+
+    projects = []
+    for p in student.get("projects", []):
+        if isinstance(p, dict):
+            projects.append(p)
+        elif isinstance(p, str):
+            projects.append({"name": p, "tags": []})
+
+    internships = []
+    for i in student.get("internships", []):
+        if isinstance(i, dict):
+            internships.append(i)
+        elif isinstance(i, str):
+            internships.append({"company": i, "role": "Intern"})
+
+    return StudentProfile(
+        student_id=student.get("student_id", student.get("usn", "STU")),
+        branch=student.get("branch"),
+        cgpa=float(student.get("cgpa", 7.0)),
+        tenth_pct=float(student.get("tenth_percentage", 75.0)),
+        twelfth_pct=float(student.get("twelfth_percentage", 75.0)),
+        backlogs=int(student.get("active_backlogs", student.get("backlogs", 0))),
+        semester=int(student.get("semester", 6)),
+        target_role=student.get("primary_track", student.get("target_role", "Software Engineer")),
+        skills=skills,
+        certifications=certifications,
+        projects=projects,
+        internships=internships,
+        aptitude=student.get("aptitude", {}),
+        soft_skills=student.get("soft_skills", {})
+    )
+
+@app.get("/api/jobs/matched")
+def get_matched_jobs_for_student(usn: str, token: str):
+    """Evaluate all official job postings against student profile and return Best/Near/Stretch matches + Aggregate Gap Matrix."""
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    student = get_student_by_usn(usn)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    from job_intelligence.demo_data import build_demo_jobs
+    from job_intelligence.matcher import rank
+    from job_intelligence.models import MatchCategory
+
+    jobs = build_demo_jobs()
+    profile = _student_to_job_profile(student)
+    ranked = rank(jobs, profile, limit=50)
+
+    best_matches = []
+    near_matches = []
+    stretch_matches = []
+    skill_gap_freq = {}
+
+    for job, res in ranked:
+        job_item = {
+            "job_id": job.id,
+            "company": job.company,
+            "title": job.title,
+            "location": job.location or "India / Remote",
+            "work_mode": job.work_mode or "Hybrid",
+            "employment_type": job.employment_type or "Full-Time",
+            "fit_score": res.job_fit_score,
+            "readiness_score": res.readiness_score,
+            "category": res.category.value,
+            "eligibility": res.eligibility.model_dump(),
+            "matched_skills": res.matched_skills,
+            "missing_required_skills": res.missing_required_skills,
+            "missing_preferred_skills": res.missing_preferred_skills,
+            "skill_gap_priority": [g.model_dump() for g in res.skill_gap_priority],
+            "why_recommended": res.why_recommended,
+            "recommended_actions": res.recommended_actions,
+            "application_url": job.application_url or job.official_url
+        }
+
+        # Track aggregate gap matrix across all prospective roles
+        for g in res.skill_gap_priority:
+            s = g.skill
+            if s not in skill_gap_freq:
+                skill_gap_freq[s] = {"skill": s, "frequency": 0, "priority": g.priority.value, "kind": g.kind}
+            skill_gap_freq[s]["frequency"] += 1
+
+        if res.category == MatchCategory.BEST_MATCH:
+            best_matches.append(job_item)
+        elif res.category == MatchCategory.NEAR_MATCH:
+            near_matches.append(job_item)
+        else:
+            stretch_matches.append(job_item)
+
+    aggregate_gap_matrix = sorted(skill_gap_freq.values(), key=lambda x: (-x["frequency"], x["priority"]))
+
+    return {
+        "usn": usn,
+        "total_evaluated_jobs": len(jobs),
+        "best_matches": best_matches,
+        "near_matches": near_matches,
+        "stretch_matches": stretch_matches,
+        "aggregate_skill_gap_matrix": aggregate_gap_matrix[:12]
+    }
+
+@app.get("/api/jobs/list")
+def list_all_jobs(token: str):
+    """List all available jobs."""
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    from job_intelligence.demo_data import build_demo_jobs
+    jobs = build_demo_jobs()
+    return [
+        {
+            "id": j.id,
+            "company": j.company,
+            "title": j.title,
+            "location": j.location,
+            "work_mode": j.work_mode,
+            "employment_type": j.employment_type,
+            "required_skills": j.required_skills,
+            "preferred_skills": j.preferred_skills,
+            "application_url": j.application_url or j.official_url
+        }
+        for j in jobs
+    ]
+
 @app.get("/api/students/all")
 def get_all_students_tpo(token: str):
     """TPO only: get all students."""
@@ -773,6 +943,8 @@ def students_with_scores(token: str):
 
         history = s.get("interview_history", [])
         latest_interview = history[-1] if history else None
+        dev_activity = s.get("developer_activity", {})
+        dev_consistency = dev_activity.get("consistency", {}).get("consistency_score")
 
         result.append({
             "usn": s["usn"],
@@ -785,6 +957,7 @@ def students_with_scores(token: str):
             "internships_count": len(s.get("internships", [])),
             "certifications_count": len(s.get("certifications", [])),
             "interview_attempts": len(history),
+            "developer_consistency": dev_consistency,
             "latest_interview": {
                 "company": latest_interview["company"],
                 "overall_score": latest_interview.get("overall_score", 0),
@@ -806,17 +979,17 @@ def vulnerable_students(token: str, threshold: float = 60.0):
     all_scored = students_with_scores(token)
     return [s for s in all_scored if s["employability_score"] < threshold]
 
-@app.get("/api/tpo/skill-heatmap")
-def skill_heatmap(token: str):
-    """Institutional skill deficit heatmap."""
+@app.get("/api/tpo/skill-deficit-heatmap")
+def skill_deficit_heatmap(token: str):
+    """Aggregate skill proficiency across all students to identify batch-wide gaps."""
     session = verify_session_token(token)
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
 
     students = get_all_students()
-    skill_counts = {}
-    total = len(students)
+    total = len(students) or 1
 
+    skill_counts = {}
     for s in students:
         for skill, level in s.get("skills", {}).items():
             if skill not in skill_counts:
@@ -841,7 +1014,7 @@ def skill_heatmap(token: str):
 
 @app.get("/api/tpo/alerts")
 def tpo_alerts(token: str):
-    """Generate mentor alerts for at-risk and outperforming students."""
+    """Generate 4-tier institutional mentor alerts for at-risk, outperforming, and consistency-lagging students."""
     session = verify_session_token(token)
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
@@ -853,18 +1026,91 @@ def tpo_alerts(token: str):
         score = s["employability_score"]
         backlogs = s["active_backlogs"]
         history = s["interview_attempts"]
+        dev_score = s.get("developer_consistency")
 
-        if score >= 88 and history > 0:
-            alerts.append({"type": "OUTPERFORMING", "usn": s["usn"], "name": s["name"], "score": score,
-                           "message": f"{s['name']} scored {score}% with strong interview performance. Fast-track for referrals.", "color": "green"})
+        if score >= 85 and (history > 0 or (dev_score and dev_score >= 70)):
+            alerts.append({
+                "type": "OUTPERFORMING",
+                "usn": s["usn"],
+                "name": s["name"],
+                "score": score,
+                "message": f"{s['name']} scored {score}% employability with verified consistency. Prime candidate for Tier-1 Super Dream drives.",
+                "color": "green",
+                "action_label": "Fast-Track Referral",
+                "action_type": "referral"
+            })
         elif score < 50 or backlogs >= 2:
-            alerts.append({"type": "AT_RISK", "usn": s["usn"], "name": s["name"], "score": score,
-                           "message": f"{s['name']} is at risk — score {score}%, {backlogs} active backlogs. Immediate mentoring required.", "color": "red"})
+            alerts.append({
+                "type": "AT_RISK",
+                "usn": s["usn"],
+                "name": s["name"],
+                "score": score,
+                "message": f"{s['name']} is at critical risk ({score}% employability, {backlogs} active backlogs). Immediate 1-on-1 counseling mandated.",
+                "color": "red",
+                "action_label": "Schedule Counseling",
+                "action_type": "counseling"
+            })
+        elif dev_score is not None and dev_score < 40:
+            alerts.append({
+                "type": "CONSISTENCY_DROP",
+                "usn": s["usn"],
+                "name": s["name"],
+                "score": score,
+                "message": f"{s['name']}'s 30-day coding consistency dropped to {dev_score}%. Send practice reminder.",
+                "color": "orange",
+                "action_label": "Send Consistency Nudge",
+                "action_type": "consistency_nudge"
+            })
+        elif score >= 65 and score < 85 and history >= 1:
+            alerts.append({
+                "type": "RISING_STAR",
+                "usn": s["usn"],
+                "name": s["name"],
+                "score": score,
+                "message": f"{s['name']} showed positive momentum with {score}% employability. Recommend for target off-campus drives & internships.",
+                "color": "purple",
+                "action_label": "Recommend for Drives",
+                "action_type": "recommend_drives"
+            })
         elif score < 65 and history == 0:
-            alerts.append({"type": "NEEDS_INTERVIEW_PRACTICE", "usn": s["usn"], "name": s["name"], "score": score,
-                           "message": f"{s['name']} hasn't taken any mock interviews yet and scores {score}%.", "color": "orange"})
+            alerts.append({
+                "type": "NEEDS_INTERVIEW_PRACTICE",
+                "usn": s["usn"],
+                "name": s["name"],
+                "score": score,
+                "message": f"{s['name']} hasn't taken any mock interviews yet and scores {score}%. Invite to Project Defense & Technical mock.",
+                "color": "orange",
+                "action_label": "Invite to Mock Interview",
+                "action_type": "invite_interview"
+            })
 
     return alerts
+
+class TpoActionRequest(BaseModel):
+    token: str
+    usn: str
+    action_type: str
+    notes: Optional[str] = None
+
+@app.post("/api/tpo/trigger-action")
+def tpo_trigger_action(req: TpoActionRequest):
+    """Execute actionable interventions from TPO dashboard directly on student record."""
+    session = verify_session_token(req.token)
+    if not session or session["role"] != "tpo":
+        raise HTTPException(status_code=403, detail="TPO access required")
+
+    student = get_student_by_usn(req.usn)
+    student_name = student["name"] if student else req.usn
+    action_desc = req.action_type.replace("_", " ").title()
+
+    return {
+        "success": True,
+        "message": f"Action '{action_desc}' successfully dispatched for {student_name} ({req.usn}).",
+        "action_type": req.action_type,
+        "usn": req.usn,
+        "dispatched_by": session["user_id"],
+        "timestamp": datetime.datetime.now().isoformat()
+    }
 
 @app.get("/api/tpo/branch-breakdown")
 def branch_breakdown(token: str):

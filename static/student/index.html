@@ -402,9 +402,16 @@
       <div class="nav-item" onclick="showSection('projects')" id="nav-projects">
         <span class="nav-icon">💻</span> Projects
       </div>
-      <div class="nav-section">Activity</div>
+      <div class="nav-section">Activity & Consistency</div>
+      <div class="nav-item" onclick="showSection('developer')" id="nav-developer">
+        <span class="nav-icon">⚡</span> Developer Activity Sync
+      </div>
       <div class="nav-item" onclick="showSection('progress')" id="nav-progress">
         <span class="nav-icon">📈</span> Progress Tracker
+      </div>
+      <div class="nav-section">Hiring & Placements</div>
+      <div class="nav-item" onclick="showSection('jobs')" id="nav-jobs">
+        <span class="nav-icon">🎯</span> Official Job Matches
       </div>
     </nav>
     <div class="sidebar-bottom">
@@ -709,6 +716,175 @@
         </div>
       </div>
 
+      <!-- ── DEVELOPER LIVE ACTIVITY SYNC ── -->
+      <div class="section" id="section-developer">
+        <div class="card" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+          <div>
+            <div class="card-title" style="margin-bottom:4px">⚡ Developer Live Activity & Consistency Engine</div>
+            <div style="font-size:13px; color:var(--muted)">Authenticates against public GitHub & LeetCode APIs to evaluate 30-day coding consistency and streaks.</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <input type="text" id="input-github-handle" placeholder="GitHub username" style="padding:9px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:white; font-size:13px; width:160px;">
+            <input type="text" id="input-leetcode-handle" placeholder="LeetCode handle" style="padding:9px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:white; font-size:13px; width:160px;">
+            <button onclick="syncDeveloperProfiles()" id="btn-sync-dev" style="padding:9px 18px; background:linear-gradient(135deg, #6366f1, #22d3ee); border:none; border-radius:10px; color:white; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <span id="dev-sync-icon">🔄</span> Sync Live Activity
+            </button>
+          </div>
+        </div>
+
+        <!-- 30-Day Consistency Score Card -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">🔥 30-Day Developer Consistency Index</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:20px; align-items:center;">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Consistency Score</div>
+              <div id="dev-consistency-score" style="font-size:42px; font-weight:800; color:#22d3ee;">—</div>
+              <div id="dev-consistency-tier" style="margin-top:6px; font-size:12px; font-weight:700; color:#10b981;">Awaiting Sync</div>
+            </div>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Active Coding Days</div>
+              <div id="dev-active-days" style="font-size:36px; font-weight:800; color:#818cf8;">— <span style="font-size:16px; color:var(--muted); font-weight:400;">/ 30</span></div>
+              <div style="margin-top:6px; font-size:12px; color:var(--muted)">Unique active commit/solve days</div>
+            </div>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Current Streak</div>
+              <div id="dev-current-streak" style="font-size:36px; font-weight:800; color:#f59e0b;">— <span style="font-size:16px; color:var(--muted); font-weight:400;">days</span></div>
+              <div id="dev-longest-streak" style="margin-top:6px; font-size:12px; color:var(--muted)">Longest: — days</div>
+            </div>
+          </div>
+          <div id="dev-rec-box" style="margin-top:20px; background:rgba(99,102,241,0.08); border-left:4px solid #6366f1; padding:14px 18px; border-radius:8px; font-size:13px; color:#c7d2fe;">
+            💡 Click "Sync Live Activity" to fetch your verified GitHub commits and LeetCode problem distributions.
+          </div>
+        </div>
+
+        <!-- 2-Column Split: GitHub & LeetCode -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- GitHub Card -->
+          <div class="card">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <div class="card-title" style="margin:0;">🐙 GitHub Signal</div>
+              <span id="gh-status-badge" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; background:rgba(16,185,129,0.15); color:#10b981;">IDLE</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+              <div id="gh-avatar-wrap" style="width:48px; height:48px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:22px;">🐙</div>
+              <div>
+                <div id="gh-display-name" style="font-size:15px; font-weight:700;">—</div>
+                <div id="gh-display-user" style="font-size:12px; color:var(--muted); font-family:monospace;">@not_synced</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+              <div style="background:var(--surface); padding:12px; border-radius:10px; text-align:center;">
+                <div style="font-size:11px; color:var(--muted);">30-Day Commits</div>
+                <div id="gh-commits-count" style="font-size:20px; font-weight:700; color:#22d3ee; margin-top:2px;">—</div>
+              </div>
+              <div style="background:var(--surface); padding:12px; border-radius:10px; text-align:center;">
+                <div style="font-size:11px; color:var(--muted);">Public Repos</div>
+                <div id="gh-repos-count" style="font-size:20px; font-weight:700; color:#818cf8; margin-top:2px;">—</div>
+              </div>
+            </div>
+            <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:10px;">Recent Activity Stream</div>
+            <div id="gh-activity-stream" style="display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--muted);">
+              <div style="padding:10px; background:var(--surface); border-radius:8px;">No recent events fetched.</div>
+            </div>
+          </div>
+
+          <!-- LeetCode Card -->
+          <div class="card">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <div class="card-title" style="margin:0;">🧠 LeetCode Signal</div>
+              <span id="lc-status-badge" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; background:rgba(245,158,11,0.15); color:#f59e0b;">IDLE</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+              <div style="width:48px; height:48px; border-radius:50%; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:22px;">⚡</div>
+              <div>
+                <div id="lc-display-name" style="font-size:15px; font-weight:700;">—</div>
+                <div id="lc-ranking-wrap" style="font-size:12px; color:var(--muted);">Global Ranking: <strong id="lc-ranking-val" style="color:var(--text)">—</strong></div>
+              </div>
+            </div>
+            <div style="background:var(--surface); padding:14px; border-radius:10px; margin-bottom:16px; text-align:center;">
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase;">Total Problems Solved</div>
+              <div id="lc-total-solved" style="font-size:32px; font-weight:800; color:#f59e0b; margin-top:2px;">—</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                  <span style="color:#10b981; font-weight:600;">🟢 Easy</span>
+                  <span id="lc-easy-count" style="font-weight:700;">—</span>
+                </div>
+                <div style="background:var(--surface2); height:6px; border-radius:3px; overflow:hidden;"><div id="lc-easy-bar" style="background:#10b981; height:100%; width:0%;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                  <span style="color:#f59e0b; font-weight:600;">🟡 Medium</span>
+                  <span id="lc-med-count" style="font-weight:700;">—</span>
+                </div>
+                <div style="background:var(--surface2); height:6px; border-radius:3px; overflow:hidden;"><div id="lc-med-bar" style="background:#f59e0b; height:100%; width:0%;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                  <span style="color:#ef4444; font-weight:600;">🔴 Hard</span>
+                  <span id="lc-hard-count" style="font-weight:700;">—</span>
+                </div>
+                <div style="background:var(--surface2); height:6px; border-radius:3px; overflow:hidden;"><div id="lc-hard-bar" style="background:#ef4444; height:100%; width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OFFICIAL JOB INTELLIGENCE & GAP MATRIX ── -->
+      <div class="section" id="section-jobs">
+        <!-- Top Metrics Row -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:20px;">
+          <div class="card" style="padding:16px 20px; margin:0; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Best Matches</div>
+            <div id="jobs-count-best" style="font-size:32px; font-weight:800; color:#10b981; margin-top:4px;">0</div>
+            <div style="font-size:11px; color:#10b981; font-weight:600;">≥ 78% Fit Score</div>
+          </div>
+          <div class="card" style="padding:16px 20px; margin:0; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Near Matches</div>
+            <div id="jobs-count-near" style="font-size:32px; font-weight:800; color:#f59e0b; margin-top:4px;">0</div>
+            <div style="font-size:11px; color:#f59e0b; font-weight:600;">58% – 77% Fit Score</div>
+          </div>
+          <div class="card" style="padding:16px 20px; margin:0; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Stretch Opportunities</div>
+            <div id="jobs-count-stretch" style="font-size:32px; font-weight:800; color:#c084fc; margin-top:4px;">0</div>
+            <div style="font-size:11px; color:#c084fc; font-weight:600;">High Upskilling Target</div>
+          </div>
+          <div class="card" style="padding:16px 20px; margin:0; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Roles Evaluated</div>
+            <div id="jobs-count-total" style="font-size:32px; font-weight:800; color:#22d3ee; margin-top:4px;">0</div>
+            <div style="font-size:11px; color:var(--muted);">Multi-Criteria Scored</div>
+          </div>
+        </div>
+
+        <!-- Cross-Job Aggregate Skill Gap Matrix Card -->
+        <div class="card" style="margin-bottom:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+            <div>
+              <div class="card-title" style="margin:0;">📊 Cross-Job Aggregate Skill Gap Matrix</div>
+              <div style="font-size:12px; color:var(--muted); margin-top:3px;">Most frequently demanded competencies missing from your profile across active campus & corporate drives.</div>
+            </div>
+            <button onclick="loadMatchedJobs()" style="background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:8px; font-size:12px; cursor:pointer;">🔄 Refresh Matches</button>
+          </div>
+          <div id="jobs-gap-matrix" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
+            <div style="color:var(--muted); font-size:13px; padding:16px;">Loading aggregate gap matrix...</div>
+          </div>
+        </div>
+
+        <!-- Filter Pill Tabs -->
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+          <button onclick="filterJobTier('all')" class="job-filter-btn active" id="filter-job-all" style="padding:7px 16px; border-radius:20px; background:rgba(99,102,241,0.2); border:1px solid #6366f1; color:white; font-size:12px; font-weight:600; cursor:pointer;">All Evaluated Roles</button>
+          <button onclick="filterJobTier('best')" class="job-filter-btn" id="filter-job-best" style="padding:7px 16px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer;">🟢 Best Matches</button>
+          <button onclick="filterJobTier('near')" class="job-filter-btn" id="filter-job-near" style="padding:7px 16px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer;">🟡 Near Matches</button>
+          <button onclick="filterJobTier('stretch')" class="job-filter-btn" id="filter-job-stretch" style="padding:7px 16px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer;">🟣 Stretch Opportunities</button>
+        </div>
+
+        <!-- Matched Job Cards Container -->
+        <div id="jobs-list-container" style="display:flex; flex-direction:column; gap:16px;">
+          <div style="color:var(--muted); font-size:13px; padding:20px;">Evaluating job postings...</div>
+        </div>
+      </div>
 
   </main>
 
@@ -793,7 +969,9 @@
     roadmap: ['My Learning Roadmap', 'Personalized weekly plan to close skill gaps'],
     resources: ['Learning Resources', 'YouTube videos and NPTEL courses for your gaps'],
     projects: ['Project Ladder', 'Recommended projects matching your skill level'],
-    progress: ['Progress Tracker', 'Live GitHub, LeetCode, HackerRank & Codeforces stats']
+    progress: ['Progress Tracker', 'Live GitHub, LeetCode, HackerRank & Codeforces stats'],
+    jobs: ['Official Job Matches', 'Institutional matching against real job postings with cross-job gap analysis'],
+    developer: ['Live Developer Sync', '30-day coding consistency, commit streaks, and problem-solving metrics']
   };
 
   function showSection(name) {
@@ -807,6 +985,236 @@
     if (name === 'resources' && document.getElementById('resources-content').querySelector('.loader')) loadResources();
     if (name === 'projects' && document.getElementById('projects-content').querySelector('.loader')) loadProjects();
     if (name === 'progress') loadProgressStats();
+    if (name === 'jobs') loadMatchedJobs();
+    if (name === 'developer') loadDeveloperActivity();
+  }
+
+  // ── Developer Live Activity Sync ──
+  async function loadDeveloperActivity() {
+    if (!studentData) return;
+    const gh = studentData.github_handle || studentData.github || '';
+    const lc = studentData.leetcode_handle || studentData.leetcode || '';
+    if (gh) document.getElementById('input-github-handle').value = gh;
+    if (lc) document.getElementById('input-leetcode-handle').value = lc;
+
+    const dev = studentData.developer_activity;
+    if (dev && dev.consistency) {
+      renderDeveloperActivity(dev);
+    }
+  }
+
+  async function syncDeveloperProfiles() {
+    const gh = document.getElementById('input-github-handle').value.trim();
+    const lc = document.getElementById('input-leetcode-handle').value.trim();
+    const btn = document.getElementById('btn-sync-dev');
+    const icon = document.getElementById('dev-sync-icon');
+
+    btn.disabled = true;
+    icon.textContent = '⏳';
+
+    try {
+      const res = await fetch(`${API}/api/student/developer-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usn,
+          token,
+          github_handle: gh,
+          leetcode_handle: lc
+        })
+      });
+      if (!res.ok) throw new Error('Sync failed');
+      const data = await res.json();
+      if (data.developer_activity) {
+        renderDeveloperActivity(data.developer_activity);
+        if (studentData) studentData.developer_activity = data.developer_activity;
+      }
+    } catch (e) {
+      alert('Developer sync error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      icon.textContent = '🔄';
+    }
+  }
+
+  function renderDeveloperActivity(dev) {
+    const c = dev.consistency || {};
+    const gh = c.github_summary || {};
+    const lc = c.leetcode_summary || {};
+
+    document.getElementById('dev-consistency-score').textContent = (c.consistency_score || 0) + '%';
+    document.getElementById('dev-consistency-tier').textContent = c.tier || 'Standard';
+    document.getElementById('dev-active-days').innerHTML = `${c.active_days_last_30 || 0} <span style="font-size:16px; color:var(--muted); font-weight:400;">/ 30</span>`;
+    document.getElementById('dev-current-streak').innerHTML = `${c.current_streak_days || 0} <span style="font-size:16px; color:var(--muted); font-weight:400;">days</span>`;
+    document.getElementById('dev-longest-streak').textContent = `Longest: ${c.longest_streak_days || 0} days`;
+    document.getElementById('dev-rec-box').innerHTML = `💡 <strong>AI Habit Diagnosis:</strong> ${c.recommendation || 'Maintain consistent daily contributions.'}`;
+
+    // GitHub
+    document.getElementById('gh-status-badge').textContent = (gh.status || 'SYNCED').toUpperCase();
+    document.getElementById('gh-display-user').textContent = '@' + (gh.username || 'user');
+    document.getElementById('gh-display-name').textContent = gh.username || 'Developer';
+    document.getElementById('gh-commits-count').textContent = gh.commits_last_30 || 0;
+    document.getElementById('gh-repos-count').textContent = gh.repos || 0;
+
+    // LeetCode
+    document.getElementById('lc-status-badge').textContent = (lc.status || 'SYNCED').toUpperCase();
+    document.getElementById('lc-display-name').textContent = lc.username || 'Problem Solver';
+    document.getElementById('lc-ranking-val').textContent = lc.ranking ? '#' + Number(lc.ranking).toLocaleString() : 'Top 5%';
+    document.getElementById('lc-total-solved').textContent = lc.total_solved || 0;
+    document.getElementById('lc-easy-count').textContent = lc.easy || 0;
+    document.getElementById('lc-med-count').textContent = lc.medium || 0;
+    document.getElementById('lc-hard-count').textContent = lc.hard || 0;
+
+    const total = (lc.total_solved || 1);
+    document.getElementById('lc-easy-bar').style.width = Math.min(100, Math.round(((lc.easy || 0) / total) * 100)) + '%';
+    document.getElementById('lc-med-bar').style.width = Math.min(100, Math.round(((lc.medium || 0) / total) * 100)) + '%';
+    document.getElementById('lc-hard-bar').style.width = Math.min(100, Math.round(((lc.hard || 0) / total) * 100)) + '%';
+  }
+
+  // ── Official Job Matches & Gap Matrix ──
+  let _cachedMatchedJobs = null;
+
+  async function loadMatchedJobs() {
+    const container = document.getElementById('jobs-list-container');
+    const matrixContainer = document.getElementById('jobs-gap-matrix');
+    container.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:20px;">⏳ Evaluating corporate requisitions against your profile...</div>';
+    matrixContainer.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:16px;">Calculating aggregate gap matrix...</div>';
+
+    try {
+      const res = await fetch(`${API}/api/jobs/matched?usn=${usn}&token=${token}`);
+      if (!res.ok) throw new Error('Failed to load job matches');
+      const data = await res.json();
+      _cachedMatchedJobs = data;
+
+      document.getElementById('jobs-count-best').textContent = data.best_matches ? data.best_matches.length : 0;
+      document.getElementById('jobs-count-near').textContent = data.near_matches ? data.near_matches.length : 0;
+      document.getElementById('jobs-count-stretch').textContent = data.stretch_matches ? data.stretch_matches.length : 0;
+      document.getElementById('jobs-count-total').textContent = data.total_evaluated_jobs || 0;
+
+      // Render Cross-Job Aggregate Gap Matrix
+      const gaps = data.aggregate_skill_gap_matrix || [];
+      if (gaps.length === 0) {
+        matrixContainer.innerHTML = '<div style="color:#10b981; font-size:13px; padding:12px;">✅ No systemic skill gaps detected across active opportunities!</div>';
+      } else {
+        const maxFreq = Math.max(...gaps.map(g => g.frequency), 1);
+        matrixContainer.innerHTML = gaps.map(g => {
+          const pct = Math.round((g.frequency / maxFreq) * 100);
+          const isCrit = g.priority === 'CRITICAL';
+          const color = isCrit ? '#ef4444' : g.priority === 'HIGH' ? '#f59e0b' : '#6366f1';
+          return `
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-weight:700; font-size:13px;">${g.skill}</span>
+                <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; background:${color}22; color:${color}; border:1px solid ${color}44;">${g.priority}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px;">
+                <span>Required in ${g.frequency} job(s)</span>
+                <span>${pct}% Demand</span>
+              </div>
+              <div style="background:var(--surface2); height:5px; border-radius:3px; overflow:hidden;">
+                <div style="background:${color}; height:100%; width:${pct}%;"></div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      renderJobList('all');
+    } catch (e) {
+      container.innerHTML = `<div style="color:var(--danger); font-size:13px; padding:20px;">Failed to load job matches: ${e.message}</div>`;
+    }
+  }
+
+  function filterJobTier(tier) {
+    document.querySelectorAll('.job-filter-btn').forEach(b => {
+      b.style.background = 'var(--surface)';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--muted)';
+    });
+    const activeBtn = document.getElementById('filter-job-' + tier);
+    if (activeBtn) {
+      activeBtn.style.background = 'rgba(99,102,241,0.2)';
+      activeBtn.style.borderColor = '#6366f1';
+      activeBtn.style.color = 'white';
+    }
+    renderJobList(tier);
+  }
+
+  function renderJobList(tier) {
+    const container = document.getElementById('jobs-list-container');
+    if (!_cachedMatchedJobs) return;
+    let list = [];
+    if (tier === 'all') {
+      list = [
+        ...(_cachedMatchedJobs.best_matches || []),
+        ...(_cachedMatchedJobs.near_matches || []),
+        ...(_cachedMatchedJobs.stretch_matches || [])
+      ];
+    } else if (tier === 'best') {
+      list = _cachedMatchedJobs.best_matches || [];
+    } else if (tier === 'near') {
+      list = _cachedMatchedJobs.near_matches || [];
+    } else if (tier === 'stretch') {
+      list = _cachedMatchedJobs.stretch_matches || [];
+    }
+
+    if (list.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted); font-size:13px; padding:20px;">No jobs found in this category.</div>';
+      return;
+    }
+
+    container.innerHTML = list.map(j => {
+      const isBest = j.category === 'BEST_MATCH';
+      const isNear = j.category === 'NEAR_MATCH';
+      const catColor = isBest ? '#10b981' : isNear ? '#f59e0b' : '#c084fc';
+      const catLabel = isBest ? 'Best Match' : isNear ? 'Near Match' : 'Stretch Opportunity';
+      const eligStatus = j.eligibility ? j.eligibility.status : 'unknown';
+      const eligColor = eligStatus === 'eligible' ? '#10b981' : eligStatus === 'partially_eligible' ? '#f59e0b' : '#ef4444';
+
+      return `
+        <div class="card" style="margin:0; padding:20px; border-left:4px solid ${catColor};">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:${catColor}; background:${catColor}15; padding:2px 8px; border-radius:4px;">${catLabel}</span>
+                <span style="font-size:11px; font-weight:700; color:${eligColor}; background:${eligColor}15; padding:2px 8px; border-radius:4px;">${eligStatus.replace(/_/g, ' ').toUpperCase()}</span>
+                <span style="font-size:12px; color:var(--muted);">${j.location || 'India'} • ${j.work_mode || 'Hybrid'} • ${j.employment_type || 'Full-Time'}</span>
+              </div>
+              <h3 style="margin:0; font-size:17px; font-weight:800;">${j.title} <span style="color:var(--muted); font-weight:500;">at ${j.company}</span></h3>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:24px; font-weight:800; color:${catColor};">${j.fit_score}%</div>
+              <div style="font-size:10px; color:var(--muted); text-transform:uppercase;">Overall Fit</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; font-size:12px;">
+            <div>
+              <div style="font-weight:700; color:#10b981; margin-bottom:6px;">✓ Matched Competencies:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${(j.matched_skills && j.matched_skills.length) ? j.matched_skills.map(s => `<span style="background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">${s}</span>`).join('') : '<span style="color:var(--muted)">None verified yet</span>'}
+              </div>
+            </div>
+            <div>
+              <div style="font-weight:700; color:#ef4444; margin-bottom:6px;">✗ Missing Requisite Skills:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${(j.missing_required_skills && j.missing_required_skills.length) ? j.missing_required_skills.map(s => `<span style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25); padding:2px 8px; border-radius:12px; font-size:11px;">${s}</span>`).join('') : '<span style="color:#10b981">Zero blockers!</span>'}
+              </div>
+            </div>
+          </div>
+
+          ${(j.why_recommended && j.why_recommended.length) ? `
+            <div style="background:var(--surface); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--muted); margin-bottom:14px;">
+              <strong style="color:var(--text);">Why this role:</strong> ${j.why_recommended.join(' • ')}
+            </div>` : ''}
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:12px; font-size:12px;">
+            <span style="color:var(--muted);">Readiness Index: <strong style="color:${catColor}">${j.readiness_score}%</strong></span>
+            <a href="${j.application_url || '#'}" target="_blank" style="padding:6px 14px; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); color:#818cf8; font-weight:600; text-decoration:none; border-radius:6px; transition:all 0.15s;">
+              Apply / View Role ↗
+            </a>
+          </div>
+        </div>`;
+    }).join('');
   }
 
   // ── Progress Tracker ──

@@ -488,6 +488,33 @@
     renderStudentTable(filtered);
   }
 
+  async function triggerTpoAction(usn, actionType, btn) {
+    if (!token) return;
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = 'Dispatching...';
+    try {
+      const res = await fetch(`${API}/api/tpo/trigger-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, usn, action_type: actionType })
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.textContent = '✓ Dispatched';
+        btn.style.background = 'rgba(16,185,129,0.2)';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#10b981';
+      } else {
+        btn.textContent = 'Error';
+        btn.disabled = false;
+      }
+    } catch (e) {
+      btn.textContent = oldText;
+      btn.disabled = false;
+    }
+  }
+
   function renderAlerts(alerts) {
     const count = alerts.length;
     const countEl = document.getElementById('alert-count');
@@ -495,12 +522,19 @@
     document.getElementById('alerts-content').innerHTML = alerts.length
       ? alerts.map(a => `
           <div class="alert-card alert-${a.color}">
-            <div class="alert-icon">${a.type === 'OUTPERFORMING' ? '🌟' : a.type === 'AT_RISK' ? '🚨' : '📋'}</div>
-            <div class="alert-body">
-              <h4>${a.name} (${a.usn})</h4>
-              <p>${a.message}</p>
+            <div class="alert-icon">${a.type === 'OUTPERFORMING' ? '🌟' : a.type === 'AT_RISK' ? '🚨' : a.type === 'CONSISTENCY_DROP' ? '📉' : a.type === 'RISING_STAR' ? '🚀' : '📋'}</div>
+            <div class="alert-body" style="flex:1;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span class="badge" style="background:${a.color === 'green' ? 'rgba(16,185,129,0.15)' : a.color === 'red' ? 'rgba(239,68,68,0.15)' : a.color === 'purple' ? 'rgba(168,85,247,0.15)' : 'rgba(245,158,11,0.15)'}; color:${a.color === 'green' ? '#10b981' : a.color === 'red' ? '#ef4444' : a.color === 'purple' ? '#c084fc' : '#f59e0b'}; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">${a.type.replace(/_/g, ' ')}</span>
+                <h4 style="margin:0; font-size:14px; font-weight:700;">${a.name} <span style="font-family:monospace; font-size:11px; color:var(--muted)">(${a.usn})</span></h4>
+              </div>
+              <p style="margin:0 0 8px; font-size:12px; color:var(--muted)">${a.message}</p>
+              ${a.action_label ? `
+                <button onclick="triggerTpoAction('${a.usn}', '${a.action_type}', this)" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); color:#818cf8; font-size:11px; font-weight:600; padding:5px 12px; border-radius:6px; cursor:pointer; transition:all 0.15s;">
+                  ⚡ ${a.action_label}
+                </button>` : ''}
             </div>
-            <div class="alert-score" style="color:${a.color === 'green' ? '#10b981' : a.color === 'red' ? '#ef4444' : '#f59e0b'}">${a.score}%</div>
+            <div class="alert-score" style="color:${a.color === 'green' ? '#10b981' : a.color === 'red' ? '#ef4444' : a.color === 'purple' ? '#c084fc' : '#f59e0b'}">${a.score}%</div>
           </div>`).join('')
       : '<p style="color:var(--muted);font-size:13px">No active alerts — all students are on track! ✅</p>';
   }

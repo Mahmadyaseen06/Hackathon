@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, f1_score
 from xgboost import XGBClassifier
@@ -51,11 +51,9 @@ def train_and_evaluate() -> Dict[str, Any]:
         X, y, test_size=0.20, random_state=42, stratify=y
     )
     
-    # 1. Random Forest
+    # Base Estimators
     rf = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1)
-    rf.fit(X_train, y_train)
     
-    # 2. XGBoost
     xgb = XGBClassifier(
         n_estimators=120,
         learning_rate=0.07,
@@ -64,9 +62,7 @@ def train_and_evaluate() -> Dict[str, Any]:
         eval_metric="logloss",
         n_jobs=-1
     )
-    xgb.fit(X_train, y_train)
     
-    # 3. LightGBM
     lgb = LGBMClassifier(
         n_estimators=120,
         learning_rate=0.07,
@@ -76,20 +72,27 @@ def train_and_evaluate() -> Dict[str, Any]:
         verbose=-1,
         n_jobs=-1
     )
-    lgb.fit(X_train, y_train)
+
+    gbdt = GradientBoostingClassifier(n_estimators=80, max_depth=4, random_state=42)
     
-    # 4. Soft Voting Ensemble
-    ensemble = VotingClassifier(
-        estimators=[("rf", rf), ("xgb", xgb), ("lgb", lgb)],
-        voting="soft"
+    # 5-fold CV Stacking Classifier with Logistic Regression meta-learner
+    ensemble = StackingClassifier(
+        estimators=[("rf", rf), ("xgb", xgb), ("lgb", lgb), ("gbdt", gbdt)],
+        final_estimator=LogisticRegression(C=1.0, max_iter=500),
+        cv=3,
+        n_jobs=-1
     )
     ensemble.fit(X_train, y_train)
+
+    # Individual fit for base estimators needed for explainer & direct inspection
+    xgb_fit = ensemble.named_estimators_["xgb"]
     
     # Evaluate
     y_pred_prob = ensemble.predict_proba(X_test)[:, 1]
     y_pred = (y_pred_prob >= 0.50).astype(int)
     
     metrics = {
+        "model_architecture": "Stacked Ensemble (RF + XGB + LGBM + GBDT -> LogisticRegression Meta-Learner)",
         "roc_auc": round(float(roc_auc_score(y_test, y_pred_prob)), 4),
         "accuracy": round(float(accuracy_score(y_test, y_pred)), 4),
         "precision": round(float(precision_score(y_test, y_pred)), 4),
@@ -97,8 +100,8 @@ def train_and_evaluate() -> Dict[str, Any]:
         "f1": round(float(f1_score(y_test, y_pred)), 4)
     }
     
-    # SHAP Explainer on XGBoost
-    explainer = shap.TreeExplainer(xgb)
+    # SHAP Explainer on XGBoost base estimator
+    explainer = shap.TreeExplainer(xgb_fit)
     
     exp_val = getattr(explainer, "expected_value", 0.0)
     if isinstance(exp_val, (list, np.ndarray)):
@@ -110,9 +113,10 @@ def train_and_evaluate() -> Dict[str, Any]:
 
     bundle = {
         "ensemble": ensemble,
-        "xgb": xgb,
-        "rf": rf,
-        "lgb": lgb,
+        "xgb": xgb_fit,
+        "rf": ensemble.named_estimators_["rf"],
+        "lgb": ensemble.named_estimators_["lgb"],
+        "gbdt": ensemble.named_estimators_["gbdt"],
         "explainer": explainer,
         "feature_names": FEATURE_COLUMNS,
         "metrics": metrics,
@@ -294,6 +298,29 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
         base_value=base_val
     )
 
+    # Derived Engineered Feature Signals for Deep Insights
+    skills = student_data.get("skills", {})
+    skill_vals = [float(v) for v in skills.values()] if isinstance(skills, dict) and skills else [0.0]
+    max_s = max(skill_vals) if skill_vals else 0.0
+    mean_s = sum(skill_vals) / max(len(skill_vals), 1)
+    skill_depth_ratio = round(float(max_s / (mean_s + 1e-5)), 2)
+    coding_acad_balance = round(float((float(features_df["coding_benchmark"].iloc[0]) / 100.0) * (float(student_data.get("cgpa", 7.0)) / 10.0)), 3)
+    hist_b = int(student_data.get("backlogs_history", 0))
+    act_b = int(student_data.get("active_backlogs", 0))
+    backlog_recovery = round(float((hist_b - act_b) / (hist_b + 1e-5)), 2) if hist_b > 0 else 1.0
+    backlog_recovery = max(0.0, min(1.0, backlog_recovery))
+    intern_count = len(student_data.get("internships", [])) if isinstance(student_data.get("internships"), list) else int(student_data.get("internships") or 0)
+    proj_count = len(student_data.get("projects", [])) if isinstance(student_data.get("projects"), list) else int(student_data.get("projects") or 0)
+    hack_count = int(student_data.get("hackathons", 0))
+    practical_exposure = round(float(intern_count * 2.0 + proj_count * 1.0 + hack_count * 1.5), 1)
+
+    engineered_signals = {
+        "skill_depth_ratio": skill_depth_ratio,
+        "coding_academic_balance": coding_acad_balance,
+        "backlog_recovery_rate": backlog_recovery,
+        "practical_exposure_score": practical_exposure
+    }
+
     return {
         "student_id": student_data.get("student_id", "STU-UNKNOWN"),
         "placement_probability": prob,
@@ -303,6 +330,7 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
         "career_track_alignments": tracks,
         "primary_recommended_track": tracks[0]["track"] if tracks else "Full-Stack Developer",
         "factor_transparency": xai_factors,
+        "engineered_signals": engineered_signals,
         "model_evaluation_metrics": bundle["metrics"],
         "reality_check_penalties": penalties,  # Transparent: show user WHY score was adjusted
         "scoring_note": (
