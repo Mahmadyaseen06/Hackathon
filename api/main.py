@@ -38,7 +38,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from auth import (
     login_student, login_tpo, create_session_token, verify_session_token,
     get_student_by_usn, get_all_students, save_interview_result,
-    register_student, usn_exists, save_platform_stats, update_student_skills_from_platforms
+    register_student, usn_exists, save_platform_stats, update_student_skills_from_platforms,
+    update_student_profile, batch_upsert_students
 )
 from interview.question_bank import get_calibrated_questions, get_company_interview_rounds, COMPANY_PROFILES
 from interview.analyzer import analyze_answer, generate_followup, generate_full_interview_report, generate_interviewer_speech
@@ -285,6 +286,68 @@ def get_student_profile(usn: str, token: str):
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
+
+class StudentProfileUpdateRequest(BaseModel):
+    usn: str
+    token: str
+    updates: dict
+
+@app.post("/api/student/profile")
+def update_profile(req: StudentProfileUpdateRequest):
+    """Update student profile (academic track, skills, projects, certifications, internships)."""
+    session = verify_session_token(req.token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != req.usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    updated = update_student_profile(req.usn, req.updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return {"success": True, "student": updated}
+
+@app.post("/api/student/upload-csv")
+async def student_upload_csv(usn: str = Form(...), token: str = Form(...), file: UploadFile = File(...)):
+    """Allow student to ingest or sync their profile from a CSV file."""
+    session = verify_session_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if session["role"] == "student" and session["user_id"].upper() != usn.upper():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    contents = await file.read()
+    import csv, io, json
+    decoded = contents.decode("utf-8", errors="ignore")
+    reader = csv.DictReader(io.StringIO(decoded))
+    updates = {}
+    for row in reader:
+        for k, v in row.items():
+            if not v: continue
+            k_lower = k.lower().strip()
+            if k_lower in ["cgpa", "tenth_percentage", "twelfth_percentage"]:
+                try: updates[k_lower] = float(v)
+                except: pass
+            elif k_lower in ["semester", "active_backlogs", "backlogs_history"]:
+                try: updates[k_lower] = int(v)
+                except: pass
+            elif k_lower == "skills":
+                try:
+                    updates["skills"] = json.loads(v)
+                except:
+                    parsed_skills = {}
+                    for p in v.split(","):
+                        if ":" in p:
+                            sk, lvl = p.split(":", 1)
+                            try: parsed_skills[sk.strip()] = float(lvl.strip())
+                            except: parsed_skills[sk.strip()] = 5.0
+                    if parsed_skills:
+                        updates["skills"] = parsed_skills
+            elif k_lower in ["projects", "certifications", "internships"]:
+                updates[k_lower] = [x.strip() for x in v.split(";") if x.strip()]
+
+    if updates:
+        update_student_profile(usn, updates)
+    return {"success": True, "updated_fields": list(updates.keys())}
 
 @app.get("/api/students/all")
 def get_all_students_tpo(token: str):
@@ -847,6 +910,56 @@ def interview_summary(token: str):
             })
     all_interviews.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
     return all_interviews
+
+@app.post("/api/tpo/upload-csv")
+async def tpo_upload_csv(token: str = Form(...), file: UploadFile = File(...)):
+    """TPO Batch CSV Ingestion for institutional cohorts."""
+    session = verify_session_token(token)
+    if not session or session["role"] != "tpo":
+        raise HTTPException(status_code=403, detail="TPO access required")
+
+    contents = await file.read()
+    import csv, io, json
+    decoded = contents.decode("utf-8", errors="ignore")
+    reader = csv.DictReader(io.StringIO(decoded))
+
+    students_to_add = []
+    for row in reader:
+        usn = row.get("usn") or row.get("USN")
+        if not usn:
+            continue
+        skills = {}
+        raw_skills = row.get("skills", "")
+        if raw_skills:
+            try:
+                skills = json.loads(raw_skills)
+            except:
+                for part in raw_skills.split(","):
+                    if ":" in part:
+                        k, v = part.split(":", 1)
+                        try: skills[k.strip()] = float(v.strip())
+                        except: skills[k.strip()] = 5.0
+
+        item = {
+            "usn": usn.strip().upper(),
+            "name": row.get("name") or row.get("Name") or "Student",
+            "branch": row.get("branch") or row.get("Branch") or "Computer Science & Engineering",
+            "cgpa": float(row.get("cgpa") or row.get("CGPA") or 7.0),
+            "semester": int(row.get("semester") or row.get("Semester") or 7),
+            "active_backlogs": int(row.get("active_backlogs") or row.get("backlogs") or 0),
+            "skills": skills,
+            "internships": [row.get("internship")] if row.get("internship") else [],
+            "certifications": [row.get("certification")] if row.get("certification") else [],
+            "projects": [row.get("project")] if row.get("project") else []
+        }
+        students_to_add.append(item)
+
+    imported = batch_upsert_students(students_to_add)
+    return {
+        "success": True,
+        "imported_count": imported,
+        "message": f"Successfully ingested {imported} student records into institutional database."
+    }
 
 
 # ─────────────────────────────────────────────

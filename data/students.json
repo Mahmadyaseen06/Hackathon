@@ -30,8 +30,8 @@
       "DSA": 8
     },
     "certifications": [
-      "AWS Certified Cloud Practitioner",
-      "Meta Front-End Developer Certificate"
+      "AWS Certified Solutions Architect Associate",
+      "DeepLearning.AI TensorFlow Developer"
     ],
     "internships": [
       {
@@ -41,34 +41,8 @@
       }
     ],
     "projects": [
-      {
-        "name": "E-Commerce Microservices",
-        "complexity": "Advanced",
-        "tags": [
-          "React",
-          "Node.js",
-          "Docker",
-          "MongoDB"
-        ]
-      },
-      {
-        "name": "Realtime Collab Whiteboard",
-        "complexity": "Intermediate",
-        "tags": [
-          "React",
-          "TypeScript",
-          "WebSocket"
-        ]
-      },
-      {
-        "name": "Portfolio Website",
-        "complexity": "Beginner",
-        "tags": [
-          "JavaScript",
-          "HTML",
-          "CSS"
-        ]
-      }
+      "Distributed Cache with Raft Consensus",
+      "Real-Time Fraud Detection Engine"
     ],
     "github_username": "priya-dev-coder",
     "leetcode_username": "priya_codes",
@@ -1442,5 +1416,46 @@
         "aggregate_activity_score": 0.0
       }
     ]
+  },
+  {
+    "usn": "4JN25CS888",
+    "name": "Aditya Verma",
+    "branch": "Computer Science & Engineering",
+    "cgpa": 8.45,
+    "semester": 7,
+    "active_backlogs": 0,
+    "skills": {
+      "python": 8.0,
+      "dsa": 8.0,
+      "sql": 7.0
+    },
+    "internships": [
+      "Full-Stack Intern at Razorpay"
+    ],
+    "certifications": [
+      "AWS Cloud Practitioner"
+    ],
+    "projects": [
+      "Cloud Microservices"
+    ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25EC777",
+    "name": "Kavya Sharma",
+    "branch": "Electronics & Communication",
+    "cgpa": 6.8,
+    "semester": 7,
+    "active_backlogs": 1,
+    "skills": {
+      "python": 4.0,
+      "c": 5.0
+    },
+    "internships": [],
+    "certifications": [],
+    "projects": [
+      "IoT Sensor Node"
+    ],
+    "password": "student123"
   }
 ]

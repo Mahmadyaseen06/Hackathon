@@ -118,6 +118,46 @@ def save_interview_result(usn: str, interview_result: dict):
     _save_students(students)
 
 
+def update_student_profile(usn: str, updates: dict) -> dict | None:
+    """Update profile fields for a student and persist."""
+    students = _load_students()
+    updated_student = None
+    for s in students:
+        if s["usn"].upper() == usn.upper():
+            for k, v in updates.items():
+                if k not in ["usn", "password"]:  # preserve credentials
+                    s[k] = v
+            updated_student = {k: val for k, val in s.items() if k != "password"}
+            break
+    if updated_student:
+        _save_students(students)
+    return updated_student
+
+
+def batch_upsert_students(new_students: list[dict]) -> int:
+    """Batch add or update students from CSV data."""
+    students = _load_students()
+    existing_map = {s["usn"].upper(): i for i, s in enumerate(students)}
+    count = 0
+    for ns in new_students:
+        usn_key = ns.get("usn", "").strip().upper()
+        if not usn_key:
+            continue
+        if usn_key in existing_map:
+            idx = existing_map[usn_key]
+            for k, v in ns.items():
+                if k != "password":
+                    students[idx][k] = v
+        else:
+            if "password" not in ns:
+                ns["password"] = "student123"
+            students.append(ns)
+            existing_map[usn_key] = len(students) - 1
+        count += 1
+    _save_students(students)
+    return count
+
+
 def usn_exists(usn: str) -> bool:
     """Check if a USN is already registered."""
     students = _load_students()
