@@ -759,7 +759,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
           <div class="interviewer-bubble">
             <div class="bubble-header">
               <span class="bubble-speaker">INTERVIEWER (TALKING BACK)</span>
-              <button id="replay-voice-btn" onclick="replayInterviewerVoice()">🔊 Replay Voice</button>
+              <div style="display:flex;align-items:center;gap:8px">
+                <select id="voice-select" onchange="changeVoice(this.value)" title="Choose Interviewer Voice" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:2px 8px;border-radius:6px;outline:none;max-width:170px;cursor:pointer">
+                  <option value="">🎙️ Natural AI Voice</option>
+                </select>
+                <button id="replay-voice-btn" onclick="replayInterviewerVoice()">🔊 Replay Voice</button>
+              </div>
             </div>
             <div id="interviewer-dialogue-text">"Welcome to your interview. Let's begin."</div>
           </div>
@@ -1219,6 +1224,84 @@ function updateInterviewerDialogue(text) {
   document.getElementById('interviewer-dialogue-text').textContent = `"${text}"`;
 }
 
+let availableVoices = [];
+let selectedVoice = null;
+let speechTimeout = null;
+let currentUtterance = null;
+let isSpeakingNow = false;
+
+function loadVoices() {
+  if (!window.speechSynthesis) return;
+  availableVoices = window.speechSynthesis.getVoices();
+  if (!availableVoices || availableVoices.length === 0) return;
+
+  // Premium natural voice selection priority:
+  const preferred = [
+    "Google US English",
+    "Samantha (Enhanced)",
+    "Samantha",
+    "Google UK English Male",
+    "Google UK English Female",
+    "Daniel (Enhanced)",
+    "Daniel",
+    "Karen",
+    "Alex",
+    "Victoria",
+    "Moira",
+    "Microsoft Mark",
+    "Microsoft Zira"
+  ];
+
+  if (!selectedVoice) {
+    for (const name of preferred) {
+      const v = availableVoices.find(voice => voice.name === name || voice.name.includes(name));
+      if (v) {
+        selectedVoice = v;
+        break;
+      }
+    }
+    if (!selectedVoice) {
+      selectedVoice = availableVoices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('compact'))
+        || availableVoices.find(v => v.lang.startsWith('en'))
+        || availableVoices[0];
+    }
+  }
+
+  // Populate voice selector dropdown
+  const voiceSelect = document.getElementById('voice-select');
+  if (voiceSelect) {
+    const enVoices = availableVoices.filter(v => v.lang.startsWith('en'));
+    const list = enVoices.length > 0 ? enVoices : availableVoices;
+    voiceSelect.innerHTML = list.map(v =>
+      `<option value="${v.name}" ${selectedVoice && selectedVoice.name === v.name ? 'selected' : ''}>${v.name}</option>`
+    ).join('');
+  }
+}
+
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+}
+
+function changeVoice(voiceName) {
+  const v = availableVoices.find(voice => voice.name === voiceName);
+  if (v) {
+    selectedVoice = v;
+    speakInterviewerText("Voice updated. I will speak using this profile.");
+  }
+}
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+  return text
+    .replace(/[`*_#~\[\]\(\)\{\}\<\>]/g, ' ')
+    .replace(/\bO\(([a-zA-Z0-9^ *+]+)\)/g, 'Big O of $1')
+    .replace(/http[s]?:\/\/\S+/g, 'link')
+    .replace(/['"]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function replayInterviewerVoice() {
   if (currentSpeakingText) {
     speakInterviewerText(currentSpeakingText);
@@ -1231,38 +1314,84 @@ function toggleTTS() {
   btn.textContent = ttsEnabled ? '🔊 Voice: ON' : '🔇 Voice: MUTED';
   btn.style.color = ttsEnabled ? 'var(--text)' : 'var(--muted)';
   if (!ttsEnabled && window.speechSynthesis) {
+    clearTimeout(speechTimeout);
     window.speechSynthesis.cancel();
+    currentUtterance = null;
     stopWaveAnimation();
   }
 }
 
-function speakInterviewerText(text) {
-  if (!ttsEnabled || !window.speechSynthesis) return;
+function speakInterviewerText(rawText, onComplete) {
+  if (!ttsEnabled || !window.speechSynthesis) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  const text = cleanTextForSpeech(rawText);
+  if (!text) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  // CRITICAL ANTI-ECHO 1: pause microphone while interviewer speaks so mic does not capture speaker output
+  if (isListening) {
+    stopListening();
+  }
+
+  // CRITICAL ANTI-ECHO 2: clear any pending timeouts
+  clearTimeout(speechTimeout);
+
+  // CRITICAL ANTI-ECHO 3: cancel previous synthesis and wait 90ms for audio unit buffer to flush cleanly
   window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.05;
-  utterance.pitch = 1.0;
-  utterance.lang = 'en-US';
+  speechTimeout = setTimeout(() => {
+    try {
+      if (!selectedVoice && availableVoices.length === 0) {
+        loadVoices();
+      }
 
-  utterance.onstart = () => {
-    document.getElementById('ai-avatar').classList.add('speaking');
-    document.getElementById('ai-status').textContent = 'Interviewer speaking...';
-    startWaveAnimation();
-  };
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance; // Keep global reference to prevent Chrome garbage-collection bug
 
-  utterance.onend = () => {
-    document.getElementById('ai-avatar').classList.remove('speaking');
-    document.getElementById('ai-status').textContent = 'Listening and evaluating...';
-    stopWaveAnimation();
-  };
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      utterance.rate = 0.95; // Calm, clear, natural pace
+      utterance.pitch = 1.0;
+      utterance.lang = selectedVoice ? selectedVoice.lang : 'en-US';
 
-  utterance.onerror = () => {
-    document.getElementById('ai-avatar').classList.remove('speaking');
-    stopWaveAnimation();
-  };
+      utterance.onstart = () => {
+        isSpeakingNow = true;
+        document.getElementById('ai-avatar')?.classList.add('speaking');
+        const statusEl = document.getElementById('ai-status');
+        if (statusEl) statusEl.textContent = 'Interviewer speaking...';
+        startWaveAnimation();
+      };
 
-  window.speechSynthesis.speak(utterance);
+      const finishSpeech = () => {
+        isSpeakingNow = false;
+        document.getElementById('ai-avatar')?.classList.remove('speaking');
+        const statusEl = document.getElementById('ai-status');
+        if (statusEl) statusEl.textContent = 'Listening and evaluating...';
+        stopWaveAnimation();
+        currentUtterance = null;
+        if (onComplete) {
+          onComplete();
+        }
+      };
+
+      utterance.onend = finishSpeech;
+      utterance.onerror = (e) => {
+        console.warn('SpeechSynthesis event:', e);
+        finishSpeech();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch(err) {
+      console.warn('Speech synthesis error:', err);
+      if (onComplete) onComplete();
+    }
+  }, 90);
 }
 
 function startWaveAnimation() {
@@ -1498,16 +1627,33 @@ async function submitAnswer() {
       analysis
     });
 
-    // Interviewer speaks dynamic talk-back challenge
-    if (analysis.interviewer_speech) {
-      updateInterviewerDialogue(analysis.interviewer_speech);
-      speakInterviewerText(analysis.interviewer_speech);
-    }
+    let advanceTimer = null;
+    const triggerAdvance = () => {
+      clearTimeout(advanceTimer);
+      submitBtn.onclick = submitAnswer;
+      nextQuestion();
+    };
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Next Question →';
+    submitBtn.onclick = () => {
+      clearTimeout(advanceTimer);
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      triggerAdvance();
+    };
 
     document.getElementById('ai-status').textContent = `Score: ${analysis.score}/10 — ${analysis.verdict}`;
 
-    // Wait 2.5 seconds so user hears and reads spoken remarks before advancing
-    setTimeout(() => nextQuestion(), 2800);
+    // Interviewer speaks dynamic talk-back challenge
+    if (analysis.interviewer_speech) {
+      updateInterviewerDialogue(analysis.interviewer_speech);
+      speakInterviewerText(analysis.interviewer_speech, () => {
+        advanceTimer = setTimeout(triggerAdvance, 1200);
+      });
+      advanceTimer = setTimeout(triggerAdvance, 15000);
+    } else {
+      advanceTimer = setTimeout(triggerAdvance, 1800);
+    }
 
   } catch(e) {
     qAnswers.push({
@@ -1536,8 +1682,10 @@ function skipQuestion() {
 }
 
 function nextQuestion() {
-  document.getElementById('submit-answer-btn').disabled = true;
-  document.getElementById('submit-answer-btn').textContent = 'Submit Answer →';
+  const submitBtn = document.getElementById('submit-answer-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submit Answer →';
+  submitBtn.onclick = submitAnswer;
 
   if (currentQIndex + 1 >= questions.length) {
     finishInterview();
