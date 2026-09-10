@@ -5,23 +5,22 @@
     "name": "Priya Patel",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 8.95,
+    "cgpa": 9.25,
     "tenth_percentage": 92.4,
     "twelfth_percentage": 89.0,
     "backlogs_history": 0,
     "active_backlogs": 0,
     "quantitative_aptitude": 88.0,
     "logical_reasoning": 92,
-    "coding_benchmark": 85.0,
+    "coding_benchmark": 92.0,
     "communication_rating": 8.2,
     "interview_rating": 8.0,
     "target_role": "Full-Stack Developer",
     "target_lpa": 16.0,
     "skills": {
       "Python": 9.0,
-      "DSA": 8.0,
-      "SQL": 8.0,
-      "Kubernetes": 7.0
+      "Go": 8.0,
+      "Docker": 8.0
     },
     "certifications": [
       "AWS Solution Architect"
@@ -1545,6 +1544,25 @@
     "projects": [
       "Vision App"
     ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25BOM001",
+    "name": "BOM Encoded Student",
+    "branch": "Computer Science & Engineering",
+    "cgpa": 8.8,
+    "semester": 7,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 75.0,
+    "coding_benchmark": 75.0,
+    "communication_rating": 7.0,
+    "skills": {
+      "Python": 8.0,
+      "DSA": 8.0
+    },
+    "internships": [],
+    "certifications": [],
+    "projects": [],
     "password": "student123"
   }
 ]

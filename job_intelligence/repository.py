@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy import (
     create_engine, Column, String, Integer, Float, Boolean, DateTime, Text, Index, select
@@ -44,9 +44,9 @@ class JobRow(Base):
     qualifications_json = Column(Text, default="[]")
     description = Column(Text)
     published_at = Column(DateTime)
-    first_seen_at = Column(DateTime, default=datetime.utcnow)
-    last_seen_at = Column(DateTime, default=datetime.utcnow)
-    last_verified_at = Column(DateTime, default=datetime.utcnow)
+    first_seen_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_seen_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_verified_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     source_type = Column(String)
     source_status = Column(String, default=SourceStatus.CACHED_VERIFIED.value)
     active = Column(Boolean, default=True)
@@ -85,9 +85,9 @@ def _row_to_job(r: JobRow) -> JobPosting:
         qualifications=json.loads(r.qualifications_json or "[]"),
         description=r.description or "",
         published_at=r.published_at,
-        first_seen_at=r.first_seen_at or datetime.utcnow(),
-        last_seen_at=r.last_seen_at or datetime.utcnow(),
-        last_verified_at=r.last_verified_at or datetime.utcnow(),
+        first_seen_at=r.first_seen_at or datetime.now(timezone.utc),
+        last_seen_at=r.last_seen_at or datetime.now(timezone.utc),
+        last_verified_at=r.last_verified_at or datetime.now(timezone.utc),
         source_type=r.source_type or "unknown",
         source_status=SourceStatus(r.source_status or SourceStatus.CACHED_VERIFIED.value),
         active=bool(r.active),
@@ -119,7 +119,7 @@ def upsert_jobs(jobs: List[JobPosting]) -> int:
             row.qualifications_json = json.dumps(j.qualifications)
             row.description = j.description
             row.published_at = j.published_at
-            row.last_seen_at = datetime.utcnow()
+            row.last_seen_at = datetime.now(timezone.utc)
             row.last_verified_at = j.last_verified_at
             row.source_type = j.source_type
             row.source_status = j.source_status.value
@@ -147,7 +147,7 @@ def mark_company_refresh(company_id: str, name: str, status: str, error: str | N
         if row is None:
             row = CompanyRow(id=company_id, name=name)
             s.add(row)
-        row.last_refresh_at = datetime.utcnow()
+        row.last_refresh_at = datetime.now(timezone.utc)
         row.last_status = status
         row.last_error = error
         s.commit()

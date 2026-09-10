@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
@@ -40,9 +40,9 @@ class JobPosting(BaseModel):
     qualifications: List[str] = Field(default_factory=list)
     description: str = ""
     published_at: Optional[datetime] = None
-    first_seen_at: datetime = Field(default_factory=datetime.utcnow)
-    last_seen_at: datetime = Field(default_factory=datetime.utcnow)
-    last_verified_at: datetime = Field(default_factory=datetime.utcnow)
+    first_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_seen_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_verified_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_type: str = "unknown"
     source_status: SourceStatus = SourceStatus.CACHED_VERIFIED
     active: bool = True

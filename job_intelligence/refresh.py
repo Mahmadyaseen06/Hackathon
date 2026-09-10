@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 from .config import CFG
 from .connectors.registry import build_connectors
@@ -20,10 +20,9 @@ def refresh_company_jobs(company_ids: List[str] | None = None) -> Dict[str, dict
     for cid in ids:
         c = connectors.get(cid)
         if not c:
-            results[cid] = {"status": "SKIPPED", "error": "No connector found"}
             continue
         try:
-            jobs = c.fetch()
+            jobs = c.fetch_jobs()
             if jobs:
                 upsert_jobs(jobs)
                 mark_company_refresh(cid, c.company_name, "SUCCESS")
@@ -36,7 +35,7 @@ def refresh_company_jobs(company_ids: List[str] | None = None) -> Dict[str, dict
             results[cid] = {"status": "FAILED", "error": str(e)}
             
     ensure_demo_fallback()
-    _state["last_refresh"] = {"at": datetime.utcnow().isoformat(), "results": results}
+    _state["last_refresh"] = {"at": datetime.now(timezone.utc).isoformat(), "results": results}
     return results
 
 def refresh_status() -> dict:

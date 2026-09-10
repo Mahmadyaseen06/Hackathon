@@ -60,13 +60,42 @@ from api.code_executor import execute_code, analyze_code_with_ollama
 DATA_DIR = Path(__file__).parent.parent / "data"
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
+from contextlib import asynccontextmanager
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 log = logging.getLogger("api.main")
+
+def decode_csv_bytes(contents: bytes) -> str:
+    """Robust decoding supporting Windows Excel BOM (utf-8-sig), standard utf-8, and latin-1."""
+    try:
+        return contents.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            return contents.decode("utf-8", errors="replace")
+        except Exception:
+            return contents.decode("latin-1", errors="ignore")
+
+# Pre-load ML model
+from ml.model_trainer import load_or_train_model
+_model = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _model
+    log.info("Initializing AI Placement Predictor v3...")
+    try:
+        _model = load_or_train_model()
+        log.info("ML stacked ensemble loaded successfully.")
+    except Exception as e:
+        log.warning(f"Model load deferred: {e}")
+    yield
+    log.info("Shutting down AI Placement Predictor...")
 
 app = FastAPI(
     title="AI Placement Predictor v3",
     description="Institutional Employability Intelligence with Real Auth & AI Voice Interviewer",
-    version="3.0.0"
+    version="3.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -80,20 +109,6 @@ app.add_middleware(
 # Mount static files (HTML dashboards)
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-# Pre-load ML model
-from ml.model_trainer import load_or_train_model
-_model = None
-
-@app.on_event("startup")
-def startup_event():
-    global _model
-    log.info("Initializing AI Placement Predictor v3...")
-    try:
-        _model = load_or_train_model()
-        log.info("ML ensemble loaded successfully.")
-    except Exception as e:
-        log.warning(f"Model load deferred: {e}")
 
 
 # ─────────────────────────────────────────────
@@ -318,7 +333,7 @@ async def student_upload_csv(usn: str = Form(...), token: str = Form(...), file:
 
     contents = await file.read()
     import csv, io, json
-    decoded = contents.decode("utf-8", errors="ignore")
+    decoded = decode_csv_bytes(contents)
     reader = csv.DictReader(io.StringIO(decoded))
     updates = {}
     for row in reader:
@@ -1173,7 +1188,7 @@ async def tpo_upload_csv(token: str = Form(...), file: UploadFile = File(...)):
 
     contents = await file.read()
     import csv, io, json
-    decoded = contents.decode("utf-8", errors="ignore")
+    decoded = decode_csv_bytes(contents)
     reader = csv.DictReader(io.StringIO(decoded))
 
     students_to_add = []
