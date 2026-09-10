@@ -70,6 +70,17 @@ def startup_event():
 
 # ----------------- Base Endpoints -----------------
 
+@app.get("/")
+def root_index():
+    return {
+        "service": "AI Placement Predictor & Institutional Intelligence Engine",
+        "version": "2.0.0",
+        "status": "online",
+        "documentation": "/docs",
+        "health_check": "/api/health",
+        "frontend_url": "http://127.0.0.1:5174/"
+    }
+
 @app.get("/api/health")
 def health():
     return {"status": "healthy", "service": "AI Placement Predictor Engine", "version": "2.0.0"}

@@ -6,6 +6,31 @@ import TpoCommandCenter from './components/TpoCommandCenter';
 import StudentProfileModal from './components/StudentProfileModal';
 import confetti from 'canvas-confetti';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '16px', margin: '40px auto', maxWidth: '600px' }}>
+          <h2 style={{ color: '#ef4444', marginBottom: '12px' }}>Something went wrong rendering this view</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>{this.state.error?.message || 'Unknown error'}</p>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload Application</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [activeView, setActiveView] = useState('student'); // 'student' | 'jobs' | 'tpo'
   const [personas, setPersonas] = useState([]);
@@ -215,44 +240,46 @@ export default function App() {
         apiOnline={apiOnline}
       />
 
-      <main style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '24px 20px', flex: 1 }}>
-        {activeView === 'student' && (
-          <StudentDiagnostics
-            student={currentStudent || {}}
-            prediction={prediction}
-            skillGap={skillGap}
-            roadmap={roadmap}
-            resources={resources}
-            projects={projects}
-            internships={internships}
-            tracker={tracker}
-            onLogActivity={handleLogActivity}
-            loading={loading}
-          />
-        )}
+      <ErrorBoundary>
+        <main style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', padding: '24px 20px', flex: 1 }}>
+          {activeView === 'student' && (
+            <StudentDiagnostics
+              student={currentStudent || {}}
+              prediction={prediction}
+              skillGap={skillGap}
+              roadmap={roadmap}
+              resources={resources}
+              projects={projects}
+              internships={internships}
+              tracker={tracker}
+              onLogActivity={handleLogActivity}
+              loading={loading}
+            />
+          )}
 
-        {activeView === 'jobs' && (
-          <JobIntelligenceView
-            jobMatches={jobMatches}
-            student={currentStudent || {}}
-            onRefreshJobs={handleRefreshJobs}
-          />
-        )}
+          {activeView === 'jobs' && (
+            <JobIntelligenceView
+              jobMatches={jobMatches}
+              student={currentStudent || {}}
+              onRefreshJobs={handleRefreshJobs}
+            />
+          )}
 
-        {activeView === 'tpo' && (
-          <TpoCommandCenter
-            overview={tpoOverview}
-            vulnerable={tpoVulnerable}
-            heatmap={tpoHeatmap}
-            alerts={tpoAlerts}
-            industryDemand={industryDemand}
-            onSelectStudent={(s) => {
-              setCurrentStudent(s);
-              setActiveView('student');
-            }}
-          />
-        )}
-      </main>
+          {activeView === 'tpo' && (
+            <TpoCommandCenter
+              overview={tpoOverview}
+              vulnerable={tpoVulnerable}
+              heatmap={tpoHeatmap}
+              alerts={tpoAlerts}
+              industryDemand={industryDemand}
+              onSelectStudent={(s) => {
+                setCurrentStudent(s);
+                setActiveView('student');
+              }}
+            />
+          )}
+        </main>
+      </ErrorBoundary>
 
       {/* Custom Profile Modal */}
       <StudentProfileModal
