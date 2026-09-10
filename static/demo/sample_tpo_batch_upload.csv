@@ -1,0 +1,9 @@
+usn,name,branch,cgpa,semester,active_backlogs,quantitative_aptitude,coding_benchmark,communication_rating,skills,internship,certification,project
+4JN25CS041,Aditya Kulkarni,Computer Science & Engineering,8.95,7,0,92.0,94.0,8.5,"Python:9.0,DSA:9.0,SQL:8.0,Docker:8.0",Google:Intern:6,AWS Solution Architect,Distributed Cache Engine
+4JN25CS042,Sneha Reddy,Computer Science & Engineering,8.60,7,0,85.0,88.0,8.0,"Java:8.5,Spring Boot:8.0,SQL:8.0,DSA:7.5",Microsoft:Intern:3,Oracle Java SE,Banking Microservices
+4JN25CS043,Kiran Joshi,Information Science & Engineering,7.40,7,1,72.0,65.0,6.5,"Python:6.0,Django:6.0,HTML:7.0",None,None,E-Commerce Web Portal
+4JN25CS044,Tanvi Deshmukh,Computer Science & Engineering,9.10,7,0,94.0,91.0,8.8,"Python:9.0,Machine Learning:8.5,SQL:8.5,DSA:8.0",Amazon:Intern:6,Deep Learning Specialization,Medical Image Classifier
+4JN25CS045,Vikas Gowda,Electronics & Communication Engineering,6.80,7,2,60.0,55.0,5.8,"C:6.0,C++:5.5,Embedded:6.0",None,None,Smart IoT Weather Station
+4JN25CS046,Meera Nair,Computer Science & Engineering,8.25,7,0,81.0,82.0,7.8,"React:8.5,Node.js:8.0,MongoDB:7.5,DSA:7.0",Swiggy:Intern:3,Meta Frontend Developer,Collaborative Whiteboard
+4JN25CS047,Rohan Rao,Computer Science & Engineering,7.90,7,0,76.0,74.0,7.2,"Java:7.5,DSA:7.0,MySQL:7.0",None,None,Hospital Management System
+4JN25CS048,Ananya Hegde,Information Science & Engineering,8.75,7,0,89.0,86.0,8.2,"Python:8.5,SQL:8.0,AWS:7.5,DSA:8.0",Cisco:Intern:4,AWS Cloud Practitioner,Cloud Security Auditing

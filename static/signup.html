@@ -296,6 +296,26 @@
           <div class="section-title">📄 Upload Your CV / Resume</div>
           <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Our AI (Ollama llama3.2) will extract your name, skills, projects, certifications, and education automatically from your PDF resume.</p>
 
+          <div style="margin-bottom:16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <span style="font-size:12.5px;font-weight:700;color:#93c5fd;display:flex;align-items:center;gap:6px">
+                ⚡ <span>Hackathon Judge Live Demo Resumes</span>
+              </span>
+              <span style="font-size:11px;color:var(--muted)">One-click test or download</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" onclick="loadDemoCV('strong')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+                ⚡ One-Click Load Aarav's CV (Top SDE)
+              </button>
+              <button type="button" onclick="loadDemoCV('needs')" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+                ⚡ Load Rahul's CV (Gaps Demo)
+              </button>
+              <a href="/static/demo/sample_cv_strong_candidate.pdf" download="Aarav_Sharma_Resume.pdf" style="text-decoration:none;background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:4px">
+                📥 Download PDF
+              </a>
+            </div>
+          </div>
+
           <div class="cv-dropzone" id="cv-dropzone" onclick="document.getElementById('cv-file').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
             <span class="cv-icon" id="cv-icon">📄</span>
             <div class="cv-title" id="cv-title">Drop your CV here or click to browse</div>
@@ -410,6 +430,32 @@
       document.getElementById('cv-file-name').style.display = 'block';
       document.getElementById('btn-cv-submit').disabled = false;
       hideError();
+    }
+
+    // ── Live Demo Sample CV Loader ──
+    async function loadDemoCV(type = 'strong') {
+      try {
+        const filename = type === 'strong' ? 'sample_cv_strong_candidate.pdf' : 'sample_cv_needs_training.pdf';
+        const displayName = type === 'strong' ? 'Aarav_Sharma_SDE_Resume.pdf' : 'Rahul_Kumar_Resume.pdf';
+        const resp = await fetch(`/static/demo/${filename}`);
+        if (!resp.ok) throw new Error('Could not fetch sample CV from /static/demo/');
+        const blob = await resp.blob();
+        const file = new File([blob], displayName, { type: 'application/pdf' });
+        setFile(file);
+        document.getElementById('cv-pass').value = 'pass@123';
+        const randomDigits = Math.floor(100 + Math.random() * 899);
+        if (type === 'strong') {
+          document.getElementById('cv-usn').value = '4JN25CS' + randomDigits;
+          document.getElementById('cv-github').value = 'aarav-dev';
+          document.getElementById('cv-leetcode').value = 'aarav_codes';
+        } else {
+          document.getElementById('cv-usn').value = '4JN25CS' + randomDigits;
+          document.getElementById('cv-github').value = 'rahul-dev';
+          document.getElementById('cv-leetcode').value = '';
+        }
+      } catch (err) {
+        showError('Sample CV failed to load: ' + err.message);
+      }
     }
 
     // ── Error/success handling ──
