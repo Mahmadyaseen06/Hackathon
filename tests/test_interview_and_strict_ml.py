@@ -78,3 +78,29 @@ def test_compute_round_breakdown():
     assert breakdown[1]["score"] == 70
     assert breakdown[2]["round_id"] == 3
     assert breakdown[2]["score"] == 90
+
+def test_interview_transcribe_audio_endpoint():
+    """Verify the audio transcription endpoint handles uploaded audio streams safely."""
+    from fastapi.testclient import TestClient
+    from api.main import app
+    client = TestClient(app)
+
+    # Test short/invalid audio payload returns graceful JSON error
+    resp_empty = client.post(
+        "/api/interview/transcribe-audio",
+        files={"audio": ("empty.wav", b"short", "audio/wav")}
+    )
+    assert resp_empty.status_code == 200
+    data_empty = resp_empty.json()
+    assert data_empty["success"] is False
+    assert "too short" in data_empty["error"]
+
+    # Test with dummy 200-byte payload doesn't crash server
+    resp_dummy = client.post(
+        "/api/interview/transcribe-audio",
+        files={"audio": ("test.wav", b"\x00" * 256, "audio/wav")}
+    )
+    assert resp_dummy.status_code == 200
+    data_dummy = resp_dummy.json()
+    assert "success" in data_dummy
+
