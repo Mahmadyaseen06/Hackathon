@@ -179,3 +179,45 @@ def test_professional_hr_progression_and_self_intro(student_auth):
     # Q5 must be Company Alignment
     assert "google" in questions[4]["question"].lower()
 
+def test_adaptive_project_selection_and_followup(student_auth):
+    # Case A: Candidate explicitly mentions a project ("Cluster Manager")
+    resp = client.post(
+        "/api/interview/analyze-answer",
+        json={
+            "usn": student_auth["usn"],
+            "token": student_auth["token"],
+            "company": "Google",
+            "question_index": 0,
+            "question": "Welcome to your interview with Google. To start off, please introduce yourself — tell me about your background, the core engineering domains you specialize in, and give me a brief overview of the projects you have built.",
+            "spoken_answer": "Hi, I am Priya Patel. I study computer science and I built a Cluster Manager project to orchestrate containers across nodes.",
+            "topic": "Self-Introduction & Background",
+            "track": "project_defense"
+        }
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "next_question" in data
+    next_q = data["next_question"]
+    assert next_q["round_id"] == 1
+    assert "cluster manager" in next_q["question"].lower() or "cluster manager" in str(next_q.get("project_name", "")).lower()
+
+    # Case B: Candidate introduces themselves without mentioning a specific project
+    resp_no_proj = client.post(
+        "/api/interview/analyze-answer",
+        json={
+            "usn": "",
+            "token": student_auth["token"],
+            "company": "Amazon",
+            "question_index": 0,
+            "question": "Welcome to your interview with Amazon. To start off, please introduce yourself.",
+            "spoken_answer": "Hello, I am a software engineer passionate about backend distributed systems and algorithmic problem solving.",
+            "topic": "Self-Introduction & Background",
+            "track": "project_defense"
+        }
+    )
+    assert resp_no_proj.status_code == 200
+    data_no_proj = resp_no_proj.json()
+    assert "next_question" in data_no_proj
+    next_q_no_proj = data_no_proj["next_question"]
+    assert "project" in next_q_no_proj["question"].lower()
+

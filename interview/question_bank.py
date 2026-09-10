@@ -602,12 +602,12 @@ def get_project_defense_interview_rounds(company: str, student_projects: list = 
             "round_id": 1,
             "round_name": "Round 1: Project Architecture & Technical Defense",
             "round_type": "project_defense",
-            "project_name": "Self-Introduction & Background",
-            "question": f"Welcome to your interview with {company}. To start off, please introduce yourself — walk me through your academic journey, the core engineering domains you specialize in, and what motivated you to pursue software engineering.",
+            "project_name": "Self-Introduction & Projects Overview",
+            "question": f"Welcome to your interview with {company}. To start off, please introduce yourself — tell me about your background, the core engineering domains you specialize in, and give me a brief overview of the projects you have built.",
             "topic": "Self-Introduction & Background",
             "difficulty": "Easy",
             "claimed_level": 6,
-            "voice_prompt": f"Hello and welcome to your {company} interview! To get started, please introduce yourself, your academic background, and what drives your passion in software engineering."
+            "voice_prompt": f"Hello and welcome to your {company} interview! To get started, please introduce yourself, your academic background, and tell me briefly about the projects you have built."
         }
     ]
 

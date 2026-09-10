@@ -309,6 +309,193 @@ Write ONE follow-up question (1-2 sentences max). Be direct. No preamble, no "Go
         return "Interesting — can you walk me through a real example where this applies, step by step?"
 
 
+def _extract_project_mention(answer: str, candidate_projects: list = None) -> Optional[str]:
+    """Extract a specific project name from candidate's spoken text or known profile."""
+    if not answer:
+        if candidate_projects and len(candidate_projects) > 0:
+            first = candidate_projects[0]
+            return first.get("name") if isinstance(first, dict) else str(first)
+        return None
+
+    # Check candidate profile projects first
+    if candidate_projects:
+        for p in candidate_projects:
+            name = p.get("name") if isinstance(p, dict) else str(p)
+            if name.lower() in answer.lower():
+                return name
+            words = [w for w in name.split() if len(w) > 4]
+            for w in words:
+                if w.lower() in answer.lower():
+                    return name
+
+    # Regex patterns for phrases like "built X", "worked on X", "project called X", "project is X"
+    patterns = [
+        r'(?:built|developed|created|worked on|architected|project called|project named|my project)\s+(?:a|an|the)?\s*([A-Za-z0-9\s\-]{3,35})',
+        r'([A-Za-z0-9\s\-]{3,25})\s+project',
+    ]
+    for pat in patterns:
+        m = re.search(pat, answer, re.IGNORECASE)
+        if m:
+            candidate = m.group(1).strip()
+            stopwords = {"system", "app", "application", "website", "few", "lot", "bunch", "couple", "it", "this", "that", "some"}
+            if candidate.lower() not in stopwords and len(candidate.split()) <= 4:
+                return candidate.title()
+
+    if candidate_projects and len(candidate_projects) > 0:
+        first = candidate_projects[0]
+        return first.get("name") if isinstance(first, dict) else str(first)
+
+    return None
+
+
+async def generate_adaptive_next_question(
+    current_index: int,
+    company: str,
+    last_question: str,
+    last_answer: str,
+    all_qa_history: list = None,
+    student_projects: list = None,
+    student_skills: dict = None
+) -> dict:
+    """
+    HackerRank-style Adaptive AI Interview Progression:
+    Stage 0 (current_index=0 completed): Selects candidate's project or asks for best project architecture.
+    Stage 1 (current_index=1 completed): Probes technical trade-offs, concurrency, or failure modes on that architecture.
+    Stage 2 (current_index=2 completed): Asks STAR behavioral question about deadlines, conflict, or teamwork.
+    Stage 3 (current_index=3 completed): Asks about company culture fit and career alignment.
+    Stage 4 (current_index=4 completed): Concludes the interview (is_final=True).
+    """
+    all_qa = all_qa_history or []
+    ollama_ok = await _is_ollama_running()
+
+    # Stage 0 -> Stage 1: Candidate completed Self-Introduction & Overview
+    if current_index == 0:
+        detected_project = _extract_project_mention(last_answer, student_projects)
+        if detected_project:
+            q_text = f"You mentioned your project '{detected_project}'. Let's dive into that. Walk me through the system architecture: what real-world problem does it solve, and how does data flow across its core components?"
+            voice_prompt = f"You mentioned your project '{detected_project}'. Walk me through the system architecture and how data flows across your components."
+            project_label = detected_project
+        else:
+            q_text = "Tell me about one of your best software engineering projects: what real-world problem did you set out to solve, how did you architect the system, and what was your specific technical role?"
+            voice_prompt = "Tell me about one of your best software projects: what problem did you set out to solve, and walk me through its system architecture."
+            project_label = "Flagship Engineering Project"
+
+        if ollama_ok and last_answer and len(last_answer) > 20:
+            prompt = f"""You are a senior {company} interviewer in an AI mock room.
+The candidate just completed their self-introduction:
+"{last_answer}"
+Detected or profile project: {detected_project or 'None specified'}
+
+Goal:
+If they mentioned a specific project, ask them directly to explain that project's architecture and data flow.
+If they did not name a project, ask them to pick their best project and walk through its architecture.
+Write ONE direct, conversational interview question (1-2 sentences). Return ONLY the question."""
+            try:
+                ai_q = await _ollama_chat(prompt, max_tokens=70)
+                cleaned = ai_q.strip().strip('"').replace('\n', ' ').strip()
+                if len(cleaned) > 20 and "?" in cleaned:
+                    q_text = cleaned
+                    voice_prompt = cleaned
+            except Exception:
+                pass
+
+        return {
+            "round_id": 1,
+            "round_name": "Round 1: Project Architecture & Technical Defense",
+            "round_type": "project_defense",
+            "project_name": project_label,
+            "question": q_text,
+            "topic": f"System Architecture ({project_label})",
+            "difficulty": "Medium",
+            "claimed_level": 7,
+            "voice_prompt": voice_prompt,
+            "is_final": False
+        }
+
+    # Stage 1 -> Stage 2: Candidate explained Project Architecture
+    elif current_index == 1:
+        fallback_project = _extract_project_mention(last_answer, student_projects) or "this project"
+        q_text = f"In that architecture, what were the most critical technical trade-offs you evaluated (e.g. database, caching, or framework choices)? What was the hardest failure mode, concurrency bottleneck, or production bug you resolved?"
+        voice_prompt = "In that architecture, what was the hardest technical trade-off or failure mode you encountered, and how did you resolve it?"
+
+        if ollama_ok and last_answer and len(last_answer) > 20:
+            prompt = f"""You are a senior {company} engineering director.
+The candidate just explained their system architecture:
+"{last_answer}"
+
+Goal:
+Challenge ONE technical decision, trade-off, or failure mode they described (e.g. concurrency, database bottlenecks, caching, or error recovery).
+Write ONE direct, probing question (1-2 sentences max). Return ONLY the question."""
+            try:
+                ai_q = await _ollama_chat(prompt, max_tokens=70)
+                cleaned = ai_q.strip().strip('"').replace('\n', ' ').strip()
+                if len(cleaned) > 20 and "?" in cleaned:
+                    q_text = cleaned
+                    voice_prompt = cleaned
+            except Exception:
+                pass
+
+        return {
+            "round_id": 1,
+            "round_name": "Round 1: Project Architecture & Technical Defense",
+            "round_type": "project_defense",
+            "project_name": fallback_project,
+            "question": q_text,
+            "topic": f"Trade-offs & Failure Modes",
+            "difficulty": "Hard",
+            "claimed_level": 8,
+            "voice_prompt": voice_prompt,
+            "is_final": False
+        }
+
+    # Stage 2 -> Stage 3: Candidate defended trade-offs -> advance to STAR Behavioral
+    elif current_index == 2:
+        q_text = f"That demonstrates solid engineering problem-solving. Now, while building software or collaborating in a team, tell me about a time you faced a strict delivery deadline or conflicting technical priorities with a team member. Using the STAR framework (Situation, Task, Action, Result), how did you handle it and what was the quantifiable outcome?"
+        voice_prompt = "Using the STAR method, tell me about a time you handled a strict deadline or team disagreement while delivering software."
+
+        return {
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Corporate HR Round",
+            "round_type": "behavioral",
+            "project_name": "STAR Behavioral Framework",
+            "question": q_text,
+            "topic": "STAR: Conflict & Deadline Delivery",
+            "difficulty": "Medium",
+            "claimed_level": 7,
+            "voice_prompt": voice_prompt,
+            "is_final": False
+        }
+
+    # Stage 3 -> Stage 4: Candidate answered STAR -> advance to Company Culture & Alignment
+    elif current_index == 3:
+        q_text = f"Thank you for sharing that experience. To conclude our interview, why are you specifically targeting {company}, and how do your technical strengths and long-term career aspirations align with our engineering culture?"
+        voice_prompt = f"Lastly, why {company}, and how do your long-term career aspirations align with our engineering culture?"
+
+        return {
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Corporate HR Round",
+            "round_type": "behavioral",
+            "project_name": f"{company} Alignment",
+            "question": q_text,
+            "topic": f"{company} Cultural Alignment & Fit",
+            "difficulty": "Medium",
+            "claimed_level": 7,
+            "voice_prompt": voice_prompt,
+            "is_final": False
+        }
+
+    # Stage 4+: Final question completed
+    else:
+        return {
+            "round_id": 2,
+            "round_name": "Round 2: Behavioral & Corporate HR Round",
+            "round_type": "behavioral",
+            "question": "Interview Completed.",
+            "topic": "Evaluation Complete",
+            "is_final": True
+        }
+
+
 async def generate_interviewer_speech(
     question: str,
     answer: str,
@@ -375,7 +562,10 @@ Return ONLY the spoken sentences."""
         pass
 
     if is_intro_q:
-        return f"Thank you for sharing your background and engineering trajectory. Let's move on to the systems and projects you have engineered."
+        detected = _extract_project_mention(answer)
+        if detected:
+            return f"Thank you for that overview. You mentioned your project '{detected}' — let's dive into that. Walk me through the system architecture and how data flows across your components."
+        return "Thank you for that background overview. Tell me about one of your best software projects: what problem did you set out to solve and what was your architecture?"
     if is_arch_q:
         return "Good breakdown of the system components and data flow. What was the single most difficult technical trade-off or failure mode you hit?"
     if is_tradeoff_q:

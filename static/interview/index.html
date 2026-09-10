@@ -1753,10 +1753,21 @@ async function submitAnswer() {
         topic: q.topic,
         claimed_skill_level: q.claimed_level || 5,
         company: selectedCompany,
-        question_type: q.type || 'technical'
+        question_type: q.type || 'technical',
+        track: selectedTrack,
+        qa_history: qAnswers
       })
     });
     const analysis = await res.json();
+
+    if (analysis.next_question) {
+      if (analysis.next_question.is_final) {
+        // Final question completed
+      } else {
+        // HackerRank-style dynamic adaptive question: update next question slot!
+        questions[currentQIndex + 1] = analysis.next_question;
+      }
+    }
 
     qAnswers.push({
       round_id: currentRoundId,

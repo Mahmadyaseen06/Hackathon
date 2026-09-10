@@ -42,7 +42,10 @@ from auth import (
     update_student_profile, batch_upsert_students
 )
 from interview.question_bank import get_calibrated_questions, get_company_interview_rounds, COMPANY_PROFILES
-from interview.analyzer import analyze_answer, generate_followup, generate_full_interview_report, generate_interviewer_speech
+from interview.analyzer import (
+    analyze_answer, generate_followup, generate_full_interview_report,
+    generate_interviewer_speech, generate_adaptive_next_question
+)
 
 # ML imports (preserved from v2)
 from ml.pipeline import extract_features_from_student as extract_features
@@ -140,6 +143,8 @@ class AnswerSubmitRequest(BaseModel):
     language: Optional[str] = None
     execution_result: Optional[dict] = None
     question_type: Optional[str] = "technical"
+    track: Optional[str] = "technical"
+    qa_history: Optional[list] = None
 
 class CodeExecuteRequest(BaseModel):
     code: str
@@ -836,6 +841,24 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
         result["score"] = blended
 
     result["interviewer_speech"] = spoken_reply
+
+    student = get_student_by_usn(req.usn) if req.usn else None
+    student_projects = student.get("projects", []) if student else []
+    student_skills = student.get("skills", {}) if student else {}
+
+    try:
+        next_q = await generate_adaptive_next_question(
+            current_index=req.question_index or 0,
+            company=req.company or "Company",
+            last_question=req.question,
+            last_answer=spoken,
+            all_qa_history=req.qa_history or [],
+            student_projects=student_projects,
+            student_skills=student_skills
+        )
+        result["next_question"] = next_q
+    except Exception as e:
+        log.warning(f"Adaptive next question generation error: {e}")
 
     return result
 
