@@ -1106,5 +1106,38 @@
         "aggregate_activity_score": 52.5
       }
     ]
+  },
+  {
+    "usn": "4JN25CS087",
+    "password": "123456",
+    "name": "jeevan",
+    "branch": "Computer Science & Engineering",
+    "semester": 3,
+    "cgpa": 7.55,
+    "active_backlogs": 0,
+    "backlogs_history": 0,
+    "quantitative_aptitude": 70,
+    "logical_reasoning": 70,
+    "coding_benchmark": 70,
+    "communication_rating": 7.0,
+    "interview_rating": 7.0,
+    "target_role": "SDE",
+    "target_lpa": 50.0,
+    "skills": {
+      "python": 5
+    },
+    "certifications": [],
+    "internships": [],
+    "projects": [],
+    "github_username": "JeevanM26",
+    "leetcode_username": "",
+    "hackerrank_username": "",
+    "codeforces_username": "",
+    "email": "mjeevan@gmail.com",
+    "phone": "7975182162",
+    "self_registered": true,
+    "interview_history": [],
+    "platform_stats": {},
+    "platform_stats_history": []
   }
 ]
