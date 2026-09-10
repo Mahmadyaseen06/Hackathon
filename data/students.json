@@ -5,44 +5,32 @@
     "name": "Priya Patel",
     "branch": "Computer Science & Engineering",
     "semester": 7,
-    "cgpa": 8.85,
+    "cgpa": 8.95,
     "tenth_percentage": 92.4,
     "twelfth_percentage": 89.0,
     "backlogs_history": 0,
     "active_backlogs": 0,
-    "quantitative_aptitude": 88,
+    "quantitative_aptitude": 88.0,
     "logical_reasoning": 92,
-    "coding_benchmark": 90,
-    "communication_rating": 8.5,
+    "coding_benchmark": 85.0,
+    "communication_rating": 8.2,
     "interview_rating": 8.0,
     "target_role": "Full-Stack Developer",
     "target_lpa": 16.0,
     "skills": {
-      "JavaScript": 9,
-      "React": 8,
-      "Node.js": 8,
-      "SQL": 7,
-      "REST APIs": 8,
-      "Git": 9,
-      "TypeScript": 7,
-      "Docker": 6,
-      "Python": 7,
-      "DSA": 8
+      "Python": 9.0,
+      "DSA": 8.0,
+      "SQL": 8.0,
+      "Kubernetes": 7.0
     },
     "certifications": [
-      "AWS Certified Solutions Architect Associate",
-      "DeepLearning.AI TensorFlow Developer"
+      "AWS Solution Architect"
     ],
     "internships": [
-      {
-        "company": "FinTech Innovations",
-        "role": "Full-Stack Intern",
-        "duration_months": 3
-      }
+      "Stripe:Intern:6"
     ],
     "projects": [
-      "Distributed Cache with Raft Consensus",
-      "Real-Time Fraud Detection Engine"
+      "Cluster Manager"
     ],
     "github_username": "priya-dev-coder",
     "leetcode_username": "priya_codes",
@@ -1455,6 +1443,107 @@
     "certifications": [],
     "projects": [
       "IoT Sensor Node"
+    ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25CS199",
+    "name": "Vikram Seth",
+    "branch": "Computer Science & Engineering",
+    "cgpa": 8.7,
+    "semester": 7,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 88.0,
+    "coding_benchmark": 85.0,
+    "communication_rating": 8.2,
+    "skills": {
+      "Python": 9.0,
+      "DSA": 8.0,
+      "SQL": 8.0,
+      "React": 8.0
+    },
+    "internships": [
+      "Amazon:SDE Intern:6"
+    ],
+    "certifications": [
+      "AWS Certified Developer"
+    ],
+    "projects": [
+      "Real-time Chat Engine"
+    ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25IS199",
+    "name": "Meera Sen",
+    "branch": "Information Science & Engineering",
+    "cgpa": 7.6,
+    "semester": 7,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 74.0,
+    "coding_benchmark": 72.0,
+    "communication_rating": 7.5,
+    "skills": {
+      "Python": 7.0,
+      "SQL": 7.0,
+      "Java": 6.0
+    },
+    "internships": [
+      "Wipro:Intern:3"
+    ],
+    "certifications": [
+      "Oracle SQL Certified"
+    ],
+    "projects": [
+      "Hospital Management"
+    ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25CS999",
+    "name": "Ingestion Unit Test",
+    "branch": "Computer Science & Engineering",
+    "cgpa": 8.5,
+    "semester": 7,
+    "active_backlogs": 0,
+    "skills": {
+      "Python": 8.0,
+      "DSA": 8.0
+    },
+    "internships": [
+      "Tech Corp:Intern:3"
+    ],
+    "certifications": [
+      "AWS Practitioner"
+    ],
+    "projects": [
+      "Test Engine"
+    ],
+    "password": "student123"
+  },
+  {
+    "usn": "4JN25AI888",
+    "name": "AI Student Test",
+    "branch": "Artificial Intelligence & Machine Learning",
+    "cgpa": 9.0,
+    "semester": 7,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 90.0,
+    "coding_benchmark": 88.0,
+    "communication_rating": 8.5,
+    "skills": {
+      "Python": 9.0,
+      "PyTorch": 8.0,
+      "DSA": 8.0
+    },
+    "internships": [
+      "OpenAI:Intern:6"
+    ],
+    "certifications": [
+      "TensorFlow Dev"
+    ],
+    "projects": [
+      "Vision App"
     ],
     "password": "student123"
   }

@@ -295,6 +295,75 @@
     }
     .analysis-score { font-size: 20px; font-weight: 800; }
     .analysis-verdict { font-size: 12px; font-weight: 700; margin-left: 8px; }
+
+    /* ── Modal & Form Styles ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 300; backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: #0c1120; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px; width: 720px; max-width: 95vw; max-height: 88vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 24px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .modal-close {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); cursor: pointer; padding: 6px 12px; font-size: 13px;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-tabs {
+      display: flex; gap: 8px; padding: 10px 24px; background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-tab-btn {
+      padding: 8px 16px; border-radius: 8px; border: 1px solid transparent;
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .modal-tab-btn.active {
+      background: var(--surface2); color: var(--text); border-color: rgba(99,102,241,0.4);
+    }
+    .modal-body { padding: 22px 24px; overflow-y: auto; flex: 1; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input, .form-textarea {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--primary); }
+    .skill-edit-row {
+      display: flex; align-items: center; gap: 12px; padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .skill-edit-name { width: 130px; font-size: 13px; font-weight: 600; }
+    .skill-edit-slider { flex: 1; accent-color: var(--primary); cursor: pointer; }
+    .skill-edit-val { width: 45px; text-align: right; font-size: 13px; font-weight: 700; color: var(--accent); }
+    .upload-zone {
+      border: 2px dashed rgba(99,102,241,0.35); border-radius: 14px; padding: 36px 20px;
+      text-align: center; background: rgba(99,102,241,0.03); cursor: pointer; transition: all 0.2s;
+    }
+    .upload-zone:hover { border-color: var(--primary); background: rgba(99,102,241,0.08); }
+    .btn-submit-modal {
+      width: 100%; padding: 12px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff; font-weight: 700; font-size: 14px; border: none; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99,102,241,0.3); transition: transform 0.15s;
+    }
+    .btn-submit-modal:hover { transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -375,6 +444,9 @@
                 <div class="info-chip">Backlogs: <strong id="profile-backlogs">—</strong></div>
               </div>
             </div>
+            <button onclick="openProfileModal()" style="margin-left:auto; display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; background:linear-gradient(135deg, #6366f1, #4f46e5); color:#fff; font-weight:600; font-size:13px; border:none; cursor:pointer; box-shadow:0 4px 14px rgba(99,102,241,0.3); transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+              ✏️ Ingest CSV / Edit Profile
+            </button>
           </div>
         </div>
 
@@ -1353,7 +1425,322 @@
     ).join('') || '<p style="color:var(--muted);font-size:13px">No projects loaded.</p>';
   }
 
+  // ── Profile & CSV Modal Logic ──
+  function openProfileModal() {
+    populateProfileForm();
+    document.getElementById('profile-modal').classList.add('active');
+  }
+
+  function closeProfileModal() {
+    document.getElementById('profile-modal').classList.remove('active');
+  }
+
+  function switchProfileTab(tab) {
+    document.getElementById('tab-btn-manual').classList.toggle('active', tab === 'manual');
+    document.getElementById('tab-btn-csv').classList.toggle('active', tab === 'csv');
+    document.getElementById('tab-content-manual').style.display = tab === 'manual' ? 'block' : 'none';
+    document.getElementById('tab-content-csv').style.display = tab === 'csv' ? 'block' : 'none';
+  }
+
+  function populateProfileForm() {
+    if (!studentData) return;
+    const u = studentData;
+    document.getElementById('edit-cgpa').value = u.cgpa || 7.0;
+    document.getElementById('edit-sem').value = u.semester || 7;
+    document.getElementById('edit-backlogs').value = u.active_backlogs || 0;
+    document.getElementById('edit-aptitude').value = u.quantitative_aptitude || 75;
+    document.getElementById('edit-coding').value = u.coding_benchmark || 70;
+    document.getElementById('edit-comm').value = u.communication_rating || 7;
+
+    const certsStr = Array.isArray(u.certifications) ? u.certifications.join('; ') : '';
+    document.getElementById('edit-certs').value = certsStr;
+
+    const projectsStr = Array.isArray(u.projects)
+      ? u.projects.map(p => typeof p === 'object' ? p.name : p).join('; ')
+      : '';
+    document.getElementById('edit-projects').value = projectsStr;
+
+    const internsStr = Array.isArray(u.internships)
+      ? u.internships.map(i => typeof i === 'object' ? `${i.company}:${i.role}:${i.duration_months||3}` : i).join('; ')
+      : '';
+    document.getElementById('edit-internships').value = internsStr;
+
+    renderEditSkillsList(u.skills || {});
+  }
+
+  function renderEditSkillsList(skills) {
+    const list = document.getElementById('edit-skills-list');
+    list.innerHTML = Object.entries(skills).map(([name, level]) => `
+      <div class="skill-edit-row" data-skill="${name}">
+        <span class="skill-edit-name">${name}</span>
+        <input type="range" min="1" max="10" step="1" value="${level}" class="skill-edit-slider" oninput="this.nextElementSibling.textContent=this.value+'/10'">
+        <span class="skill-edit-val">${level}/10</span>
+        <button type="button" onclick="this.parentElement.remove()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 4px">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function addCustomSkillRow() {
+    const skillName = prompt("Enter skill name (e.g. Docker, PyTorch, Kubernetes):");
+    if (!skillName || !skillName.trim()) return;
+    const name = skillName.trim();
+    const list = document.getElementById('edit-skills-list');
+    const div = document.createElement('div');
+    div.className = 'skill-edit-row';
+    div.dataset.skill = name;
+    div.innerHTML = `
+      <span class="skill-edit-name">${name}</span>
+      <input type="range" min="1" max="10" step="1" value="6" class="skill-edit-slider" oninput="this.nextElementSibling.textContent=this.value+'/10'">
+      <span class="skill-edit-val">6/10</span>
+      <button type="button" onclick="this.parentElement.remove()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 4px">✕</button>
+    `;
+    list.prepend(div);
+  }
+
+  async function saveProfileForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-profile');
+    const msg = document.getElementById('edit-form-msg');
+    btn.disabled = true;
+    btn.textContent = 'Saving updates...';
+    msg.style.display = 'none';
+
+    // Collect skills
+    const skills = {};
+    document.querySelectorAll('#edit-skills-list .skill-edit-row').forEach(row => {
+      const sk = row.dataset.skill;
+      const val = parseFloat(row.querySelector('input').value);
+      if (sk) skills[sk] = val;
+    });
+
+    const certs = document.getElementById('edit-certs').value.split(';').map(x=>x.trim()).filter(Boolean);
+    const projects = document.getElementById('edit-projects').value.split(';').map(x=>x.trim()).filter(Boolean).map(n => ({
+      name: n, complexity: 'Intermediate', tags: ['Portfolio', 'Academic']
+    }));
+
+    const rawIntern = document.getElementById('edit-internships').value;
+    const internships = rawIntern.split(';').map(x=>x.trim()).filter(Boolean).map(item => {
+      const parts = item.split(':');
+      return {
+        company: parts[0] || 'Tech Corp',
+        role: parts[1] || 'Intern',
+        duration_months: parseInt(parts[2]) || 3
+      };
+    });
+
+    const updates = {
+      cgpa: parseFloat(document.getElementById('edit-cgpa').value),
+      semester: parseInt(document.getElementById('edit-sem').value),
+      active_backlogs: parseInt(document.getElementById('edit-backlogs').value),
+      quantitative_aptitude: parseFloat(document.getElementById('edit-aptitude').value),
+      coding_benchmark: parseFloat(document.getElementById('edit-coding').value),
+      communication_rating: parseFloat(document.getElementById('edit-comm').value),
+      skills,
+      certifications: certs,
+      projects,
+      internships
+    };
+
+    try {
+      const res = await fetch(`${API}/api/student/profile`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ usn, token, updates })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        msg.style.display = 'block';
+        msg.style.background = 'rgba(16,185,129,0.15)';
+        msg.style.color = '#34d399';
+        msg.textContent = 'Profile successfully updated! Recalculating AI employability...';
+        await loadProfile();
+        await loadScore();
+        await loadRoadmap();
+        await loadResources();
+        await loadProjects();
+        setTimeout(() => closeProfileModal(), 900);
+      } else {
+        throw new Error(data.detail || 'Failed to update profile');
+      }
+    } catch (err) {
+      msg.style.display = 'block';
+      msg.style.background = 'rgba(239,68,68,0.15)';
+      msg.style.color = '#f87171';
+      msg.textContent = 'Error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Save Profile & Re-Predict Live';
+    }
+  }
+
+  function handleStudentCsvSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      document.getElementById('csv-file-name').textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    }
+  }
+
+  function downloadSampleStudentCsv() {
+    const csvContent = "cgpa,semester,active_backlogs,quantitative_aptitude,coding_benchmark,communication_rating,skills,certifications,projects,internships\n" +
+      "8.5,7,0,85,82,8.0,\"Python:8,DSA:8,SQL:7,React:7,Docker:6\",\"AWS Certified Cloud Practitioner; Kubernetes Fundamentals\",\"Distributed Cache; Placement Predictor AI\",\"Google:Software Intern:3; Razorpay:Backend Intern:3\"";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `student_profile_${usn}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  async function uploadStudentCsv() {
+    const fileInput = document.getElementById('student-csv-file');
+    const msg = document.getElementById('csv-upload-msg');
+    const btn = document.getElementById('btn-upload-csv');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert("Please select a CSV file first.");
+      return;
+    }
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('usn', usn);
+    formData.append('token', token);
+    formData.append('file', file);
+
+    btn.disabled = true;
+    btn.textContent = 'Ingesting CSV...';
+    msg.style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/api/student/upload-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        msg.style.display = 'block';
+        msg.style.background = 'rgba(16,185,129,0.15)';
+        msg.style.color = '#34d399';
+        msg.textContent = `Successfully synchronized fields: ${data.updated_fields?.join(', ')}`;
+        await loadProfile();
+        await loadScore();
+        await loadRoadmap();
+        await loadResources();
+        await loadProjects();
+        setTimeout(() => closeProfileModal(), 1000);
+      } else {
+        throw new Error(data.detail || 'CSV upload failed');
+      }
+    } catch(err) {
+      msg.style.display = 'block';
+      msg.style.background = 'rgba(239,68,68,0.15)';
+      msg.style.color = '#f87171';
+      msg.textContent = 'Error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 Ingest CSV & Update';
+    }
+  }
+
   init();
   </script>
+
+  <!-- Profile & CSV Ingestion Modal -->
+  <div class="modal-overlay" id="profile-modal" onclick="if(event.target===this) closeProfileModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Student Profile & Ingestion Engine</div>
+        <button class="modal-close" onclick="closeProfileModal()">✕ Close</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="tab-btn-manual" onclick="switchProfileTab('manual')">📝 Multi-Tier Profile Form</button>
+        <button class="modal-tab-btn" id="tab-btn-csv" onclick="switchProfileTab('csv')">📂 CSV Bulk Ingestion</button>
+      </div>
+
+      <div class="modal-body" id="tab-content-manual">
+        <form id="profile-edit-form" onsubmit="saveProfileForm(event)">
+          <div style="font-weight:700;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Academic Record</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">CGPA (0 - 10)</label>
+              <input type="number" step="0.01" min="0" max="10" id="edit-cgpa" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Semester</label>
+              <input type="number" min="1" max="8" id="edit-sem" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Active Backlogs</label>
+              <input type="number" min="0" max="20" id="edit-backlogs" class="form-input" required>
+            </div>
+          </div>
+
+          <div style="font-weight:700;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin:16px 0 12px">Aptitude & Coding Benchmarks</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Quantitative Aptitude (%)</label>
+              <input type="number" min="0" max="100" id="edit-aptitude" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Coding Assessment (%)</label>
+              <input type="number" min="0" max="100" id="edit-coding" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Communication (/10)</label>
+              <input type="number" step="0.1" min="1" max="10" id="edit-comm" class="form-input" required>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px">
+            <span style="font-weight:700;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px">Technical Skills & Proficiency (1-10)</span>
+            <button type="button" onclick="addCustomSkillRow()" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ Add Skill</button>
+          </div>
+          <div id="edit-skills-list" style="margin-bottom:16px;max-height:180px;overflow-y:auto;padding-right:6px">
+            <!-- Dynamically injected -->
+          </div>
+
+          <div style="font-weight:700;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin:16px 0 12px">Practical Portfolio & Certifications</div>
+          <div class="form-group">
+            <label class="form-label">Certifications (semicolon separated)</label>
+            <input type="text" id="edit-certs" class="form-input" placeholder="AWS Cloud Practitioner; Certified Kubernetes Admin">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Internships (format: Company:Role:Months; Company2:Role2:Months)</label>
+            <input type="text" id="edit-internships" class="form-input" placeholder="Infosys:Software Intern:3; Razorpay:Backend Intern:6">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Projects (semicolon separated names)</label>
+            <input type="text" id="edit-projects" class="form-input" placeholder="Distributed Cache in Go; Autonomous Drone Vision; PlaceIQ">
+          </div>
+
+          <div id="edit-form-msg" style="display:none;padding:10px;border-radius:8px;margin-bottom:14px;font-size:12px"></div>
+          <button type="submit" class="btn-submit-modal" id="btn-save-profile">💾 Save Profile & Re-Predict Live</button>
+        </form>
+      </div>
+
+      <div class="modal-body" id="tab-content-csv" style="display:none">
+        <div style="margin-bottom:20px;line-height:1.5;font-size:13px;color:var(--muted)">
+          Upload your student academic and skills transcript in CSV format to synchronize your digital employability profile across the institutional engine.
+        </div>
+
+        <div class="upload-zone" onclick="document.getElementById('student-csv-file').click()">
+          <input type="file" id="student-csv-file" accept=".csv" style="display:none" onchange="handleStudentCsvSelect(event)">
+          <div style="font-size:36px;margin-bottom:8px">📄</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px" id="csv-file-name">Click to select or drop CSV file here</div>
+          <div style="font-size:12px;color:var(--muted)">Accepted format: .csv (Columns: cgpa, semester, backlogs, skills, certifications, etc.)</div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button type="button" onclick="downloadSampleStudentCsv()" style="flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer">
+            📥 Download Sample Student CSV
+          </button>
+          <button type="button" class="btn-submit-modal" style="flex:1.5" id="btn-upload-csv" onclick="uploadStudentCsv()">
+            🚀 Ingest CSV & Update
+          </button>
+        </div>
+        <div id="csv-upload-msg" style="display:none;padding:10px;border-radius:8px;margin-top:14px;font-size:12px"></div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -324,7 +324,7 @@ async def student_upload_csv(usn: str = Form(...), token: str = Form(...), file:
         for k, v in row.items():
             if not v: continue
             k_lower = k.lower().strip()
-            if k_lower in ["cgpa", "tenth_percentage", "twelfth_percentage"]:
+            if k_lower in ["cgpa", "tenth_percentage", "twelfth_percentage", "quantitative_aptitude", "coding_benchmark", "communication_rating"]:
                 try: updates[k_lower] = float(v)
                 except: pass
             elif k_lower in ["semester", "active_backlogs", "backlogs_history"]:
@@ -947,6 +947,9 @@ async def tpo_upload_csv(token: str = Form(...), file: UploadFile = File(...)):
             "cgpa": float(row.get("cgpa") or row.get("CGPA") or 7.0),
             "semester": int(row.get("semester") or row.get("Semester") or 7),
             "active_backlogs": int(row.get("active_backlogs") or row.get("backlogs") or 0),
+            "quantitative_aptitude": float(row.get("quantitative_aptitude") or row.get("aptitude") or 75.0),
+            "coding_benchmark": float(row.get("coding_benchmark") or row.get("coding") or 75.0),
+            "communication_rating": float(row.get("communication_rating") or row.get("communication") or 7.0),
             "skills": skills,
             "internships": [row.get("internship")] if row.get("internship") else [],
             "certifications": [row.get("certification")] if row.get("certification") else [],

@@ -10,5 +10,4 @@
 - **Browser subagent Playwright driver 404**: Playwright 1.57.0 macOS arm64 driver download failed from Azure CDN. Handled with full automated test coverage in `tests/test_interview_and_strict_ml.py` and curl verification.
 - **Interviewer Talking-Back & Multi-Round Pipeline**: Integrated local Ollama `llama3.2:3b` with browser SpeechSynthesis, Monaco sandbox test runner, Web Audio visualizer, live webcam proctoring HUD, and 3-round progression (Coding OA -> Tech Deep Dive -> Leadership STAR). Verified end-to-end with 17 passing pytest tests and live API execution.
 - **TTS Voice Quality & Echoing Bug**: Fixed double-voice audio overlap by replacing fixed 2.8s transition timer with `utterance.onend` completion callback. Added 90ms audio buffer flush delay before `speak()`, microphone pause during synthesis to eliminate acoustic feedback, markdown text sanitizer (`cleanTextForSpeech`), and dynamic voice selector prioritizing natural voices (Google US English, Samantha, Daniel, Karen).
-
-
+- **CSV Ingestion & Student Profile Synchronization**: Added manual multi-tier profile editor and CSV ingestion engine for both Students and TPOs. Configured numeric parser for aptitude, coding benchmarks, and communication ratings, with client-side CSV template generation and instant re-prediction triggers.

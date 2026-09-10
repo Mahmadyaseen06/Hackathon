@@ -161,6 +161,7 @@
       <div class="nav-item" onclick="showSection('branches')" id="nav-branches"><span class="nav-icon">🏫</span> Branch Breakdown</div>
       <div class="nav-item" onclick="showSection('interviews')" id="nav-interviews"><span class="nav-icon">🎤</span> Interview Results</div>
       <div class="nav-section">Actions</div>
+      <div class="nav-item" onclick="openBatchUploadModal()"><span class="nav-icon">📤</span> Ingest Cohort CSV</div>
       <div class="nav-item" onclick="showSection('alerts')" id="nav-alerts"><span class="nav-icon">🔔</span> Alerts <span id="alert-count" style="margin-left:auto; background:var(--danger); color:white; font-size:10px; padding:2px 6px; border-radius:10px; display:none"></span></div>
     </nav>
     <div class="sidebar-bottom">
@@ -174,7 +175,12 @@
         <div class="page-title" id="page-title">Batch Overview</div>
         <div class="page-subtitle" id="page-subtitle">JNNCSE Placement Intelligence Dashboard</div>
       </div>
-      <div style="font-size:13px; color:var(--muted)" id="last-updated">Loading data...</div>
+      <div style="display:flex; align-items:center; gap:14px">
+        <button onclick="openBatchUploadModal()" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:700; font-size:13px; border:none; cursor:pointer; box-shadow:0 4px 14px rgba(245,158,11,0.25); transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+          📤 Ingest Cohort CSV
+        </button>
+        <div style="font-size:13px; color:var(--muted)" id="last-updated">Loading data...</div>
+      </div>
     </div>
 
     <div class="content">
@@ -565,7 +571,119 @@
   function closeModal(e) { if (e.target.id === 'student-modal') closeModalBtn(); }
   function closeModalBtn() { document.getElementById('student-modal').style.display = 'none'; }
 
+  // Batch Ingestion Modal
+  function openBatchUploadModal() {
+    document.getElementById('batch-upload-modal').style.display = 'block';
+    document.getElementById('batch-upload-msg').style.display = 'none';
+  }
+
+  function closeBatchUploadModal() {
+    document.getElementById('batch-upload-modal').style.display = 'none';
+  }
+
+  function handleBatchFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      document.getElementById('tpo-file-name').textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    }
+  }
+
+  function downloadBatchTemplateCsv() {
+    const csvContent = "usn,name,branch,cgpa,semester,active_backlogs,quantitative_aptitude,coding_benchmark,communication_rating,skills,internship,certification,project\n" +
+      "4JN25CS090,Rohan Mehta,Computer Science & Engineering,8.4,7,0,84,80,8.0,\"Python:8,DSA:8,SQL:7,React:7\",Cognizant:Web Intern:3,AWS Certified Cloud Practitioner,Distributed KV Store\n" +
+      "4JN25IS042,Ananya Rao,Information Science & Engineering,6.9,7,1,62,55,6.5,\"Python:5,SQL:5,HTML:7\",,,\"Simple Blog Website\"\n" +
+      "4JN25AI015,Karthik Sharma,Artificial Intelligence & Machine Learning,9.1,7,0,92,88,8.5,\"Python:9,DSA:8,PyTorch:8,SQL:8\",Bosch:AI Intern:6,Deep Learning Specialization,Medical Image Segmentation";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "tpo_cohort_batch_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  async function submitBatchCsv() {
+    const fileInput = document.getElementById('tpo-batch-file');
+    const msg = document.getElementById('batch-upload-msg');
+    const btn = document.getElementById('btn-batch-upload');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert("Please choose a CSV file to upload.");
+      return;
+    }
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('file', file);
+
+    btn.disabled = true;
+    btn.textContent = 'Processing Cohort...';
+    msg.style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/api/tpo/upload-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        msg.style.display = 'block';
+        msg.style.background = 'rgba(16,185,129,0.15)';
+        msg.style.color = '#34d399';
+        msg.textContent = `Success! Ingested ${data.imported_count} student records into institutional database.`;
+        await loadOverview();
+        await loadStudents();
+        await loadHeatmap();
+        await loadBranches();
+        await loadAlerts();
+        setTimeout(() => closeBatchUploadModal(), 1200);
+      } else {
+        throw new Error(data.detail || 'Failed to ingest batch CSV');
+      }
+    } catch(err) {
+      msg.style.display = 'block';
+      msg.style.background = 'rgba(239,68,68,0.15)';
+      msg.style.color = '#f87171';
+      msg.textContent = 'Upload Error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 Ingest Cohort Records';
+    }
+  }
+
   init();
   </script>
+
+  <!-- Batch CSV Ingestion Modal -->
+  <div class="modal-overlay" id="batch-upload-modal" onclick="if(event.target===this) closeBatchUploadModal()">
+    <div class="modal" style="width:620px">
+      <button class="modal-close" onclick="closeBatchUploadModal()">✕ Close</button>
+      <h3 style="font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px">
+        📤 Batch Cohort CSV Ingestion
+      </h3>
+      <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:20px">
+        Import or synchronize an entire institutional batch into the PlaceIQ ML intelligence database. 
+        Supports multi-track skill matrices, backlogs, academic records, and interview benchmark scores.
+      </p>
+
+      <div class="upload-zone" onclick="document.getElementById('tpo-batch-file').click()" style="border: 2px dashed rgba(245,158,11,0.4); border-radius: 14px; padding: 32px 20px; text-align: center; background: rgba(245,158,11,0.03); cursor: pointer; transition: all 0.2s;">
+        <input type="file" id="tpo-batch-file" accept=".csv" style="display:none" onchange="handleBatchFileSelect(event)">
+        <div style="font-size:36px;margin-bottom:8px">📑</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px" id="tpo-file-name">Click to select or drop Cohort CSV</div>
+        <div style="font-size:12px;color:var(--muted)">Expected columns: usn, name, branch, cgpa, semester, active_backlogs, skills, internship, certification, project</div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:20px">
+        <button type="button" onclick="downloadBatchTemplateCsv()" style="flex:1; padding:11px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:13px; font-weight:600; cursor:pointer">
+          📥 Download Template
+        </button>
+        <button type="button" onclick="submitBatchCsv()" id="btn-batch-upload" style="flex:1.4; padding:11px; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; border-radius:10px; color:#fff; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(245,158,11,0.3)">
+          🚀 Ingest Cohort Records
+        </button>
+      </div>
+
+      <div id="batch-upload-msg" style="display:none; padding:12px; border-radius:8px; margin-top:16px; font-size:13px"></div>
+    </div>
+  </div>
 </body>
 </html>
