@@ -1,0 +1,149 @@
+{
+  "tracks": {
+    "full_stack": {
+      "id": "full_stack",
+      "title": "Full-Stack Developer",
+      "description": "Designs and builds end-to-end web applications with modern frontend frameworks and robust backend services.",
+      "target_lpa_range": "6 - 18 LPA",
+      "benchmarks": {
+        "cgpa": 7.0,
+        "dsa_aptitude": 75,
+        "system_design": 65,
+        "coding_benchmarks": 75,
+        "projects_count": 3,
+        "internships_count": 1,
+        "required_skills": {
+          "JavaScript": 8,
+          "React": 7,
+          "Node.js": 7,
+          "SQL": 7,
+          "REST APIs": 8,
+          "Git": 7
+        },
+        "preferred_skills": {
+          "TypeScript": 6,
+          "Docker": 6,
+          "MongoDB": 6,
+          "Next.js": 6,
+          "AWS": 5
+        }
+      }
+    },
+    "data_ai_ml": {
+      "id": "data_ai_ml",
+      "title": "Data Analyst / ML Engineer",
+      "description": "Applies statistical modeling, machine learning, and data analytics pipelines to solve data-intensive enterprise problems.",
+      "target_lpa_range": "8 - 22 LPA",
+      "benchmarks": {
+        "cgpa": 7.5,
+        "dsa_aptitude": 70,
+        "system_design": 60,
+        "coding_benchmarks": 75,
+        "projects_count": 3,
+        "internships_count": 1,
+        "required_skills": {
+          "Python": 8,
+          "SQL": 8,
+          "Machine Learning": 7,
+          "Pandas": 8,
+          "Statistics": 7,
+          "Data Visualization": 7
+        },
+        "preferred_skills": {
+          "Deep Learning": 6,
+          "PyTorch": 6,
+          "Power BI": 6,
+          "MLOps": 5,
+          "Docker": 5
+        }
+      }
+    },
+    "cloud_devops": {
+      "id": "cloud_devops",
+      "title": "Cloud / DevOps Engineer",
+      "description": "Automates cloud infrastructure, deployment pipelines, container orchestration, and system reliability.",
+      "target_lpa_range": "7 - 20 LPA",
+      "benchmarks": {
+        "cgpa": 7.0,
+        "dsa_aptitude": 65,
+        "system_design": 75,
+        "coding_benchmarks": 70,
+        "projects_count": 2,
+        "internships_count": 1,
+        "required_skills": {
+          "Linux": 8,
+          "Docker": 8,
+          "AWS": 7,
+          "CI/CD": 7,
+          "Git": 8,
+          "Bash": 7
+        },
+        "preferred_skills": {
+          "Kubernetes": 6,
+          "Terraform": 6,
+          "Azure": 6,
+          "Python": 6,
+          "GitHub Actions": 6
+        }
+      }
+    },
+    "qa_specialist": {
+      "id": "qa_specialist",
+      "title": "QA & Automation Specialist",
+      "description": "Ensures software quality, reliability, test automation coverage, and performance benchmarking across release cycles.",
+      "target_lpa_range": "5 - 12 LPA",
+      "benchmarks": {
+        "cgpa": 6.5,
+        "dsa_aptitude": 60,
+        "system_design": 50,
+        "coding_benchmarks": 65,
+        "projects_count": 2,
+        "internships_count": 1,
+        "required_skills": {
+          "Java": 7,
+          "Selenium": 7,
+          "Manual Testing": 8,
+          "Automation Testing": 7,
+          "SQL": 6,
+          "Git": 6
+        },
+        "preferred_skills": {
+          "Pytest": 6,
+          "Postman": 7,
+          "CI/CD": 5,
+          "Cypress": 6,
+          "JMeter": 5
+        }
+      }
+    },
+    "core_sde": {
+      "id": "core_sde",
+      "title": "Core Systems / SDE",
+      "description": "Focuses on high-performance algorithms, data structures, operating systems, and distributed system architectures.",
+      "target_lpa_range": "10 - 28 LPA",
+      "benchmarks": {
+        "cgpa": 8.0,
+        "dsa_aptitude": 85,
+        "system_design": 75,
+        "coding_benchmarks": 85,
+        "projects_count": 3,
+        "internships_count": 1,
+        "required_skills": {
+          "DSA": 9,
+          "C++": 8,
+          "Operating Systems": 8,
+          "System Design": 7,
+          "DBMS": 8,
+          "OOP": 8
+        },
+        "preferred_skills": {
+          "Competitive Programming": 7,
+          "Computer Networks": 7,
+          "Microservices": 6,
+          "Go": 6,
+          "Linux": 7
+        }
+      }
+    }
+  }
+}

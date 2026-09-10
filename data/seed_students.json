@@ -1,0 +1,198 @@
+[
+  {
+    "student_id": "STU-2026-001",
+    "name": "Priya Patel",
+    "branch": "Computer Science & Engineering",
+    "semester": 7,
+    "cgpa": 8.85,
+    "tenth_percentage": 92.4,
+    "twelfth_percentage": 89.0,
+    "backlogs_history": 0,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 88,
+    "logical_reasoning": 92,
+    "coding_benchmark": 90,
+    "communication_rating": 8.5,
+    "interview_rating": 8.0,
+    "target_role": "Full-Stack Developer",
+    "target_lpa": 16.0,
+    "projects": [
+      {"name": "E-Commerce Microservices", "complexity": "Advanced", "tags": ["React", "Node.js", "Docker", "MongoDB", "REST APIs"]},
+      {"name": "Realtime Collab Whiteboard", "complexity": "Intermediate", "tags": ["React", "TypeScript", "WebSocket"]},
+      {"name": "Portfolio Website", "complexity": "Beginner", "tags": ["JavaScript", "HTML", "CSS"]}
+    ],
+    "internships": [
+      {"company": "FinTech Innovations", "role": "Full-Stack Intern", "duration_months": 3, "description": "Built customer dashboard using React and Spring Boot"}
+    ],
+    "certifications": [
+      "AWS Certified Cloud Practitioner",
+      "Meta Front-End Developer Professional Certificate"
+    ],
+    "skills": {
+      "JavaScript": 9,
+      "React": 8,
+      "Node.js": 8,
+      "SQL": 7,
+      "REST APIs": 8,
+      "Git": 9,
+      "TypeScript": 7,
+      "Docker": 6,
+      "Python": 7,
+      "DSA": 8
+    },
+    "soft_skills": {
+      "Communication": 8.5,
+      "Teamwork": 9.0,
+      "Problem Solving": 9.0
+    },
+    "aptitude": {
+      "Quantitative": 88,
+      "Logical": 92,
+      "Coding": 90
+    },
+    "github_username": "priya-dev-coder",
+    "leetcode_username": "priya_codes"
+  },
+  {
+    "student_id": "STU-2026-002",
+    "name": "Rahul Sharma",
+    "branch": "Information Science & Engineering",
+    "semester": 7,
+    "cgpa": 7.15,
+    "tenth_percentage": 81.0,
+    "twelfth_percentage": 78.5,
+    "backlogs_history": 1,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 68,
+    "logical_reasoning": 72,
+    "coding_benchmark": 65,
+    "communication_rating": 7.0,
+    "interview_rating": 6.5,
+    "target_role": "Data Analyst / ML Engineer",
+    "target_lpa": 9.0,
+    "projects": [
+      {"name": "Customer Churn Prediction", "complexity": "Intermediate", "tags": ["Python", "scikit-learn", "Pandas"]},
+      {"name": "Sales Analytics Dashboard", "complexity": "Beginner", "tags": ["Python", "Excel", "Power BI"]}
+    ],
+    "internships": [
+      {"company": "Apex Analytics", "role": "Data Analyst Intern", "duration_months": 2, "description": "Analyzed retail sales trends"}
+    ],
+    "certifications": [
+      "Google Data Analytics Certificate"
+    ],
+    "skills": {
+      "Python": 7,
+      "SQL": 6,
+      "Pandas": 7,
+      "Machine Learning": 5,
+      "Data Visualization": 6,
+      "Statistics": 6,
+      "Git": 6,
+      "DSA": 5
+    },
+    "soft_skills": {
+      "Communication": 7.0,
+      "Teamwork": 7.5,
+      "Problem Solving": 6.5
+    },
+    "aptitude": {
+      "Quantitative": 68,
+      "Logical": 72,
+      "Coding": 65
+    },
+    "github_username": "rahul-sharma-data",
+    "leetcode_username": "rahul_s"
+  },
+  {
+    "student_id": "STU-2026-003",
+    "name": "Amit Verma",
+    "branch": "Electronics & Communication Engineering",
+    "semester": 7,
+    "cgpa": 5.92,
+    "tenth_percentage": 70.0,
+    "twelfth_percentage": 66.0,
+    "backlogs_history": 3,
+    "active_backlogs": 2,
+    "quantitative_aptitude": 52,
+    "logical_reasoning": 54,
+    "coding_benchmark": 42,
+    "communication_rating": 5.5,
+    "interview_rating": 5.0,
+    "target_role": "Full-Stack Developer",
+    "target_lpa": 5.5,
+    "projects": [
+      {"name": "Basic Calculator App", "complexity": "Beginner", "tags": ["Python", "Tkinter"]}
+    ],
+    "internships": [],
+    "certifications": [],
+    "skills": {
+      "C": 5,
+      "Python": 4,
+      "SQL": 3,
+      "Git": 3,
+      "DSA": 3
+    },
+    "soft_skills": {
+      "Communication": 5.5,
+      "Teamwork": 6.0,
+      "Problem Solving": 4.5
+    },
+    "aptitude": {
+      "Quantitative": 52,
+      "Logical": 54,
+      "Coding": 42
+    },
+    "github_username": "amit-v",
+    "leetcode_username": "amit_verma_26"
+  },
+  {
+    "student_id": "STU-2026-004",
+    "name": "Sneha Rao",
+    "branch": "Computer Science & Engineering",
+    "semester": 7,
+    "cgpa": 8.35,
+    "tenth_percentage": 89.0,
+    "twelfth_percentage": 86.0,
+    "backlogs_history": 0,
+    "active_backlogs": 0,
+    "quantitative_aptitude": 82,
+    "logical_reasoning": 85,
+    "coding_benchmark": 84,
+    "communication_rating": 8.0,
+    "interview_rating": 8.0,
+    "target_role": "Core Systems / SDE",
+    "target_lpa": 22.0,
+    "projects": [
+      {"name": "Custom Key-Value Store", "complexity": "Advanced", "tags": ["C++", "Operating Systems", "DSA"]},
+      {"name": "Distributed Task Queue", "complexity": "Advanced", "tags": ["Go", "Docker", "System Design"]}
+    ],
+    "internships": [
+      {"company": "InfraScale Labs", "role": "Systems Intern", "duration_months": 3, "description": "Optimized memory cache eviction"}
+    ],
+    "certifications": [
+      "Linux Foundation Certified System Administrator (LFCS)"
+    ],
+    "skills": {
+      "C++": 9,
+      "DSA": 9,
+      "Operating Systems": 8,
+      "System Design": 7,
+      "DBMS": 8,
+      "Linux": 8,
+      "Git": 8,
+      "OOP": 8
+    },
+    "soft_skills": {
+      "Communication": 8.0,
+      "Teamwork": 8.5,
+      "Problem Solving": 9.0
+    },
+    "aptitude": {
+      "Quantitative": 82,
+      "Logical": 85,
+      "Coding": 84
+    },
+    "github_username": "sneha-systems",
+    "leetcode_username": "sneha_rao"
+  }
+]
