@@ -119,32 +119,46 @@ def _analyze_communication_patterns(text: str) -> dict:
     }
 
 
-async def _ollama_chat(prompt: str, max_tokens: int = 500) -> str:
+import time
+
+_ollama_cache = {"running": None, "ts": 0}
+
+async def _ollama_chat(prompt: str, max_tokens: int = 180, format_json: bool = False) -> str:
     """Send a prompt to Ollama and get a response."""
     payload = {
         "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.05,  # Very low — we want deterministic strict judgment
+            "temperature": 0.05,  # Low for deterministic strict judgment
             "num_predict": max_tokens,
             "top_p": 0.8,
             "repeat_penalty": 1.1
         }
     }
-    async with httpx.AsyncClient(timeout=90.0) as client:
+    if format_json:
+        payload["format"] = "json"
+    async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload)
         response.raise_for_status()
         return response.json().get("response", "").strip()
 
 
 async def _is_ollama_running() -> bool:
-    """Check if Ollama is running and model is available."""
+    """Check if Ollama is running and model is available (cached 60s)."""
+    now = time.time()
+    if _ollama_cache["running"] is not None and (now - _ollama_cache["ts"]) < 60:
+        return _ollama_cache["running"]
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        async with httpx.AsyncClient(timeout=1.5) as client:
             r = await client.get(f"{OLLAMA_BASE_URL}/api/version")
-            return r.status_code == 200
+            is_up = (r.status_code == 200)
+            _ollama_cache["running"] = is_up
+            _ollama_cache["ts"] = now
+            return is_up
     except Exception:
+        _ollama_cache["running"] = False
+        _ollama_cache["ts"] = now
         return False
 
 
