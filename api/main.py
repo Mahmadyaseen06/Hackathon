@@ -759,28 +759,46 @@ def get_companies():
 
 @app.post("/api/interview/transcribe")
 async def transcribe_audio(audio: UploadFile = File(...)):
-    """Transcribe audio blob using faster-whisper."""
+    """Transcribe audio blob using faster-whisper with local speech_recognition fallback."""
+    import tempfile
+    import os
+
+    file_bytes = await audio.read()
+    if len(file_bytes) < 100:
+        return {"text": "", "error": "Audio stream too short"}
+
+    # 1. Try faster_whisper if available
     try:
         from faster_whisper import WhisperModel
-        import tempfile
-        import os
-
-        # Use a small fast model
         model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
-        
-        # Save blob to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
-            tmp.write(await audio.read())
+            tmp.write(file_bytes)
             tmp_path = tmp.name
-
         segments, info = model.transcribe(tmp_path, beam_size=1)
         text = " ".join([segment.text for segment in segments])
-        
-        os.unlink(tmp_path)
-        
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
         return {"text": text.strip()}
+    except Exception:
+        pass
+
+    # 2. Resilient fallback to speech_recognition
+    try:
+        import speech_recognition as sr
+        r = sr.Recognizer()
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+        try:
+            with sr.AudioFile(tmp_path) as source:
+                r.adjust_for_ambient_noise(source, duration=0.2)
+                audio_data = r.record(source)
+            text = r.recognize_google(audio_data)
+            return {"text": text}
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
     except Exception as e:
-        print(f"Transcription error: {e}")
         return {"text": "", "error": str(e)}
 
 @app.post("/api/interview/start")
