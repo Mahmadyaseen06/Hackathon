@@ -103,7 +103,7 @@
       }
     ],
     "platform_stats": {
-      "fetched_at": "2026-09-10T23:00:24.942650+00:00",
+      "fetched_at": "2026-09-11T04:57:16.096586+00:00",
       "github": {
         "error": "GitHub user 'priya-dev-coder' not found"
       },
@@ -120,7 +120,7 @@
         "global_ranking": 0,
         "top_percentage": 100,
         "activity_score": 4,
-        "fetched_at": "2026-09-10T23:00:24.942388+00:00"
+        "fetched_at": "2026-09-11T04:57:16.092326+00:00"
       },
       "aggregate_activity_score": 4.0
     },
@@ -144,6 +144,28 @@
           "top_percentage": 100,
           "activity_score": 4,
           "fetched_at": "2026-09-10T23:00:24.942388+00:00"
+        },
+        "aggregate_activity_score": 4.0
+      },
+      {
+        "fetched_at": "2026-09-11T04:57:16.096586+00:00",
+        "github": {
+          "error": "GitHub user 'priya-dev-coder' not found"
+        },
+        "leetcode": {
+          "username": "priya_codes",
+          "profile_url": "https://leetcode.com/priya_codes",
+          "total_solved": 4,
+          "easy_solved": 4,
+          "medium_solved": 0,
+          "hard_solved": 0,
+          "ranking": 5000001,
+          "contest_rating": 0,
+          "contests_attended": 0,
+          "global_ranking": 0,
+          "top_percentage": 100,
+          "activity_score": 4,
+          "fetched_at": "2026-09-11T04:57:16.092326+00:00"
         },
         "aggregate_activity_score": 4.0
       }
