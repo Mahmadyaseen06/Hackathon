@@ -364,6 +364,23 @@
       box-shadow: 0 4px 15px rgba(99,102,241,0.3); transition: transform 0.15s;
     }
     .btn-submit-modal:hover { transform: translateY(-1px); }
+    .track-pill {
+      padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+      cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .track-pill:hover { border-color: rgba(99,102,241,0.4); color: var(--text); }
+    .track-pill.active {
+      background: rgba(99,102,241,0.12); border-color: var(--accent); color: var(--accent);
+    }
+    .btn-preset {
+      padding: 6px 12px; font-size: 11px; font-weight: 600; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-preset:hover {
+      background: var(--surface2); border-color: var(--accent); color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -398,6 +415,9 @@
       </div>
       <div class="nav-item" onclick="showSection('projects')" id="nav-projects">
         <span class="nav-icon">💻</span> Projects
+      </div>
+      <div class="nav-item" onclick="showSection('linkedin')" id="nav-linkedin">
+        <span class="nav-icon">💼</span> LinkedIn Review & ATS
       </div>
       <div class="nav-section">Activity & Consistency</div>
       <div class="nav-item" onclick="showSection('developer')" id="nav-developer">
@@ -547,8 +567,35 @@
 
       <!-- ── ROADMAP ── -->
       <div class="section" id="section-roadmap">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">🗺️ Career Domain Roadmaps (Multi-Course)</div>
+              <div style="font-size:13px; color:var(--muted)">Select any target course track to dynamically view an 8-week syllabus tailored with your skill gaps.</div>
+            </div>
+            <div id="roadmap-tier-badge" style="font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px; background:rgba(99,102,241,0.1); color:var(--accent); border:1px solid rgba(99,102,241,0.25)">
+              Tier: Loading...
+            </div>
+          </div>
+          <!-- Track Selector Pills -->
+          <div id="roadmap-track-pills" style="display:flex; gap:8px; flex-wrap:wrap;">
+            <!-- Loaded dynamically: Full-Stack SDE, Data Science & AI, Cloud & DevOps, Cybersecurity, Data Analytics -->
+          </div>
+        </div>
+
         <div class="card">
-          <div class="card-title">🗺️ Personalized 8-Week Roadmap</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="active-track-icon" style="font-size:24px;">🚀</span>
+              <div>
+                <div id="active-track-title" style="font-size:17px; font-weight:800; color:var(--text);">Full-Stack SDE Syllabus</div>
+                <div id="active-track-hours" style="font-size:12px; color:var(--muted); font-weight:600;">8 Weeks • 112 Hours Commitment</div>
+              </div>
+            </div>
+            <div style="font-size:11px; padding:4px 10px; border-radius:6px; background:var(--surface2); color:var(--muted); border:1px solid var(--border)">
+              🎯 Auto-calibrated with your skill gaps
+            </div>
+          </div>
           <div id="roadmap-content">
             <div class="loader"><span></span><span></span><span></span></div>
           </div>
@@ -571,6 +618,73 @@
           <div class="card-title">💻 Recommended Projects</div>
           <div id="projects-content">
             <div class="loader"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LINKEDIN REVIEW & ATS OPTIMIZER ── -->
+      <div class="section" id="section-linkedin">
+        <!-- Header & Presets -->
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div>
+              <div class="card-title" style="margin-bottom:4px">💼 AI LinkedIn Recruiter Audit & Search Optimizer</div>
+              <div style="font-size:13px; color:var(--muted)">Audit your profile against recruiter Boolean search algorithms, Google STAR formulas, and high-volume keywords.</div>
+            </div>
+            <div id="linkedin-score-badge" style="display:none; font-size:13px; font-weight:700; padding:6px 14px; border-radius:20px;">
+              Score: —
+            </div>
+          </div>
+
+          <!-- 1-Click Demo Presets -->
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; padding-top:10px; border-top:1px solid var(--border)">
+            <span style="font-size:12px; color:var(--muted); font-weight:600">⚡ 1-Click Presets:</span>
+            <button onclick="loadLinkedInPreset('generic_student')" class="btn-preset">🎯 Generic Student (Score ~52)</button>
+            <button onclick="loadLinkedInPreset('aarav_sde')" class="btn-preset">🚀 Aarav Sharma (Strong SDE Intern)</button>
+            <button onclick="loadLinkedInPreset('priya_ds')" class="btn-preset">🤖 Priya Patel (Data Science & AI)</button>
+          </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="form-grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+            <div class="form-group">
+              <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; color:var(--muted)">Target Career Track / Role</label>
+              <select id="li-input-role" class="form-control" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit;">
+                <option value="Full-Stack SDE">🚀 Full-Stack SDE</option>
+                <option value="Data Science & AI">🤖 Data Science & AI</option>
+                <option value="Cloud & DevOps">☁️ Cloud & DevOps</option>
+                <option value="Cybersecurity">🛡️ Cybersecurity</option>
+                <option value="Data Analytics">📊 Data Analytics</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; color:var(--muted)">Current LinkedIn Headline</label>
+              <input type="text" id="li-input-headline" placeholder="e.g. Student at ABC Institute | Looking for SDE roles" class="form-control" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; color:var(--muted)">Current About / Summary Section</label>
+            <textarea id="li-input-about" rows="3" placeholder="Paste your current LinkedIn About section or brief personal bio..." style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; resize:vertical;"></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; color:var(--muted)">Key Projects & Internships Summary (Optional)</label>
+            <textarea id="li-input-experience" rows="2" placeholder="Briefly mention your projects or past experience (or leave empty to auto-load from profile)..." style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; resize:vertical;"></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end;">
+            <button onclick="runLinkedInReview()" id="btn-run-li-review" style="padding:10px 24px; background:linear-gradient(135deg,#0a66c2,#004182); color:white; border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+              <span>🔍 Run AI Recruiter Audit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Audit Results Container -->
+        <div id="li-results-container">
+          <div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:14px;">
+            Click "Run AI Recruiter Audit" or select a 1-Click Preset to evaluate your LinkedIn presence.
           </div>
         </div>
       </div>
@@ -856,7 +970,8 @@
     projects: ['Project Ladder', 'Recommended projects matching your skill level'],
     progress: ['Progress Tracker', 'Live GitHub, LeetCode, HackerRank & Codeforces stats'],
     jobs: ['Official Job Matches', 'Institutional matching against real job postings with cross-job gap analysis'],
-    developer: ['Live Developer Sync', '30-day coding consistency, commit streaks, and problem-solving metrics']
+    developer: ['Live Developer Sync', '30-day coding consistency, commit streaks, and problem-solving metrics'],
+    linkedin: ['LinkedIn Profile Review & ATS', 'Recruiter search optimization, headline hooks & Google STAR formulas']
   };
 
   function showSection(name) {
@@ -876,12 +991,13 @@
       document.getElementById('page-subtitle').textContent = titles[name][1];
     }
     if (name === 'score') loadInterviewHistory();
-    if (name === 'roadmap' && !document.getElementById('roadmap-content').innerText.trim().includes('Week')) loadRoadmap();
+    if (name === 'roadmap') loadRoadmap();
     if (name === 'resources' && document.getElementById('resources-content').querySelector('.loader')) loadResources();
     if (name === 'projects' && document.getElementById('projects-content').querySelector('.loader')) loadProjects();
     if (name === 'progress') loadProgressStats();
     if (name === 'jobs') loadMatchedJobs();
     if (name === 'developer') loadDeveloperActivity();
+    if (name === 'linkedin') loadLinkedInReview();
   }
 
   // ── Developer Live Activity Sync ──
@@ -1447,22 +1563,281 @@
   }
 
   // ── Roadmap ──
-  async function loadRoadmap() {
-    const res = await fetch(`${API}/api/roadmap`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ usn, token })
-    });
-    const data = await res.json();
+  let currentRoadmapTrack = 'sde';
+
+  async function loadRoadmap(selectedTrack) {
+    if (selectedTrack) currentRoadmapTrack = selectedTrack;
+    else if (studentData && studentData.branch && currentRoadmapTrack === 'sde') {
+      if (studentData.branch.toLowerCase().includes('data')) currentRoadmapTrack = 'data_science';
+      else if (studentData.branch.toLowerCase().includes('cloud')) currentRoadmapTrack = 'cloud_devops';
+    }
+
     const el = document.getElementById('roadmap-content');
-    const weeks = data.weeks || data.phases || [];
-    if (!weeks.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading roadmap...</p>'; return; }
-    el.innerHTML = weeks.map((w, i) =>
-      `<div class="week-card">
-        <div class="week-label">Week ${i + 1}</div>
-        <div class="week-title">${w.focus || w.title || w.theme || 'Learning Phase'}</div>
-        <div class="week-tasks">${Array.isArray(w.tasks) ? w.tasks.join(' • ') : (w.description || w.tasks || '')}</div>
-      </div>`
-    ).join('');
+    el.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+
+    try {
+      const res = await fetch(`${API}/api/roadmap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usn,
+          token,
+          target_role: currentRoadmapTrack
+        })
+      });
+      const data = await res.json();
+
+      // Update header info & badge
+      if (data.tier_info && document.getElementById('roadmap-tier-badge')) {
+        document.getElementById('roadmap-tier-badge').textContent = data.tier_info.tier_name || 'Benchmark Tier';
+      }
+      if (document.getElementById('active-track-icon')) {
+        document.getElementById('active-track-icon').textContent = data.track_icon || '🚀';
+      }
+      if (document.getElementById('active-track-title')) {
+        document.getElementById('active-track-title').textContent = (data.track_title || 'Curriculum') + ' Syllabus';
+      }
+      if (document.getElementById('active-track-hours')) {
+        document.getElementById('active-track-hours').textContent = `${data.total_weeks || 8} Weeks • ${data.estimated_hours || 110} Hours Commitment`;
+      }
+
+      // Render Track Selector Pills
+      const pillsContainer = document.getElementById('roadmap-track-pills');
+      if (pillsContainer && data.available_tracks) {
+        pillsContainer.innerHTML = data.available_tracks.map(t => `
+          <button class="track-pill ${t.id === data.track_id ? 'active' : ''}" onclick="loadRoadmap('${t.id}')">
+            <span>${t.icon}</span> ${t.title}
+          </button>
+        `).join('');
+      }
+
+      // Render 8 Weeks
+      const weeks = data.weeks || [];
+      if (!weeks.length) {
+        el.innerHTML = '<p style="color:var(--muted);font-size:13px">No weeks loaded for this curriculum.</p>';
+        return;
+      }
+
+      el.innerHTML = weeks.map((w, i) => `
+        <div class="week-card" style="margin-bottom:14px; border:1px solid var(--border); border-radius:12px; padding:18px; background:var(--surface);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; padding:4px 10px; border-radius:6px; background:rgba(99,102,241,0.12); color:var(--accent);">
+                Week ${w.week || (i + 1)}
+              </span>
+              <span style="font-size:12px; color:var(--muted); font-weight:600;">${w.phase || 'Development Phase'}</span>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:var(--muted); background:var(--surface2); padding:3px 10px; border-radius:12px;">
+              ⏱️ ${w.time_estimate || '12 hours'}
+            </span>
+          </div>
+          <h4 style="font-size:15px; font-weight:700; margin:0 0 6px 0; color:var(--text);">${w.title || 'Weekly Sprint'}</h4>
+          <p style="font-size:13px; color:var(--muted); margin:0 0 12px 0; line-height:1.5;">${w.focus || ''}</p>
+          
+          ${w.actions && w.actions.length ? `
+            <div style="margin-bottom:12px; padding-left:4px;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-bottom:6px;">🛠️ Hands-on Deliverables:</div>
+              <ul style="margin:0; padding-left:18px; font-size:12px; color:var(--text); line-height:1.6;">
+                ${w.actions.map(act => `<li>${act}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${w.milestone ? `
+            <div style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:6px 12px; border-radius:6px; background:rgba(16,185,129,0.08); color:#10b981; border:1px solid rgba(16,185,129,0.2);">
+              🎯 Milestone: ${w.milestone}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<p style="color:#ef4444;font-size:13px">Failed to load roadmap: ${err.message}</p>`;
+    }
+  }
+
+  // ── LinkedIn Profile Review & ATS Optimizer ──
+  let cachedLinkedInPresets = [];
+
+  async function loadLinkedInReview() {
+    if (!document.getElementById('li-results-container').querySelector('.li-results-card')) {
+      await runLinkedInReview();
+    }
+  }
+
+  async function runLinkedInReview() {
+    const role = document.getElementById('li-input-role').value;
+    const headline = document.getElementById('li-input-headline').value.trim();
+    const about = document.getElementById('li-input-about').value.trim();
+    const experience = document.getElementById('li-input-experience').value.trim();
+    const btn = document.getElementById('btn-run-li-review');
+    const container = document.getElementById('li-results-container');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Analyzing Recruiter Algorithms...</span>';
+
+    try {
+      const res = await fetch(`${API}/api/student/linkedin-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usn,
+          token,
+          target_role: role,
+          headline: headline,
+          about: about,
+          experience: experience
+        })
+      });
+      const data = await res.json();
+      if (!data.success || !data.review) throw new Error(data.detail || 'Audit failed');
+
+      const rev = data.review;
+      cachedLinkedInPresets = rev.presets || [];
+      renderLinkedInAudit(rev);
+    } catch (err) {
+      container.innerHTML = `<div style="padding:20px; color:#ef4444; font-size:13px;">Error analyzing LinkedIn profile: ${err.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔍 Run AI Recruiter Audit</span>';
+    }
+  }
+
+  function loadLinkedInPreset(presetId) {
+    const p = cachedLinkedInPresets.find(x => x.id === presetId);
+    if (!p) return;
+    document.getElementById('li-input-role').value = p.target_role || 'Full-Stack SDE';
+    document.getElementById('li-input-headline').value = p.headline || '';
+    document.getElementById('li-input-about').value = p.about || '';
+    document.getElementById('li-input-experience').value = p.experience || '';
+    runLinkedInReview();
+  }
+
+  function renderLinkedInAudit(rev) {
+    const badgeEl = document.getElementById('linkedin-score-badge');
+    if (badgeEl) {
+      badgeEl.style.display = 'block';
+      badgeEl.style.background = `${rev.badge_color}18`;
+      badgeEl.style.color = rev.badge_color;
+      badgeEl.style.border = `1px solid ${rev.badge_color}40`;
+      badgeEl.innerHTML = `⭐ Recruiter Score: <strong>${rev.score}/100</strong> • ${rev.badge}`;
+    }
+
+    const container = document.getElementById('li-results-container');
+    container.innerHTML = `
+      <div class="li-results-card">
+        <!-- Score Overview Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:16px;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Headline Hook</div>
+            <div style="font-size:22px; font-weight:800; color:${rev.breakdown.headline_score>=20?'#10b981':'#f59e0b'}; margin-top:4px;">${rev.breakdown.headline_score}/25</div>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">About Story</div>
+            <div style="font-size:22px; font-weight:800; color:${rev.breakdown.about_score>=20?'#10b981':'#f59e0b'}; margin-top:4px;">${rev.breakdown.about_score}/25</div>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Keywords Match</div>
+            <div style="font-size:22px; font-weight:800; color:${rev.breakdown.keyword_score>=18?'#10b981':'#f59e0b'}; margin-top:4px;">${rev.breakdown.keyword_score}/25</div>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center;">
+            <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">STAR Metrics</div>
+            <div style="font-size:22px; font-weight:800; color:${rev.breakdown.experience_score>=20?'#10b981':'#f59e0b'}; margin-top:4px;">${rev.breakdown.experience_score}/25</div>
+          </div>
+        </div>
+
+        <!-- 1. Headline Audit & AI Recommendations -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">🎯 Headline Recruiter Critique & 3 High-Impact Rewrites</div>
+          <div style="background:rgba(239,68,68,0.06); border-left:4px solid #ef4444; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:14px; font-size:13px;">
+            <strong>Recruiter Flag:</strong> ${rev.headline_analysis.issues.join(' • ')}
+          </div>
+          <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Click 📋 Copy to apply to your LinkedIn:</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${rev.headline_analysis.optimized_headlines.map((headline) => `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; gap:12px;">
+                <span style="font-size:13px; font-weight:600; color:var(--text); line-height:1.4;">${headline}</span>
+                <button onclick="copyToClipboard('${headline.replace(/'/g, "\\'")}', this)" style="padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; color:var(--accent); white-space:nowrap;">
+                  📋 Copy
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 2. Keyword Discoverability Audit -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">🔍 Recruiter Search Discoverability (Keywords for ${rev.keyword_analysis.target_role})</div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:12px; font-weight:700; color:#10b981; margin-bottom:6px;">✅ Detected in Your Profile:</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${rev.keyword_analysis.detected_keywords.length ? rev.keyword_analysis.detected_keywords.map(kw => `
+                <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);">${kw}</span>
+              `).join('') : '<span style="font-size:12px; color:var(--muted);">No high-volume tech keywords detected yet.</span>'}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px; font-weight:700; color:#ef4444; margin-bottom:6px;">⚠️ Missing High-Volume Recruiter Keywords (Add to About & Skills):</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${rev.keyword_analysis.missing_keywords.map(kw => `
+                <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.25);">+ ${kw}</span>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. All-Star About Section -->
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div class="card-title">📝 AI-Optimized All-Star About Section</div>
+            <button onclick="copyToClipboard(document.getElementById('opt-about-text').innerText, this)" style="padding:6px 14px; background:linear-gradient(135deg,#0a66c2,#004182); color:white; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
+              📋 Copy Full About
+            </button>
+          </div>
+          <div id="opt-about-text" style="white-space:pre-wrap; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; font-size:13px; line-height:1.6; color:var(--text); font-family:inherit;">
+${rev.about_analysis.optimized_about}
+          </div>
+        </div>
+
+        <!-- 4. Google STAR X-Y-Z Experience Transformer -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title">⚡ Google STAR (X-Y-Z) Experience Transformer</div>
+          <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Transform passive descriptions into quantified impact bullets that impress engineering hiring managers.</p>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            ${rev.experience_star_optimizer.map(star => `
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px;">
+                <div style="font-size:12px; font-weight:800; color:var(--accent); text-transform:uppercase; margin-bottom:6px;">📌 ${star.category}</div>
+                <div style="font-size:12px; color:#ef4444; margin-bottom:4px; text-decoration:line-through; opacity:0.85;">❌ Before: "${star.before}"</div>
+                <div style="font-size:13px; color:#10b981; font-weight:600; line-height:1.4;">✅ Recruiter Ready: "${star.after}"</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 5. All-Star 5-Step Checklist -->
+        <div class="card">
+          <div class="card-title">✅ 5-Step All-Star Profile Checklist</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px;">
+            ${rev.all_star_checklist.map(item => `
+              <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="font-size:16px;">${item.completed ? '🟢' : '⚪'}</span>
+                <div>
+                  <div style="font-size:13px; font-weight:700; color:${item.completed ? 'var(--text)' : 'var(--muted)'};">${item.step}</div>
+                  <div style="font-size:12px; color:var(--muted);">${item.description}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copied!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    });
   }
 
   // ── Resources ──

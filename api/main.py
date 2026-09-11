@@ -466,6 +466,54 @@ def student_developer_sync(req: DeveloperSyncRequest):
     )
     return {"success": True, "developer_activity": payload}
 
+class LinkedInReviewRequest(BaseModel):
+    usn: Optional[str] = None
+    token: Optional[str] = None
+    headline: Optional[str] = ""
+    about: Optional[str] = ""
+    target_role: Optional[str] = "Full-Stack SDE"
+    experience: Optional[str] = ""
+
+@app.post("/api/student/linkedin-review")
+def student_linkedin_review(req: LinkedInReviewRequest):
+    """Analyze and optimize candidate's LinkedIn presence for recruiter searchability."""
+    from upskilling.linkedin_reviewer import review_linkedin_profile
+    student = None
+    if req.usn:
+        student = get_student_by_usn(req.usn)
+    
+    headline = req.headline
+    if not headline:
+        if student:
+            headline = f"Student @ {student.get('branch', 'Engineering')} | Looking for {student.get('target_role', 'SDE')} roles"
+        else:
+            headline = f"Student | Looking for {req.target_role or 'SDE'} opportunities"
+
+    about = req.about or ""
+    experience = req.experience or ""
+    
+    if student:
+        if not about and student.get("projects"):
+            projs = [str(p.get("name", "")) + ": " + str(p.get("description", "")) for p in student.get("projects", [])]
+            about = " ".join(projs)
+        if not experience and student.get("internships"):
+            interns = [str(i.get("role", "")) + " at " + str(i.get("company", "")) for i in student.get("internships", [])]
+            experience = ", ".join(interns)
+
+    target_role = req.target_role or (student.get("target_role") if student else "Full-Stack SDE")
+    name = student.get("name", "Candidate") if student else "Candidate"
+    skills = list(student.get("skills", {}).keys()) if student else []
+
+    review = review_linkedin_profile(
+        headline=headline,
+        about=about,
+        target_role=target_role,
+        experience=experience,
+        student_name=name,
+        known_skills=skills
+    )
+    return {"success": True, "review": review}
+
 def _student_to_job_profile(student: dict):
     from job_intelligence.models import StudentProfile
     skills = {}
@@ -705,7 +753,11 @@ async def roadmap(req: PredictRequest):
         profile = req.dict(exclude_none=True)
     gap = compute_skill_gap(profile)
     missing = [g["skill"] for g in gap.get("critical_gaps", [])] + [g["skill"] for g in gap.get("minor_gaps", [])]
-    return generate_roadmap(profile, missing, target_role=profile.get("target_role", "SDE"), target_lpa=float(profile.get("target_lpa", 12.0)))
+    target_role = req.target_role or profile.get("target_role") or (
+        "Data Science & AI" if "data" in str(profile.get("branch", "")).lower() else "SDE"
+    )
+    target_lpa = float(req.target_lpa or profile.get("target_lpa") or 12.0)
+    return generate_roadmap(profile, missing, target_role=target_role, target_lpa=target_lpa)
 
 @app.post("/api/resources")
 def resources(req: PredictRequest):
