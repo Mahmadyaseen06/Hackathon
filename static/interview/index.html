@@ -1184,8 +1184,12 @@ function selectTrack(track) {
 async function startInterview() {
   if (!selectedCompany) return;
   
-  // UNLOCK AUDIO CONTEXT SYNCHRONOUSLY ON CLICK
+  // UNLOCK SPEECH & AUDIO CONTEXT SYNCHRONOUSLY ON CLICK
   try {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.resume();
+      loadVoices();
+    }
     const player = document.getElementById('interviewer-audio') || new Audio();
     player.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
     player.play().catch(e => console.warn('Audio unlock blocked:', e));
@@ -1498,6 +1502,7 @@ let availableVoices = [];
 let selectedVoice = null;
 let speechTimeout = null;
 let currentUtterance = null;
+let currentAudio = null;
 let isSpeakingNow = false;
 
 function loadVoices() {
@@ -1577,16 +1582,25 @@ function toggleTTS() {
   const btn = document.getElementById('tts-toggle-btn');
   btn.textContent = ttsEnabled ? '🔊 Voice: ON' : '🔇 Voice: MUTED';
   btn.style.color = ttsEnabled ? 'var(--text)' : 'var(--muted)';
-  if (!ttsEnabled && currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
+  if (!ttsEnabled) {
+    if (window.speechSynthesis) {
+      clearTimeout(speechTimeout);
+      window.speechSynthesis.cancel();
+      currentUtterance = null;
+    }
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    isSpeakingNow = false;
+    document.getElementById('ai-avatar')?.classList.remove('speaking');
     stopWaveAnimation();
     const statusEl = document.getElementById('ai-status');
     if (statusEl) statusEl.textContent = 'Listening and evaluating...';
   }
 }
 
-async function speakInterviewerText(rawText, onComplete) {
+function speakInterviewerText(rawText, onComplete) {
   if (!ttsEnabled) {
     if (onComplete) onComplete();
     return;
@@ -1598,86 +1612,90 @@ async function speakInterviewerText(rawText, onComplete) {
     return;
   }
 
+  // CRITICAL ANTI-ECHO 1: pause candidate mic while interviewer speaks
   if (isListening) {
     stopListening();
   }
 
+  // CRITICAL ANTI-ECHO 2: clear any pending timeouts
+  clearTimeout(speechTimeout);
+
+  // CRITICAL ANTI-ECHO 3: cancel previous synthesis and ensure clean buffer flush
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
   }
 
-  try {
-    const statusEl = document.getElementById('ai-status');
-    if (statusEl) statusEl.textContent = 'Generating speech...';
-
-    const formData = new FormData();
-    formData.append("text", text);
-    formData.append("voice", "en-US-AndrewMultilingualNeural");
-
-    const response = await fetch("/api/interview/tts", {
-      method: "POST",
-      body: formData
-    });
-
-    if (!response.ok) throw new Error("TTS generation failed");
-
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
-    
-    let audioEl = document.getElementById('interviewer-audio');
-    if (audioEl.src && audioEl.src.startsWith('blob:')) {
-      URL.revokeObjectURL(audioEl.src);
-    }
-    
-    currentAudio = audioEl;
-    currentAudio.src = audioUrl;
-    
-    currentAudio.onplay = () => {
-      isSpeakingNow = true;
-      if (statusEl) statusEl.textContent = 'Interviewer speaking...';
-      startWaveAnimation();
-    };
-
-    const finishSpeech = () => {
-      isSpeakingNow = false;
-      if (statusEl) statusEl.textContent = 'Listening and evaluating...';
-      stopWaveAnimation();
-      
-      // Clean up previous event listeners so they don't fire multiple times
-      currentAudio.onended = null;
-      currentAudio.onerror = null;
-      
-      if (onComplete) {
-        onComplete();
+  speechTimeout = setTimeout(() => {
+    try {
+      if (!window.speechSynthesis) {
+        if (onComplete) onComplete();
+        return;
       }
-    };
 
-    currentAudio.onended = finishSpeech;
-    currentAudio.onerror = finishSpeech;
+      if (!selectedVoice && availableVoices.length === 0) {
+        loadVoices();
+      }
 
-    await currentAudio.play();
-  } catch(err) {
-    console.warn('Speech synthesis error:', err);
-    isSpeakingNow = false;
-    stopWaveAnimation();
-    showAudioBanner('⚠️ Browser blocked auto-playing audio. Click the "🔊 Replay" button above to hear the interviewer.');
-    if (onComplete) onComplete();
-  }
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance; // Keep global reference to prevent Chrome/Brave garbage-collection cut-off bug
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      utterance.rate = 0.95; // Calm, clear, natural pace
+      utterance.pitch = 1.0;
+      utterance.lang = selectedVoice ? selectedVoice.lang : 'en-US';
+
+      utterance.onstart = () => {
+        isSpeakingNow = true;
+        document.getElementById('ai-avatar')?.classList.add('speaking');
+        const statusEl = document.getElementById('ai-status');
+        if (statusEl) statusEl.textContent = 'Interviewer speaking...';
+        startWaveAnimation();
+      };
+
+      const finishSpeech = () => {
+        isSpeakingNow = false;
+        document.getElementById('ai-avatar')?.classList.remove('speaking');
+        const statusEl = document.getElementById('ai-status');
+        if (statusEl) statusEl.textContent = 'Listening and evaluating...';
+        stopWaveAnimation();
+        currentUtterance = null;
+        if (onComplete) {
+          onComplete();
+        }
+      };
+
+      utterance.onend = finishSpeech;
+      utterance.onerror = (e) => {
+        console.warn('SpeechSynthesis event:', e);
+        finishSpeech();
+      };
+
+      // Brave/Chrome safeguard: resume context before speak
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('Speech synthesis error:', err);
+      isSpeakingNow = false;
+      document.getElementById('ai-avatar')?.classList.remove('speaking');
+      stopWaveAnimation();
+      if (onComplete) onComplete();
+    }
+  }, 60);
 }
 
 function replayInterviewerVoice() {
-  const audioEl = document.getElementById('interviewer-audio');
-  if (audioEl && audioEl.src && audioEl.src.startsWith('blob:')) {
-    audioEl.currentTime = 0;
-    audioEl.play().catch(e => {
-      showAudioBanner("Browser blocked audio replay. Please ensure audio permissions are granted.");
-      console.warn("Replay blocked:", e);
-    });
-  } else if (currentSpeakingText) {
+  if (currentSpeakingText) {
     speakInterviewerText(currentSpeakingText);
   } else {
-    showAudioBanner('No audio queued to replay.');
+    showAudioBanner('No interviewer dialogue queued to replay.');
   }
 }
 
