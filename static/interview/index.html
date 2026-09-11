@@ -1860,10 +1860,11 @@ async function startListening() {
   document.getElementById('ai-avatar').classList.add('listening-candidate');
 
   recordedAudioChunks = [];
+  // Always show the transcribe button when mic is active
+  document.getElementById('backend-transcribe-btn').style.display = 'inline-block';
   if (mediaRecorder && mediaRecorder.state === 'inactive') {
     try {
       mediaRecorder.start(250);
-      document.getElementById('backend-transcribe-btn').style.display = 'inline-block';
     } catch(recErr) {
       console.warn('mediaRecorder start error:', recErr);
     }
@@ -1904,8 +1905,18 @@ async function startListening() {
 
     recognition.onerror = (e) => {
       console.warn('SpeechRecognition event:', e.error);
-      if (e.error === 'network' || e.error === 'not-allowed') {
-        showAudioBanner("🎙️ Hardware mic active. (Brave Shields / network blocked cloud speech: speak and click Transcribe Audio, or use Demo Presets).");
+      if (e.error === 'network' || e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        showAudioBanner("🎙️ Hardware mic active. Cloud speech unavailable — speak and click 'Transcribe Audio', or use Demo Presets.");
+        // Auto-trigger backend transcription after a short delay if we have recorded audio
+        if (recordedAudioChunks.length > 0 && mediaRecorder && mediaRecorder.state === 'recording') {
+          setTimeout(() => {
+            const transcribeBtn = document.getElementById('backend-transcribe-btn');
+            if (transcribeBtn) {
+              showAudioBanner("🔄 Auto-sending audio to backend transcription engine...");
+              transcribeBtn.click();
+            }
+          }, 3000);
+        }
       }
     };
 
@@ -2228,11 +2239,11 @@ async function submitAnswer() {
     if (analysis.interviewer_speech) {
       updateInterviewerDialogue(analysis.interviewer_speech);
       speakInterviewerText(analysis.interviewer_speech, () => {
-        advanceTimer = setTimeout(triggerAdvance, 4500);
+        advanceTimer = setTimeout(triggerAdvance, 8000);
       });
-      advanceTimer = setTimeout(triggerAdvance, 25000);
+      advanceTimer = setTimeout(triggerAdvance, 30000);
     } else {
-      advanceTimer = setTimeout(triggerAdvance, 4500);
+      advanceTimer = setTimeout(triggerAdvance, 8000);
     }
 
   } catch(e) {

@@ -421,8 +421,19 @@
         <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span><span>Needs Training: <strong>${needs}%</strong> (${ov.needs_training_count||0})</span></div>
       </div>`;
 
+    // Compute more meaningful stats from student data
+    const totalCerts = students.reduce((s, st) => s + (st.certifications_count || 0), 0);
+    const avgCgpa = students.length ? (students.reduce((s, st) => s + (st.cgpa || 0), 0) / students.length).toFixed(2) : '—';
+    const placementRate = ov.cohort_size ? Math.round((ov.ready_count / ov.cohort_size) * 100) : 0;
+
     document.getElementById('quick-stats').innerHTML = `
       <div style="display:grid; gap:10px">
+        <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
+          <span style="color:var(--muted)">Placement Rate</span><strong style="color:${placementRate>=60?'var(--success)':placementRate>=30?'var(--warning)':'var(--danger)'}">${placementRate}%</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
+          <span style="color:var(--muted)">Avg Batch CGPA</span><strong>${avgCgpa}</strong>
+        </div>
         <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
           <span style="color:var(--muted)">Interviews Taken</span><strong>${ov.total_interviews_taken || 0}</strong>
         </div>
@@ -430,7 +441,7 @@
           <span style="color:var(--muted)">Students with Internships</span><strong>${ov.students_with_internships || 0}</strong>
         </div>
         <div style="display:flex; justify-content:space-between; padding:10px; background:var(--surface); border-radius:8px; font-size:13px">
-          <span style="color:var(--muted)">Batch Size</span><strong>${ov.cohort_size || 0} students</strong>
+          <span style="color:var(--muted)">Total Certifications</span><strong>${totalCerts}</strong>
         </div>
       </div>`;
 
@@ -446,18 +457,21 @@
         <td><span class="tier-badge tier-${s.readiness_tier.replace(' ','-')}">${s.readiness_tier}</span></td>
       </tr>`).join('');
 
-    // Vulnerable
-    const vulnerable = students.filter(s => s.employability_score < 60);
+    // Vulnerable — sort by score ascending (worst first)
+    const vulnerable = [...students].filter(s => s.employability_score < 60).sort((a,b) => a.employability_score - b.employability_score);
     document.getElementById('vulnerable-tbody').innerHTML = vulnerable.length
-      ? vulnerable.map(s => `
+      ? vulnerable.map(s => {
+          const skillCount = Object.keys(s.skills || {}).length;
+          const lowSkills = Object.entries(s.skills || {}).filter(([k,v]) => v < 5).length;
+          return `
           <tr onclick="openStudent('${s.usn}')">
             <td><strong>${s.name}</strong></td>
             <td style="font-family:monospace;color:var(--accent);font-size:12px">${s.usn}</td>
             <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
             <td class="score-cell" style="color:var(--danger)">${s.employability_score}%</td>
             <td>${s.active_backlogs > 0 ? `<span style="color:var(--danger);font-weight:700">${s.active_backlogs} ⚠️</span>` : '—'}</td>
-            <td><button onclick="event.stopPropagation()" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">Alert Mentor</button></td>
-          </tr>`).join('')
+            <td><button onclick="event.stopPropagation(); triggerTpoAction('${s.usn}','counseling',this)" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">⚡ Schedule Counseling</button></td>
+          </tr>`;}).join('')
       : '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No students below 60% — great batch! 🎉</td></tr>';
   }
 
@@ -582,23 +596,51 @@
     const s = allStudentsData.find(x => x.usn === usn);
     if (!s) { document.getElementById('modal-content').innerHTML = 'Student not found.'; return; }
     const skillsHtml = Object.entries(s.skills || {}).map(([sk, lv]) =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:12px;margin:3px">${sk} <strong style="color:var(--accent)">${lv}/10</strong></span>`
+      `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:12px;margin:3px">${sk} <strong style="color:${lv>=7?'var(--success)':lv>=5?'var(--warning)':'var(--danger)'}">${lv}/10</strong></span>`
     ).join('');
+
+    const projectsHtml = (s.projects || []).length > 0
+      ? `<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Projects</div>
+         ${(s.projects||[]).map(p => `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;font-size:12px;margin:3px;color:var(--accent-light)">${typeof p === 'object' ? p.name : p}</span>`).join('')}</div>`
+      : '';
+
     const latestInterview = s.latest_interview ? `
       <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:12px">
         <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">Latest Interview: ${s.latest_interview.company}</div>
         <div style="font-size:22px;font-weight:800;margin:4px 0">${s.latest_interview.overall_score}% <span style="font-size:13px;color:var(--muted)">${s.latest_interview.verdict?.replace(/_/g,' ')}</span></div>
       </div>` : '<p style="color:var(--muted);font-size:13px;margin-top:8px">No interviews taken yet.</p>';
 
+    // Compute a skills summary
+    const skillEntries = Object.entries(s.skills || {});
+    const avgSkill = skillEntries.length ? (skillEntries.reduce((sum, [k,v]) => sum + v, 0) / skillEntries.length).toFixed(1) : '—';
+    const strongSkills = skillEntries.filter(([k,v]) => v >= 7).length;
+    const weakSkills = skillEntries.filter(([k,v]) => v < 5).length;
+
     document.getElementById('modal-content').innerHTML = `
       <h2 style="font-size:22px;font-weight:800;margin-bottom:4px">${s.name}</h2>
       <p style="color:var(--muted);font-size:13px;margin-bottom:16px">${s.branch} • ${s.usn}</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.cgpa}</div><div style="font-size:11px;color:var(--muted)">CGPA</div></div>
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</div><div style="font-size:11px;color:var(--muted)">Score</div></div>
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.interview_attempts}</div><div style="font-size:11px;color:var(--muted)">Interviews</div></div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${avgSkill}</div><div style="font-size:11px;color:var(--muted)">Avg Skill</div></div>
       </div>
-      <div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Skills</div>${skillsHtml}</div>
+      <div style="display:flex;gap:16px;margin-bottom:12px">
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:8px 12px;font-size:12px">
+          <strong style="color:var(--success)">${strongSkills}</strong> <span style="color:var(--muted)">strong skills (≥7)</span>
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:8px 12px;font-size:12px">
+          <strong style="color:var(--danger)">${weakSkills}</strong> <span style="color:var(--muted)">weak skills (<5)</span>
+        </div>
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:8px 12px;font-size:12px">
+          <strong style="color:var(--primary)">${s.internships_count}</strong> <span style="color:var(--muted)">internships</span>
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:8px 12px;font-size:12px">
+          <strong style="color:var(--warning)">${s.certifications_count}</strong> <span style="color:var(--muted)">certifications</span>
+        </div>
+      </div>
+      ${projectsHtml}
+      <div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Skills</div>${skillsHtml || '<span style="color:var(--muted);font-size:12px">No skills listed</span>'}</div>
       ${latestInterview}`;
   }
 
@@ -665,11 +707,7 @@
         msg.style.background = 'rgba(16,185,129,0.15)';
         msg.style.color = '#34d399';
         msg.textContent = `Success! Ingested ${data.imported_count} student records into institutional database.`;
-        await loadOverview();
-        await loadStudents();
-        await loadHeatmap();
-        await loadBranches();
-        await loadAlerts();
+        await loadAll();
         setTimeout(() => closeBatchUploadModal(), 1200);
       } else {
         throw new Error(data.detail || 'Failed to ingest batch CSV');

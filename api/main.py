@@ -11,6 +11,8 @@ import os
 import json
 import logging
 import datetime
+import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -81,6 +83,68 @@ def decode_csv_bytes(contents: bytes) -> str:
 # Pre-load ML model
 from ml.model_trainer import load_or_train_model
 _model = None
+
+# ── TPO Score Cache (30s TTL to avoid 4x redundant ML predictions) ──
+_tpo_scores_cache = {"data": None, "timestamp": 0, "ttl": 30}
+
+def _get_cached_scores(token: str) -> list:
+    """Return cached student scores if fresh (<30s), else recompute."""
+    now = time.time()
+    if _tpo_scores_cache["data"] is not None and (now - _tpo_scores_cache["timestamp"]) < _tpo_scores_cache["ttl"]:
+        return _tpo_scores_cache["data"]
+    # Recompute
+    scored = _compute_all_student_scores(token)
+    _tpo_scores_cache["data"] = scored
+    _tpo_scores_cache["timestamp"] = now
+    return scored
+
+def _invalidate_tpo_cache():
+    """Force cache refresh after data changes (CSV upload, profile edit, etc.)"""
+    _tpo_scores_cache["data"] = None
+    _tpo_scores_cache["timestamp"] = 0
+
+def _compute_all_student_scores(token: str) -> list:
+    """Single pass: compute employability scores for all students."""
+    students = get_all_students()
+    result = []
+    for s in students:
+        try:
+            res = predict_student_employability(s)
+            score = round(res.get("placement_probability", 50.0), 1)
+            tier = "Ready" if score >= 78 else "Near-Ready" if score >= 55 else "Needs Training"
+        except:
+            score = 50.0
+            tier = "Near-Ready"
+
+        history = s.get("interview_history", [])
+        latest_interview = history[-1] if history else None
+        dev_activity = s.get("developer_activity", {})
+        dev_consistency = dev_activity.get("consistency", {}).get("consistency_score")
+
+        result.append({
+            "usn": s["usn"],
+            "name": s["name"],
+            "branch": s["branch"],
+            "cgpa": s["cgpa"],
+            "employability_score": score,
+            "readiness_tier": tier,
+            "active_backlogs": s.get("active_backlogs", 0),
+            "internships_count": len(s.get("internships", [])),
+            "certifications_count": len(s.get("certifications", [])),
+            "interview_attempts": len(history),
+            "skills": s.get("skills", {}),
+            "developer_consistency": dev_consistency,
+            "projects": [p.get("name", p) if isinstance(p, dict) else p for p in s.get("projects", [])],
+            "latest_interview": {
+                "company": latest_interview["company"],
+                "overall_score": latest_interview.get("overall_score", 0),
+                "verdict": latest_interview.get("verdict", ""),
+                "timestamp": latest_interview.get("timestamp", "")
+            } if latest_interview else None
+        })
+
+    result.sort(key=lambda x: x["employability_score"], reverse=True)
+    return result
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -972,18 +1036,11 @@ def tpo_overview(token: str):
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
 
-    students = get_all_students()
-    total = len(students)
+    # Use cached scores — single computation shared across all TPO endpoints
+    all_scored = _get_cached_scores(token)
+    total = len(all_scored) or 1
 
-    # Calculate scores for each student using predict_student_employability
-    scores = []
-    for s in students:
-        try:
-            res = predict_student_employability(s)
-            scores.append(res.get("placement_probability", 50.0))
-        except:
-            scores.append(50.0)
-
+    scores = [s["employability_score"] for s in all_scored]
     ready = sum(1 for sc in scores if sc >= 78)
     near_ready = sum(1 for sc in scores if 55 <= sc < 78)
     needs_training = sum(1 for sc in scores if sc < 55)
@@ -996,60 +1053,21 @@ def tpo_overview(token: str):
         "near_ready_count": near_ready,
         "needs_training_count": needs_training,
         "readiness_distribution": {
-            "Ready": round(ready / total * 100, 1),
-            "Near-Ready": round(near_ready / total * 100, 1),
-            "Needs Training": round(needs_training / total * 100, 1)
+            "Ready": round(ready / total * 100, 1) if total else 0,
+            "Near-Ready": round(near_ready / total * 100, 1) if total else 0,
+            "Needs Training": round(needs_training / total * 100, 1) if total else 0
         },
-        "total_interviews_taken": sum(len(s.get("interview_history", [])) for s in students),
-        "students_with_internships": sum(1 for s in students if len(s.get("internships", [])) > 0)
+        "total_interviews_taken": sum(s["interview_attempts"] for s in all_scored),
+        "students_with_internships": sum(1 for s in all_scored if s["internships_count"] > 0)
     }
 
 @app.get("/api/tpo/students-with-scores")
 def students_with_scores(token: str):
-    """All students with their computed employability scores."""
+    """All students with their computed employability scores (cached 30s)."""
     session = verify_session_token(token)
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
-
-    students = get_all_students()
-
-    result = []
-    for s in students:
-        try:
-            res = predict_student_employability(s)
-            score = round(res.get("placement_probability", 50.0), 1)
-            tier = "Ready" if score >= 78 else "Near-Ready" if score >= 55 else "Needs Training"
-        except:
-            score = 50.0
-            tier = "Near-Ready"
-
-        history = s.get("interview_history", [])
-        latest_interview = history[-1] if history else None
-        dev_activity = s.get("developer_activity", {})
-        dev_consistency = dev_activity.get("consistency", {}).get("consistency_score")
-
-        result.append({
-            "usn": s["usn"],
-            "name": s["name"],
-            "branch": s["branch"],
-            "cgpa": s["cgpa"],
-            "employability_score": score,
-            "readiness_tier": tier,
-            "active_backlogs": s.get("active_backlogs", 0),
-            "internships_count": len(s.get("internships", [])),
-            "certifications_count": len(s.get("certifications", [])),
-            "interview_attempts": len(history),
-            "developer_consistency": dev_consistency,
-            "latest_interview": {
-                "company": latest_interview["company"],
-                "overall_score": latest_interview.get("overall_score", 0),
-                "verdict": latest_interview.get("verdict", ""),
-                "timestamp": latest_interview.get("timestamp", "")
-            } if latest_interview else None
-        })
-
-    result.sort(key=lambda x: x["employability_score"], reverse=True)
-    return result
+    return _get_cached_scores(token)
 
 @app.get("/api/tpo/vulnerable")
 def vulnerable_students(token: str, threshold: float = 60.0):
@@ -1094,6 +1112,11 @@ def skill_deficit_heatmap(token: str):
     heatmap.sort(key=lambda x: x["deficit_percentage"], reverse=True)
     return heatmap
 
+@app.get("/api/tpo/skill-heatmap")
+def skill_heatmap_alias(token: str):
+    """Alias for skill-deficit-heatmap (frontend compatibility)."""
+    return skill_deficit_heatmap(token)
+
 @app.get("/api/tpo/alerts")
 def tpo_alerts(token: str):
     """Generate 4-tier institutional mentor alerts for at-risk, outperforming, and consistency-lagging students."""
@@ -1101,7 +1124,7 @@ def tpo_alerts(token: str):
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
 
-    all_scored = students_with_scores(token)
+    all_scored = _get_cached_scores(token)
     alerts = []
 
     for s in all_scored:
@@ -1200,7 +1223,7 @@ def branch_breakdown(token: str):
     if not session or session["role"] != "tpo":
         raise HTTPException(status_code=403, detail="TPO access required")
 
-    all_scored = students_with_scores(token)
+    all_scored = _get_cached_scores(token)
     branches = {}
     for s in all_scored:
         b = s["branch"]
@@ -1293,6 +1316,7 @@ async def tpo_upload_csv(token: str = Form(...), file: UploadFile = File(...)):
         students_to_add.append(item)
 
     imported = batch_upsert_students(students_to_add)
+    _invalidate_tpo_cache()  # Force fresh scores after new data
     return {
         "success": True,
         "imported_count": imported,
