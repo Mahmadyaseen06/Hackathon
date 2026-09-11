@@ -339,16 +339,19 @@
               <span style="font-size:11px;color:var(--muted)">One-click test or download</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="loadDemoCV('strong')" style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
-                ⚡ One-Click Load Aarav's CV (Top SDE)
-              </button>
-              <button type="button" onclick="loadDemoCV('needs')" style="background:var(--surface2);color:var(--warning);border:1px solid var(--border);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
-                ⚡ Load Rahul's CV (Gaps Demo)
-              </button>
-              <a href="/static/demo/sample_cv_strong_candidate.pdf" download="Aarav_Sharma_Resume.pdf" style="text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:4px">
-                📥 Download PDF
+              <a href="/static/demo/sample_cv_ready_for_registration.pdf" download="STUDENT_DEMO_CV.pdf" style="text-decoration:none;background:var(--primary);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(29,111,92,0.25);">
+                📥 Download Ready-to-Upload CV (PDF)
               </a>
+              <button type="button" onclick="loadDemoCV('strong')" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+                ⚡ 1-Click Auto-Fill Aarav's CV (Top SDE)
+              </button>
+              <button type="button" onclick="loadDemoCV('needs')" style="background:var(--surface2);color:var(--warning);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+                ⚡ 1-Click Auto-Fill Rahul's CV (Gaps Demo)
+              </button>
             </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4;">
+            💡 <strong>Live Demo Instructions:</strong> Click <em>"Download Ready-to-Upload CV"</em> to save the file to your machine, then drag and drop it into the box below or click to browse. Alternatively, use the 1-Click Auto-Fill buttons!
           </div>
 
           <div class="cv-dropzone" id="cv-dropzone" onclick="document.getElementById('cv-file').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">

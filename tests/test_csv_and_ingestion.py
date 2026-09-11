@@ -136,3 +136,24 @@ def test_student_and_tpo_csv_upload_with_windows_excel_bom():
     imported_bom_stu = get_student_by_usn("4JN25BOM001")
     assert imported_bom_stu is not None
     assert imported_bom_stu["name"] == "BOM Encoded Student"
+
+
+def test_signup_cv_upload_endpoint():
+    with open("STUDENT_DEMO_CV.pdf", "rb") as f:
+        pdf_bytes = f.read()
+
+    files = {"cv_file": ("STUDENT_DEMO_CV.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+    data = {
+        "password": "demopassword123",
+        "usn": "4JN25TESTCV",
+        "github_username": "aarav-dev",
+        "leetcode_username": "aarav_codes"
+    }
+    resp = client.post("/api/auth/signup-cv", data=data, files=files)
+    assert resp.status_code == 200
+    res_json = resp.json()
+    assert res_json["success"] is True
+    assert res_json["usn"] == "4JN25TESTCV"
+    assert res_json["extracted_profile"]["name"] == "AARAV SHARMA"
+    assert res_json["extracted_profile"]["skills_found"] >= 10
+

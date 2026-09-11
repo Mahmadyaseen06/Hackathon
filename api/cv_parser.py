@@ -19,6 +19,8 @@ except ImportError:
 
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "llama3.2:3b"
+# Reload trigger: pdfplumber and reportlab enabled for registration CV parsing
+
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -93,14 +95,14 @@ Rules:
 - If something is not mentioned, use sensible defaults"""
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=3.5) as client:
             response = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
                 json={
                     "model": OLLAMA_MODEL,
                     "prompt": prompt,
                     "stream": False,
-                    "options": {"temperature": 0.1, "num_predict": 600}
+                    "options": {"temperature": 0.1, "num_predict": 350}
                 }
             )
             response.raise_for_status()
@@ -109,7 +111,8 @@ Rules:
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', raw, re.DOTALL)
             if json_match:
-                return json.loads(json_match.group())
+                data = json.loads(json_match.group())
+                return data if isinstance(data, dict) else {}
     except Exception as e:
         pass
 
@@ -240,18 +243,25 @@ async def parse_cv(file_bytes: bytes, filename: str) -> dict:
     """
     Main CV parsing pipeline:
     1. Extract text from PDF
-    2. Try Ollama AI parsing
-    3. Fallback to rule-based if needed
+    2. Compute fast, rock-solid rule-based baseline
+    3. Try fast Ollama AI parsing (3.5s timeout)
+    4. Merge without overwriting with None
     """
     cv_text = extract_text_from_pdf(file_bytes)
     if not cv_text:
         return {}
 
-    # Try Ollama first
-    result = await parse_cv_with_ollama(cv_text)
-    if not result or not result.get("name"):
-        # Fallback to rule-based
-        result = _rule_based_cv_parse(cv_text)
+    baseline = _rule_based_cv_parse(cv_text)
 
-    result["cv_text_preview"] = cv_text[:500]
-    return result
+    # Attempt fast Ollama AI parsing
+    try:
+        ollama_res = await parse_cv_with_ollama(cv_text)
+        if ollama_res and isinstance(ollama_res, dict) and ollama_res.get("name"):
+            for k, v in ollama_res.items():
+                if v is not None and v != "":
+                    baseline[k] = v
+    except Exception:
+        pass
+
+    baseline["cv_text_preview"] = cv_text[:500]
+    return baseline

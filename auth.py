@@ -182,23 +182,39 @@ def register_student(profile: dict) -> dict:
         seq = len(existing_self) + 1
         usn = f"SELF{year:02d}{seq:04d}"
 
+    def _safe_int(val, default=0) -> int:
+        try:
+            if val is None or val == "":
+                return default
+            return int(float(val))
+        except (ValueError, TypeError):
+            return default
+
+    def _safe_float(val, default=0.0) -> float:
+        try:
+            if val is None or val == "":
+                return default
+            return float(val)
+        except (ValueError, TypeError):
+            return default
+
     # Build full student record with defaults
     student = {
         "usn": usn,
-        "password": profile.get("password", "changeme123"),
-        "name": profile.get("name", "Student"),
-        "branch": profile.get("branch", "Computer Science & Engineering"),
-        "semester": int(profile.get("semester", 7)),
-        "cgpa": float(profile.get("cgpa", 7.0)),
-        "active_backlogs": int(profile.get("active_backlogs", 0)),
-        "backlogs_history": int(profile.get("backlogs_history", 0)),
-        "quantitative_aptitude": int(profile.get("quantitative_aptitude", 70)),
-        "logical_reasoning": int(profile.get("logical_reasoning", 70)),
-        "coding_benchmark": int(profile.get("coding_benchmark", 70)),
-        "communication_rating": float(profile.get("communication_rating", 7.0)),
-        "interview_rating": float(profile.get("interview_rating", 7.0)),
-        "target_role": profile.get("target_role", "SDE"),
-        "target_lpa": float(profile.get("target_lpa", 10.0)),
+        "password": profile.get("password") or "changeme123",
+        "name": profile.get("name") or "Student",
+        "branch": profile.get("branch") or "Computer Science & Engineering",
+        "semester": _safe_int(profile.get("semester"), 7),
+        "cgpa": _safe_float(profile.get("cgpa"), 7.0),
+        "active_backlogs": _safe_int(profile.get("active_backlogs"), 0),
+        "backlogs_history": _safe_int(profile.get("backlogs_history"), 0),
+        "quantitative_aptitude": _safe_int(profile.get("quantitative_aptitude"), 70),
+        "logical_reasoning": _safe_int(profile.get("logical_reasoning"), 70),
+        "coding_benchmark": _safe_int(profile.get("coding_benchmark"), 70),
+        "communication_rating": _safe_float(profile.get("communication_rating"), 7.0),
+        "interview_rating": _safe_float(profile.get("interview_rating"), 7.0),
+        "target_role": profile.get("target_role") or "SDE",
+        "target_lpa": _safe_float(profile.get("target_lpa"), 10.0),
         "skills": profile.get("skills", {}),
         "certifications": profile.get("certifications", []),
         "internships": profile.get("internships", []),
