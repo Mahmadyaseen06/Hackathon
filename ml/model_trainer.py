@@ -356,11 +356,11 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
     if track_model and track_encoder:
         track_probs = track_model.predict_proba(features_df)[0]
         classes = track_encoder.inverse_transform(track_model.classes_)
-        for i, prob in enumerate(track_probs):
+        for i, t_prob in enumerate(track_probs):
             tracks.append({
                 "track": classes[i],
-                "score": float(prob),
-                "match_pct": round(float(prob) * 100, 1)
+                "score": float(t_prob),
+                "match_pct": round(float(t_prob) * 100, 1)
             })
         tracks = sorted(tracks, key=lambda x: x["score"], reverse=True)
     else:
@@ -407,8 +407,8 @@ def predict_student_employability(student_data: Dict[str, Any]) -> Dict[str, Any
 
     return {
         "student_id": student_data.get("student_id", "STU-UNKNOWN"),
-        "placement_probability": prob,
-        "raw_ml_probability": round(raw_prob, 1),
+        "placement_probability": int(round(prob)),
+        "raw_ml_probability": int(round(raw_prob)),
         "readiness_status": readiness,
         "readiness_badge": readiness_badge,
         "career_track_alignments": tracks,

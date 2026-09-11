@@ -462,7 +462,7 @@
         <td><strong>${s.name}</strong></td>
         <td style="font-family:monospace; color:var(--accent); font-size:12px">${s.usn}</td>
         <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
-        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</td>
+        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${Math.round(s.employability_score)}%</td>
         <td><span class="tier-badge tier-${s.readiness_tier.replace(' ','-')}">${s.readiness_tier}</span></td>
       </tr>`).join('');
 
@@ -477,7 +477,7 @@
             <td><strong>${s.name}</strong></td>
             <td style="font-family:monospace;color:var(--accent);font-size:12px">${s.usn}</td>
             <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
-            <td class="score-cell" style="color:var(--danger)">${s.employability_score}%</td>
+            <td class="score-cell" style="color:var(--danger)">${Math.round(s.employability_score)}%</td>
             <td>${s.active_backlogs > 0 ? `<span style="color:var(--danger);font-weight:700">${s.active_backlogs} ⚠️</span>` : '—'}</td>
             <td><button onclick="event.stopPropagation(); triggerTpoAction('${s.usn}','schedule_bootcamp',this)" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">⚡ Schedule Bootcamp</button></td>
           </tr>`;}).join('')
@@ -495,7 +495,7 @@
         <td style="font-family:monospace;color:var(--accent);font-size:12px">${s.usn}</td>
         <td style="color:var(--muted);font-size:12px">${s.branch}</td>
         <td>${s.cgpa}</td>
-        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</td>
+        <td class="score-cell" style="color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${Math.round(s.employability_score)}%</td>
         <td><span class="tier-badge tier-${s.readiness_tier.replace(' ','-')}">${s.readiness_tier}</span></td>
         <td>${s.internships_count > 0 ? `✅ ${s.internships_count}` : '—'}</td>
         <td>${s.interview_attempts > 0 ? `🎤 ${s.interview_attempts}` : '—'}</td>
@@ -630,7 +630,7 @@
       <p style="color:var(--muted);font-size:13px;margin-bottom:16px">${s.branch} • ${s.usn}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.cgpa}</div><div style="font-size:11px;color:var(--muted)">CGPA</div></div>
-        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${s.employability_score}%</div><div style="font-size:11px;color:var(--muted)">Score</div></div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:${s.employability_score>=78?'#10b981':s.employability_score>=55?'#f59e0b':'#ef4444'}">${Math.round(s.employability_score)}%</div><div style="font-size:11px;color:var(--muted)">Score</div></div>
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${s.interview_attempts}</div><div style="font-size:11px;color:var(--muted)">Interviews</div></div>
         <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${avgSkill}</div><div style="font-size:11px;color:var(--muted)">Avg Skill</div></div>
       </div>

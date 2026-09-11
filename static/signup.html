@@ -189,7 +189,7 @@
             <span>🎙️</span> <span>Mandatory Calibrated AI Mock Interview</span>
           </div>
           <div style="font-size:13px;color:var(--text);line-height:1.5;">
-            According to institutional placement policy, your claimed skills must be calibrated through the <strong>HackerRank-style AI Interview Room</strong> powered by local Ollama AI. Includes real-time code execution, speech clarity analysis, and company simulation.
+            According to institutional placement policy, your claimed skills must be calibrated through the <strong>Calibrated AI Interview Room</strong> powered by local Ollama AI. Includes real-time code execution, speech clarity analysis, and company simulation.
           </div>
         </div>
 
@@ -258,70 +258,77 @@
                   <option value="7" selected>7th</option><option value="8">8th</option>
                 </select>
               </div>
+            </div>
+
+            <div class="section-title">📊 Placement Readiness Metrics</div>
+            <div class="form-grid cols-3">
               <div class="form-group">
-                <label class="form-label">CGPA *</label>
+                <label class="form-label">Current CGPA *</label>
                 <input class="form-input" id="m-cgpa" type="number" step="0.01" min="0" max="10" placeholder="e.g. 8.5" required>
               </div>
               <div class="form-group">
                 <label class="form-label">Active Backlogs</label>
-                <input class="form-input" id="m-backlogs" type="number" min="0" value="0">
+                <input class="form-input" id="m-backlogs" type="number" min="0" max="20" value="0">
               </div>
               <div class="form-group">
-                <label class="form-label">Target LPA</label>
-                <input class="form-input" id="m-lpa" type="number" step="0.5" min="3" value="10">
+                <label class="form-label">Target Role</label>
+                <select class="form-select" id="m-role">
+                  <option>Full-Stack Developer</option>
+                  <option>Frontend Developer</option>
+                  <option>Backend Developer</option>
+                  <option>Data Scientist</option>
+                  <option>Machine Learning Engineer</option>
+                  <option>Cloud / DevOps Engineer</option>
+                  <option>Software Engineer</option>
+                  <option>QA / Test Engineer</option>
+                </select>
               </div>
             </div>
 
-            <div class="section-title">🎯 Target Role</div>
             <div class="form-grid cols-2">
               <div class="form-group">
-                <label class="form-label">Preferred Role</label>
-                <select class="form-select" id="m-role">
-                  <option value="SDE">Software Development Engineer</option>
-                  <option value="Data Scientist">Data Scientist / ML Engineer</option>
-                  <option value="Full Stack">Full Stack Developer</option>
-                  <option value="DevOps">DevOps / Cloud Engineer</option>
-                  <option value="Product Manager">Product Manager</option>
-                  <option value="Data Analyst">Data Analyst</option>
-                  <option value="Embedded">Embedded / IoT Engineer</option>
-                  <option value="Other">Other</option>
-                </select>
+                <label class="form-label">Target Package (LPA)</label>
+                <input class="form-input" id="m-lpa" type="number" step="0.5" min="2" max="60" value="10">
               </div>
               <div class="form-group">
                 <label class="form-label">Certifications (comma-separated)</label>
-                <input class="form-input" id="m-certs" type="text" placeholder="e.g. AWS Cloud Practitioner, NPTEL Python">
+                <input class="form-input" id="m-certs" type="text" placeholder="AWS Certified, NPTEL Python, etc.">
               </div>
             </div>
 
-            <div class="section-title">🛠️ Skills</div>
-            <div class="skill-add-row">
-              <input id="skill-name-input" type="text" placeholder="Skill name (e.g. Python, React, SQL)">
-              <select id="skill-level-select">
-                <option value="5">Beginner (5)</option>
-                <option value="6" selected>Intermediate (6)</option>
-                <option value="7">Good (7)</option>
-                <option value="8">Advanced (8)</option>
-                <option value="9">Expert (9)</option>
-              </select>
-              <button type="button" onclick="addSkill()">+ Add</button>
-            </div>
-            <div class="skill-builder" id="skill-builder">
-              <span style="color:var(--muted);font-size:12px;align-self:center">Add skills above ↑</span>
+            <div class="section-title">🛠️ Technical Skills</div>
+            <div class="form-group">
+              <label class="form-label">Add Your Skills & Proficiency (1-10)</label>
+              <div class="skill-builder" id="skill-builder">
+                <span style="color:var(--muted);font-size:12px;align-self:center">Add skills below ↓</span>
+              </div>
+              <div class="skill-add-row">
+                <input id="skill-name-input" type="text" placeholder="Skill name (e.g. Python, React, SQL)">
+                <select id="skill-level-select">
+                  <option value="10">10 — Master / Expert</option>
+                  <option value="8" selected>8 — Proficient</option>
+                  <option value="6">6 — Intermediate</option>
+                  <option value="4">4 — Beginner</option>
+                  <option value="2">2 — Basic Exposure</option>
+                </select>
+                <button type="button" onclick="addSkill()">+ Add</button>
+              </div>
             </div>
 
-            <div class="section-title" style="margin-top:24px">🔗 Platform Usernames (for progress tracking)</div>
+            <div class="section-title" style="margin-top:24px">🔗 Platform Profiles (Optional)</div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Add your usernames to automatically track your coding activity and benchmark scores.</p>
             <div class="platform-grid">
               <div class="platform-input-wrap"><span class="platform-icon">🐙</span><input id="m-github" type="text" placeholder="GitHub username"></div>
               <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="m-leetcode" type="text" placeholder="LeetCode username"></div>
               <div class="platform-input-wrap"><span class="platform-icon">💻</span><input id="m-hackerrank" type="text" placeholder="HackerRank username"></div>
               <div class="platform-input-wrap"><span class="platform-icon">🏆</span><input id="m-codeforces" type="text" placeholder="Codeforces username"></div>
             </div>
-          </div>
 
-          <button type="submit" class="btn-submit" id="btn-manual-submit">
-            <span id="btn-manual-text">🚀 Create Account & Start Interview</span>
-            <div class="spinner" id="spinner-manual" style="display:none"></div>
-          </button>
+            <button class="btn-submit" id="btn-manual-submit" type="submit" style="margin-top:28px">
+              <span id="btn-manual-text">✨ Create Account & Predict Placement</span>
+              <div class="spinner" id="spinner-manual" style="display:none"></div>
+            </button>
+          </div>
         </form>
       </div>
 
@@ -330,29 +337,6 @@
         <div class="form-card">
           <div class="section-title">📄 Upload Your CV / Resume</div>
           <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Our AI (Ollama llama3.2) will extract your name, skills, projects, certifications, and education automatically from your PDF resume.</p>
-
-          <div style="margin-bottom:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-              <span style="font-size:12.5px;font-weight:700;color:#93c5fd;display:flex;align-items:center;gap:6px">
-                ⚡ <span>Hackathon Judge Live Demo Resumes</span>
-              </span>
-              <span style="font-size:11px;color:var(--muted)">One-click test or download</span>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a href="/static/demo/sample_cv_ready_for_registration.pdf" download="STUDENT_DEMO_CV.pdf" style="text-decoration:none;background:var(--primary);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(29,111,92,0.25);">
-                📥 Download Ready-to-Upload CV (PDF)
-              </a>
-              <button type="button" onclick="loadDemoCV('strong')" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
-                ⚡ 1-Click Auto-Fill Aarav's CV (Top SDE)
-              </button>
-              <button type="button" onclick="loadDemoCV('needs')" style="background:var(--surface2);color:var(--warning);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
-                ⚡ 1-Click Auto-Fill Rahul's CV (Gaps Demo)
-              </button>
-            </div>
-          </div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4;">
-            💡 <strong>Live Demo Instructions:</strong> Click <em>"Download Ready-to-Upload CV"</em> to save the file to your machine, then drag and drop it into the box below or click to browse. Alternatively, use the 1-Click Auto-Fill buttons!
-          </div>
 
           <div class="cv-dropzone" id="cv-dropzone" onclick="document.getElementById('cv-file').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
             <span class="cv-icon" id="cv-icon">📄</span>

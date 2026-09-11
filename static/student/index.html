@@ -479,16 +479,19 @@
             <div class="stat-icon">🎯</div>
             <div class="stat-value" id="stat-aptitude">—</div>
             <div class="stat-label">Aptitude Score</div>
+            <div id="stat-aptitude-sub" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">💻</div>
             <div class="stat-value" id="stat-coding">—</div>
             <div class="stat-label">Coding Benchmark</div>
+            <div id="stat-coding-sub" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🗣️</div>
             <div class="stat-value" id="stat-comm">—</div>
             <div class="stat-label">Communication /10</div>
+            <div id="stat-comm-sub" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
           </div>
         </div>
 
@@ -1433,9 +1436,23 @@
     document.getElementById('profile-backlogs').textContent = u.active_backlogs > 0 ? `${u.active_backlogs} Active ⚠️` : 'None ✅';
     const hasTakenAssessment = u.interview_history && u.interview_history.length > 0;
     
-    document.getElementById('stat-aptitude').textContent = (!hasTakenAssessment && u.quantitative_aptitude === 70) ? 'Pending' : u.quantitative_aptitude + '%';
-    document.getElementById('stat-coding').textContent = (!hasTakenAssessment && u.coding_benchmark === 70) ? 'Pending' : u.coding_benchmark + '%';
-    document.getElementById('stat-comm').textContent = (!hasTakenAssessment && u.communication_rating === 7.0) ? 'Pending' : u.communication_rating + '/10';
+    document.getElementById('stat-aptitude').textContent = Math.round(u.quantitative_aptitude || 70) + '%';
+    const aptSub = document.getElementById('stat-aptitude-sub');
+    if (aptSub) aptSub.innerHTML = hasTakenAssessment
+      ? '<span style="color:var(--success)">✓ Verified via Assessment</span>'
+      : '<span style="color:var(--muted)">📄 Extracted from CV</span>';
+
+    document.getElementById('stat-coding').textContent = Math.round(u.coding_benchmark || 70) + '%';
+    const codeSub = document.getElementById('stat-coding-sub');
+    if (codeSub) codeSub.innerHTML = hasTakenAssessment
+      ? '<span style="color:var(--success)">✓ Verified via Coding OA</span>'
+      : '<span style="color:var(--muted)">📄 Extracted from CV</span>';
+
+    document.getElementById('stat-comm').textContent = (u.communication_rating || 7.0) + '/10';
+    const commSub = document.getElementById('stat-comm-sub');
+    if (commSub) commSub.innerHTML = hasTakenAssessment
+      ? '<span style="color:var(--success)">✓ Evaluated in Voice Interview</span>'
+      : '<span style="color:var(--muted)">🎤 Pending Voice Interview</span>';
 
     // Skills
     const skillColors = {10:'#10b981',9:'#10b981',8:'#22d3ee',7:'#6366f1',6:'#8b5cf6',5:'#f59e0b',4:'#f59e0b',3:'#ef4444',2:'#ef4444',1:'#ef4444'};
@@ -1446,7 +1463,20 @@
 
     // Internships
     document.getElementById('internships-list').innerHTML = u.internships?.length
-      ? u.internships.map(i => `<div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px"><strong>${i.company}</strong> — ${i.role} <span style="color:var(--muted)">(${i.duration_months}mo)</span></div>`).join('')
+      ? u.internships.map(i => {
+          let company = 'Company', role = 'Intern', dur = '';
+          if (typeof i === 'string') {
+            const parts = i.split(':');
+            company = parts[0] || i;
+            role = parts[1] || 'Intern';
+            dur = parts[2] ? ` (${parts[2]}mo)` : '';
+          } else if (i && typeof i === 'object') {
+            company = i.company || i.name || 'Company';
+            role = i.role || 'Intern';
+            dur = i.duration_months ? ` (${i.duration_months}mo)` : (i.duration ? ` (${i.duration})` : '');
+          }
+          return `<div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:13px"><strong>${company}</strong> — ${role} <span style="color:var(--muted)">${dur}</span></div>`;
+        }).join('')
       : '<p style="color:var(--muted);font-size:13px">No internships yet.</p>';
 
     // Certifications
@@ -1456,11 +1486,16 @@
 
     // Projects
     document.getElementById('projects-profile-list').innerHTML = u.projects?.length
-      ? u.projects.map(p => `<div style="padding:10px 0; border-bottom:1px solid var(--border)">
-          <span style="font-size:13px;font-weight:600">💡 ${p.name}</span>
-          <span style="margin-left:8px; font-size:11px; padding:2px 8px; border-radius:4px; background:var(--surface); color:var(--muted)">${p.complexity}</span>
-          <div style="margin-top:6px">${p.tags.map(t=>`<span style="font-size:11px;margin-right:4px;color:var(--accent)">#${t}</span>`).join('')}</div>
-        </div>`).join('')
+      ? u.projects.map(p => {
+          const name = typeof p === 'string' ? p : (p.name || 'Project');
+          const complexity = (typeof p === 'object' && p.complexity) ? p.complexity : 'Production / Full-Stack';
+          const tags = (typeof p === 'object' && Array.isArray(p.tags)) ? p.tags : ['Project', 'System'];
+          return `<div style="padding:10px 0; border-bottom:1px solid var(--border)">
+            <span style="font-size:13px;font-weight:600">💡 ${name}</span>
+            <span style="margin-left:8px; font-size:11px; padding:2px 8px; border-radius:4px; background:var(--surface); color:var(--muted)">${complexity}</span>
+            <div style="margin-top:6px">${tags.map(t=>`<span style="font-size:11px;margin-right:4px;color:var(--accent)">#${t}</span>`).join('')}</div>
+          </div>`;
+        }).join('')
       : '<p style="color:var(--muted);font-size:13px">No projects listed.</p>';
   }
 
@@ -1472,9 +1507,9 @@
     });
     if (!res.ok) return;
     scoreData = await res.json();
-    const score = scoreData.employability_score;
+    const score = Math.round(Number(scoreData.employability_score) || 0);
     const tier = scoreData.readiness_status;
-    const rawScore = scoreData.raw_ml_probability || score;
+    const rawScore = Math.round(Number(scoreData.raw_ml_probability || score));
     const penalties = scoreData.reality_check_penalties || [];
 
     document.getElementById('topbar-score').textContent = score + '%';

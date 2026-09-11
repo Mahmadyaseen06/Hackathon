@@ -645,7 +645,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div id="setup-step-1" style="max-width:720px;width:100%">
     <div style="font-size:44px;margin-bottom:12px">🏢</div>
     <div class="screen-title">Multi-Round AI Company Interview</div>
-    <div class="screen-sub">Experience real corporate recruitment pipelines (HackerRank OA + Tech Deep Dive + Behavioral). Powered by local Ollama llama3.2:3b & strict zero-compromise evaluation.</div>
+    <div class="screen-sub">Experience real corporate recruitment pipelines (Coding OA + Technical Deep Dive + Behavioral). Powered by local Ollama llama3.2:3b & strict zero-compromise evaluation.</div>
 
     <div style="margin-bottom:22px">
       <div class="section-title" style="text-align:left;margin-bottom:10px">1. Select Target Company</div>
@@ -2290,7 +2290,7 @@ async function submitAnswer() {
       if (analysis.next_question.is_final) {
         // Final question completed
       } else {
-        // HackerRank-style dynamic adaptive question: update next question slot!
+        // Dynamic adaptive question: update next question slot!
         questions[currentQIndex + 1] = analysis.next_question;
       }
     }

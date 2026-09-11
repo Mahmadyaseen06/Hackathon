@@ -110,10 +110,10 @@ def _compute_all_student_scores(token: str) -> list:
     for s in students:
         try:
             res = predict_student_employability(s)
-            score = round(res.get("placement_probability", 50.0), 1)
+            score = int(round(res.get("placement_probability", 50.0)))
             tier = "Ready" if score >= 78 else "Near-Ready" if score >= 55 else "Needs Training"
         except:
-            score = 50.0
+            score = 50
             tier = "Near-Ready"
 
         history = s.get("interview_history", [])
@@ -682,6 +682,9 @@ def predict_employability(req: PredictRequest):
         if not student:
             raise HTTPException(status_code=404, detail="Student not found")
         profile = student
+    elif req.usn:
+        student = get_student_by_usn(req.usn)
+        profile = student if student else req.dict(exclude_none=True)
     else:
         profile = req.dict(exclude_none=True)
 
@@ -703,9 +706,10 @@ def predict_employability(req: PredictRequest):
                     if interview_score >= 70:
                         score = min(54.0, score + 2.0)
                 else:
-                    score = round(score * 0.8 + interview_score * 0.2, 1)
+                    score = score * 0.8 + interview_score * 0.2
                 tier = "Ready" if score >= 78 else "Near-Ready" if score >= 62 else "Needs Training"
 
+        score = int(round(score))
         factors = result.get("factor_transparency", result.get("shap_factors", []))
         tracks = result.get("career_track_alignments", [])
         top_track = result.get("primary_recommended_track", tracks[0]["track"] if tracks else "Full-Stack Developer")
@@ -716,7 +720,7 @@ def predict_employability(req: PredictRequest):
             "placement_probability": score,
             "readiness_status": tier,
             "readiness_badge": result.get("readiness_badge", "error" if tier == "Needs Training" else "warning"),
-            "probability": score / 100.0,
+            "probability": round(score / 100.0, 2),
             "shap_factors": factors,
             "factor_transparency": factors,
             "reality_check_penalties": result.get("reality_check_penalties", []),
