@@ -1270,7 +1270,7 @@ def tpo_trigger_action(req: TpoActionRequest):
         "usn": req.usn,
         "student_name": student_name,
         "action_type": req.action_type,
-        "tpo_id": session["usn"]
+        "tpo_id": session.get("usn") or session.get("user_id") or "TPO"
     })
     
     with open(log_file, "w") as f:
