@@ -80,7 +80,7 @@ def train_and_evaluate() -> Dict[str, Any]:
         estimators=[("rf", rf), ("xgb", xgb), ("lgb", lgb), ("gbdt", gbdt)],
         final_estimator=LogisticRegression(C=1.0, max_iter=500),
         cv=3,
-        n_jobs=-1
+        n_jobs=1
     )
     ensemble.fit(X_train, y_train)
 
