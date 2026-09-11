@@ -6,273 +6,158 @@
   <title>Login — AI Placement Predictor | JNNCSE</title>
   <meta name="description" content="Login to AI Placement Predictor with your USN or Employee ID">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #070b14;
-      --surface: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
-      --primary: #6366f1;
-      --primary-glow: rgba(99,102,241,0.3);
-      --accent: #22d3ee;
-      --success: #10b981;
-      --danger: #ef4444;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
+      --bg: #f8f5ee;
+      --surface: #f4efe4;
+      --surface2: #ece6d8;
+      --border: #d4cfc4;
+      --primary: #1d6f5c;
+      --primary-glow: rgba(29,111,92,0.15);
+      --accent: #2e7d32;
+      --success: #2e7d32;
+      --warning: #d97706;
+      --danger: #9e3b33;
+      --text: #1a1917;
+      --muted: #6b665d;
     }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* Animated background */
-    .bg-orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.15;
-      animation: float 8s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .orb-1 { width: 500px; height: 500px; background: #6366f1; top: -100px; left: -100px; animation-delay: 0s; }
-    .orb-2 { width: 400px; height: 400px; background: #22d3ee; bottom: -80px; right: -80px; animation-delay: 3s; }
-    .orb-3 { width: 300px; height: 300px; background: #8b5cf6; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 1.5s; }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.05); }
-    }
-
-    .login-container {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      max-width: 460px;
-      padding: 20px;
-    }
-
-    .logo-section {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-
-    .logo-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #6366f1, #22d3ee);
-      border-radius: 18px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      margin-bottom: 16px;
-      box-shadow: 0 0 40px rgba(99,102,241,0.4);
-    }
+    /* Remove animated bg orbs */
+    .bg-orb { display: none; }
 
     .logo-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 24px;
+      font-family: 'Newsreader', serif; font-style: italic;
+      font-size: 32px;
       font-weight: 800;
-      background: linear-gradient(135deg, #6366f1, #22d3ee);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 4px;
-    }
-
-    .logo-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: 0.5px;
-    }
-
-    .card {
-      background: rgba(15, 20, 35, 0.85);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 40px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 1px rgba(99,102,241,0.3);
-    }
-
-    .tab-row {
-      display: flex;
-      background: rgba(255,255,255,0.04);
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 32px;
-      gap: 4px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 10px 16px;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .tab-btn.active {
-      background: linear-gradient(135deg, #6366f1, #5b5fe0);
-      color: white;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.4);
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 8px;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 14px 18px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 12px;
       color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      font-weight: 500;
-      transition: all 0.2s;
-      outline: none;
+      background: none;
+      -webkit-text-fill-color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    
+    .card, .form-card { 
+        background: var(--surface); 
+        border: 1px solid var(--border); 
+        border-radius: 12px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        color: var(--text);
     }
 
-    .form-input:focus {
-      border-color: var(--primary);
-      background: rgba(99,102,241,0.08);
-      box-shadow: 0 0 0 3px var(--primary-glow);
+    .form-input, .form-select {
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .form-input:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-glow);
     }
 
-    .form-input::placeholder { color: rgba(148,163,184,0.4); }
-
-    .hint-text {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 6px;
-      opacity: 0.7;
+    .btn-submit {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(29,111,92,0.2);
+        width: 100%; padding: 16px;
+        font-size: 15px; font-weight: 700;
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
     }
-
-    .btn-login {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #6366f1, #5b5fe0);
-      border: none;
-      border-radius: 12px;
-      color: white;
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+    .btn-submit:hover {
+        background: #145243;
+        transform: translateY(-1px);
     }
-
-    .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(99,102,241,0.5); }
-    .btn-login:active { transform: translateY(0); }
-    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    .error-box {
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #fca5a5;
-      margin-bottom: 16px;
-      display: none;
-      align-items: center;
-      gap: 8px;
+    
+    .mode-btn { color: var(--muted); }
+    .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(29,111,92,0.2); }
+    .mode-toggle { background: var(--surface); border-color: var(--border); }
+    
+    .platform-input-wrap, .skill-add-row input, .skill-add-row select, .skill-builder {
+        background: #fff; border: 1px solid var(--border); color: var(--text);
     }
+    
+    .login-link a { color: var(--primary); }
+    
+    input, select { color: var(--text); background: #fff; border: 1px solid var(--border); }
+    input::placeholder { color: var(--muted); }
+    
+    .cv-dropzone { background: #fff; border-color: var(--border); }
+    .cv-dropzone.has-file { background: rgba(46,125,50,0.05); border-color: var(--success); }
+    
+    .section-title { color: var(--text); border-bottom: 1px solid var(--border); }
 
-    .demo-creds {
-      margin-top: 24px;
-      background: rgba(99,102,241,0.06);
-      border: 1px solid rgba(99,102,241,0.15);
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .demo-creds h4 {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 12px;
-    }
-
-    .demo-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .demo-item {
-      background: rgba(255,255,255,0.04);
-      border-radius: 8px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-      border: 1px solid transparent;
-    }
-
-    .demo-item:hover {
-      background: rgba(99,102,241,0.1);
-      border-color: rgba(99,102,241,0.3);
-    }
-
-    .demo-usn {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent);
-      font-family: 'Courier New', monospace;
-    }
-
-    .demo-name {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
+    /* Other required components ported from old CSS */
+    .page-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 20px; position: relative; z-index: 1; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .logo-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .logo-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .mode-toggle { display: flex; border-radius: 16px; padding: 6px; gap: 6px; margin-bottom: 28px; width: 100%; max-width: 480px; }
+    .mode-btn { flex: 1; padding: 12px; border: none; font-size: 13px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .form-card { padding: 36px; width: 100%; max-width: 700px; margin-bottom: 24px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; }
+    .form-grid { display: grid; gap: 16px; margin-bottom: 24px; }
+    .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+    .form-hint { font-size: 11px; color: var(--muted); opacity: 0.7; }
+    .skill-builder { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 44px; padding: 8px; border-radius: 10px; }
+    .skill-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text); }
+    .skill-chip button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+    .skill-chip button:hover { color: var(--danger); }
+    .skill-add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .skill-add-row input { flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; }
+    .skill-add-row select { padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer; }
+    .skill-add-row button { padding: 8px 16px; background: var(--primary); border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .cv-dropzone { border: 2px dashed var(--border); border-radius: 16px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .cv-dropzone:hover, .cv-dropzone.drag-over { border-color: var(--primary); }
+    .cv-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+    .cv-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .cv-sub { font-size: 13px; color: var(--muted); }
+    .cv-file-name { font-size: 13px; color: var(--success); font-weight: 600; margin-top: 8px; }
+    .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .platform-input-wrap { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 10px 14px; }
+    .platform-icon { font-size: 20px; flex-shrink: 0; width: 24px; text-align: center; }
+    .platform-input-wrap input { background: none; border: none; font-size: 13px; outline: none; flex: 1; }
+    .error-box { background: rgba(158,59,51,0.1); border: 1px solid rgba(158,59,51,0.3); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--danger); margin-bottom: 16px; display: none; }
+    .success-box { background: rgba(46,125,50,0.1); border: 1px solid rgba(46,125,50,0.3); border-radius: 12px; padding: 20px; font-size: 14px; color: var(--success); margin-bottom: 16px; display: none; text-align: center; }
+    .success-box .success-usn { font-size: 28px; font-weight: 800; font-family: monospace; color: var(--primary); margin: 8px 0; }
+    .login-link { text-align: center; font-size: 13px; color: var(--muted); }
+    .login-link a { text-decoration: none; font-weight: 600; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+    .steps { display: flex; gap: 6px; margin-bottom: 28px; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1); transition: background 0.3s; }
+    .step.done { background: var(--success); }
+    .step.active { background: var(--primary); }
+    .ai-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 16px; display: none; }
+    .ai-preview h4 { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .ai-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .ai-stat:last-child { border: none; }
+    .ai-stat strong { color: var(--primary); }
+    
+    .login-container { position: relative; z-index: 10; width: 100%; max-width: 460px; padding: 20px; }
+    .logo-section { text-align: center; margin-bottom: 36px; }
+    .logo-subtitle { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
+
+    @media (max-width: 600px) {
+      .form-grid.cols-2, .form-grid.cols-3, .platform-grid { grid-template-columns: 1fr; }
+    }
+
+</style>
 </head>
 <body>
   <div class="bg-orb orb-1"></div>
@@ -314,7 +199,7 @@
         </button>
 
         <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted)">
-          New student? <a href="/signup" style="color:#6366f1;font-weight:700;text-decoration:none">Create account / Upload CV →</a>
+          New student? <a href="/signup" style="color:var(--primary);font-weight:700;text-decoration:none">Create account / Upload CV →</a>
         </div>
 
         <div class="demo-creds">

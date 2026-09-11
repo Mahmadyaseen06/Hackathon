@@ -5,123 +5,158 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up — AI Placement Predictor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #070b14; --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
-      --border: rgba(255,255,255,0.08); --primary: #6366f1; --primary-glow: rgba(99,102,241,0.25);
-      --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-      --text: #f1f5f9; --muted: #94a3b8;
+      --bg: #f8f5ee;
+      --surface: #f4efe4;
+      --surface2: #ece6d8;
+      --border: #d4cfc4;
+      --primary: #1d6f5c;
+      --primary-glow: rgba(29,111,92,0.15);
+      --accent: #2e7d32;
+      --success: #2e7d32;
+      --warning: #d97706;
+      --danger: #9e3b33;
+      --text: #1a1917;
+      --muted: #6b665d;
     }
+
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* Animated bg */
-    .bg-orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; animation: float 10s ease-in-out infinite; }
-    .orb-1 { width: 600px; height: 600px; background: #6366f1; top: -150px; left: -150px; }
-    .orb-2 { width: 400px; height: 400px; background: #22d3ee; bottom: -100px; right: -100px; animation-delay: 4s; }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+    /* Remove animated bg orbs */
+    .bg-orb { display: none; }
 
+    .logo-title {
+      font-family: 'Newsreader', serif; font-style: italic;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      background: none;
+      -webkit-text-fill-color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    
+    .card, .form-card { 
+        background: var(--surface); 
+        border: 1px solid var(--border); 
+        border-radius: 12px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        color: var(--text);
+    }
+
+    .form-input, .form-select {
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .form-input:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .btn-submit {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(29,111,92,0.2);
+        width: 100%; padding: 16px;
+        font-size: 15px; font-weight: 700;
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-submit:hover {
+        background: #145243;
+        transform: translateY(-1px);
+    }
+    
+    .mode-btn { color: var(--muted); }
+    .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(29,111,92,0.2); }
+    .mode-toggle { background: var(--surface); border-color: var(--border); }
+    
+    .platform-input-wrap, .skill-add-row input, .skill-add-row select, .skill-builder {
+        background: #fff; border: 1px solid var(--border); color: var(--text);
+    }
+    
+    .login-link a { color: var(--primary); }
+    
+    input, select { color: var(--text); background: #fff; border: 1px solid var(--border); }
+    input::placeholder { color: var(--muted); }
+    
+    .cv-dropzone { background: #fff; border-color: var(--border); }
+    .cv-dropzone.has-file { background: rgba(46,125,50,0.05); border-color: var(--success); }
+    
+    .section-title { color: var(--text); border-bottom: 1px solid var(--border); }
+
+    /* Other required components ported from old CSS */
     .page-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 20px; position: relative; z-index: 1; }
-
     .header { text-align: center; margin-bottom: 32px; }
     .logo-icon { font-size: 40px; display: block; margin-bottom: 12px; }
-    .logo-title { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .logo-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-
-    /* Mode toggle */
-    .mode-toggle { display: flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 16px; padding: 6px; gap: 6px; margin-bottom: 28px; width: 100%; max-width: 480px; }
-    .mode-btn { flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-    .mode-btn.active { background: linear-gradient(135deg, #6366f1, #5b5fe0); color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.35); }
-
-    .form-card { background: rgba(13,18,32,0.9); border: 1px solid var(--border); border-radius: 24px; padding: 36px; width: 100%; max-width: 700px; backdrop-filter: blur(20px); margin-bottom: 24px; }
-
-    .section-title { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(99,102,241,0.2); }
-
+    .mode-toggle { display: flex; border-radius: 16px; padding: 6px; gap: 6px; margin-bottom: 28px; width: 100%; max-width: 480px; }
+    .mode-btn { flex: 1; padding: 12px; border: none; font-size: 13px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .form-card { padding: 36px; width: 100%; max-width: 700px; margin-bottom: 24px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; }
     .form-grid { display: grid; gap: 16px; margin-bottom: 24px; }
     .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
     .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
-    .form-input, .form-select {
-      padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
-      outline: none; transition: all 0.2s;
-    }
-    .form-input:focus, .form-select:focus { border-color: var(--primary); background: rgba(99,102,241,0.08); box-shadow: 0 0 0 3px var(--primary-glow); }
-    .form-input::placeholder { color: rgba(148,163,184,0.4); }
-    .form-select option { background: #0d1220; }
     .form-hint { font-size: 11px; color: var(--muted); opacity: 0.7; }
-
-    /* Skill builder */
-    .skill-builder { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 44px; padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; }
-    .skill-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 12px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); border-radius: 20px; font-size: 12px; font-weight: 600; color: #a5b4fc; }
-    .skill-chip button { background: none; border: none; color: rgba(165,180,252,0.6); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+    .skill-builder { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 44px; padding: 8px; border-radius: 10px; }
+    .skill-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text); }
+    .skill-chip button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
     .skill-chip button:hover { color: var(--danger); }
     .skill-add-row { display: flex; gap: 8px; margin-top: 8px; }
-    .skill-add-row input { flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
-    .skill-add-row input:focus { border-color: var(--primary); }
-    .skill-add-row select { padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; }
+    .skill-add-row input { flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; }
+    .skill-add-row select { padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer; }
     .skill-add-row button { padding: 8px 16px; background: var(--primary); border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; }
-
-    /* CV Upload */
-    .cv-dropzone {
-      border: 2px dashed rgba(99,102,241,0.4); border-radius: 16px; padding: 48px 32px;
-      text-align: center; cursor: pointer; transition: all 0.2s;
-      background: rgba(99,102,241,0.04);
-    }
-    .cv-dropzone:hover, .cv-dropzone.drag-over { border-color: var(--primary); background: rgba(99,102,241,0.08); }
-    .cv-dropzone.has-file { border-color: var(--success); background: rgba(16,185,129,0.05); }
+    .cv-dropzone { border: 2px dashed var(--border); border-radius: 16px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .cv-dropzone:hover, .cv-dropzone.drag-over { border-color: var(--primary); }
     .cv-icon { font-size: 48px; margin-bottom: 12px; display: block; }
     .cv-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
     .cv-sub { font-size: 13px; color: var(--muted); }
     .cv-file-name { font-size: 13px; color: var(--success); font-weight: 600; margin-top: 8px; }
-
-    /* Platform section */
     .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .platform-input-wrap { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .platform-input-wrap { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 10px 14px; }
     .platform-icon { font-size: 20px; flex-shrink: 0; width: 24px; text-align: center; }
-    .platform-input-wrap input { background: none; border: none; color: var(--text); font-size: 13px; outline: none; flex: 1; }
-    .platform-input-wrap input::placeholder { color: rgba(148,163,184,0.4); }
-
-    /* Submit button */
-    .btn-submit {
-      width: 100%; padding: 16px; background: linear-gradient(135deg, #6366f1, #5b5fe0);
-      border: none; border-radius: 14px; color: white; font-size: 15px; font-weight: 700;
-      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 20px rgba(99,102,241,0.35);
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.5); }
-    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #fca5a5; margin-bottom: 16px; display: none; }
-    .success-box { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 20px; font-size: 14px; color: #6ee7b7; margin-bottom: 16px; display: none; text-align: center; }
-    .success-box .success-usn { font-size: 28px; font-weight: 800; font-family: monospace; color: var(--accent); margin: 8px 0; }
-
+    .platform-input-wrap input { background: none; border: none; font-size: 13px; outline: none; flex: 1; }
+    .error-box { background: rgba(158,59,51,0.1); border: 1px solid rgba(158,59,51,0.3); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--danger); margin-bottom: 16px; display: none; }
+    .success-box { background: rgba(46,125,50,0.1); border: 1px solid rgba(46,125,50,0.3); border-radius: 12px; padding: 20px; font-size: 14px; color: var(--success); margin-bottom: 16px; display: none; text-align: center; }
+    .success-box .success-usn { font-size: 28px; font-weight: 800; font-family: monospace; color: var(--primary); margin: 8px 0; }
     .login-link { text-align: center; font-size: 13px; color: var(--muted); }
-    .login-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
-
+    .login-link a { text-decoration: none; font-weight: 600; }
     .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Step indicators */
     .steps { display: flex; gap: 6px; margin-bottom: 28px; }
-    .step { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1); transition: background 0.3s; }
     .step.done { background: var(--success); }
     .step.active { background: var(--primary); }
-
-    /* AI extraction preview */
-    .ai-preview { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 16px; margin-top: 16px; display: none; }
+    .ai-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 16px; display: none; }
     .ai-preview h4 { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-    .ai-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .ai-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
     .ai-stat:last-child { border: none; }
-    .ai-stat strong { color: var(--accent); }
+    .ai-stat strong { color: var(--primary); }
+    
+    .login-container { position: relative; z-index: 10; width: 100%; max-width: 460px; padding: 20px; }
+    .logo-section { text-align: center; margin-bottom: 36px; }
+    .logo-subtitle { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
 
     @media (max-width: 600px) {
       .form-grid.cols-2, .form-grid.cols-3, .platform-grid { grid-template-columns: 1fr; }
     }
-  </style>
+
+</style>
 </head>
 <body>
   <div class="bg-orb orb-1"></div>
@@ -143,26 +178,26 @@
     <div style="width:100%;max-width:700px">
       <!-- Error / Success boxes -->
       <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
-      <div class="success-box" id="success-box" style="display:none;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:16px;padding:26px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-        <div style="font-size:24px;font-weight:800;color:#10b981;margin-bottom:6px">🎉 Account Created Successfully!</div>
+      <div class="success-box" id="success-box" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:26px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <div style="font-size:24px;font-weight:800;color:var(--success);margin-bottom:6px">🎉 Account Created Successfully!</div>
         <div style="font-size:13px;color:var(--muted)">Your permanent USN has been generated:</div>
-        <div class="success-usn" id="success-usn" style="font-size:26px;font-weight:800;color:#fff;background:rgba(255,255,255,0.06);padding:10px 20px;border-radius:10px;display:inline-block;margin:12px 0;letter-spacing:1px;border:1px solid rgba(255,255,255,0.1);"></div>
+        <div class="success-usn" id="success-usn" style="font-size:26px;font-weight:800;color:#fff;background:var(--surface2);padding:10px 20px;border-radius:10px;display:inline-block;margin:12px 0;letter-spacing:1px;border:1px solid var(--border);"></div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Save this USN to log in to your account anytime.</div>
 
-        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:18px;margin-bottom:24px;text-align:left;">
-          <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#818cf8;margin-bottom:6px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:24px;text-align:left;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--primary);margin-bottom:6px">
             <span>🎙️</span> <span>Mandatory Calibrated AI Mock Interview</span>
           </div>
-          <div style="font-size:13px;color:#cbd5e1;line-height:1.5;">
+          <div style="font-size:13px;color:var(--text);line-height:1.5;">
             According to institutional placement policy, your claimed skills must be calibrated through the <strong>HackerRank-style AI Interview Room</strong> powered by local Ollama AI. Includes real-time code execution, speech clarity analysis, and company simulation.
           </div>
         </div>
 
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-          <a id="btn-take-interview" href="/interview" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:transform 0.15s ease;">
+          <a id="btn-take-interview" href="/interview" style="background: var(--primary);color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:transform 0.15s ease;">
             ⚡ Start AI Mock Interview Now (Recommended)
           </a>
-          <a href="/student" style="background:rgba(255,255,255,0.08);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,0.1);">
+          <a href="/student" style="background:var(--surface2);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;border:1px solid var(--border);">
             Go to Student Dashboard →
           </a>
         </div>
@@ -296,7 +331,7 @@
           <div class="section-title">📄 Upload Your CV / Resume</div>
           <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Our AI (Ollama llama3.2) will extract your name, skills, projects, certifications, and education automatically from your PDF resume.</p>
 
-          <div style="margin-bottom:16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:14px">
+          <div style="margin-bottom:16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
               <span style="font-size:12.5px;font-weight:700;color:#93c5fd;display:flex;align-items:center;gap:6px">
                 ⚡ <span>Hackathon Judge Live Demo Resumes</span>
@@ -304,13 +339,13 @@
               <span style="font-size:11px;color:var(--muted)">One-click test or download</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="loadDemoCV('strong')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+              <button type="button" onclick="loadDemoCV('strong')" style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
                 ⚡ One-Click Load Aarav's CV (Top SDE)
               </button>
-              <button type="button" onclick="loadDemoCV('needs')" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
+              <button type="button" onclick="loadDemoCV('needs')" style="background:var(--surface2);color:var(--warning);border:1px solid var(--border);border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">
                 ⚡ Load Rahul's CV (Gaps Demo)
               </button>
-              <a href="/static/demo/sample_cv_strong_candidate.pdf" download="Aarav_Sharma_Resume.pdf" style="text-decoration:none;background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:4px">
+              <a href="/static/demo/sample_cv_strong_candidate.pdf" download="Aarav_Sharma_Resume.pdf" style="text-decoration:none;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:4px">
                 📥 Download PDF
               </a>
             </div>

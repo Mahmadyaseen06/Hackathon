@@ -748,6 +748,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <span>Q <strong id="tb-qnum">1</strong>/<strong id="tb-qtotal">?</strong></span>
     </div>
 
+    <audio id="interviewer-audio" style="display:none;" preload="auto"></audio>
+
     <div class="topbar-actions">
       <button id="tts-toggle-btn" onclick="toggleTTS()" class="proctor-btn" title="Toggle Interviewer Voice Audio">
         🔊 Voice: ON
@@ -1181,6 +1183,16 @@ function selectTrack(track) {
 // ── Start Interview Session ──
 async function startInterview() {
   if (!selectedCompany) return;
+  
+  // UNLOCK AUDIO CONTEXT SYNCHRONOUSLY ON CLICK
+  try {
+    const player = document.getElementById('interviewer-audio') || new Audio();
+    player.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    player.play().catch(e => console.warn('Audio unlock blocked:', e));
+  } catch (e) {
+    console.warn('Audio unlock failed:', e);
+  }
+
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('loading-screen').style.display = 'flex';
   document.getElementById('loading-msg').textContent = selectedTrack === 'project_defense'
@@ -1601,7 +1613,7 @@ async function speakInterviewerText(rawText, onComplete) {
 
     const formData = new FormData();
     formData.append("text", text);
-    formData.append("voice", "en-US-ChristopherNeural");
+    formData.append("voice", "en-US-AndrewMultilingualNeural");
 
     const response = await fetch("/api/interview/tts", {
       method: "POST",
@@ -1613,7 +1625,13 @@ async function speakInterviewerText(rawText, onComplete) {
     const blob = await response.blob();
     const audioUrl = URL.createObjectURL(blob);
     
-    currentAudio = new Audio(audioUrl);
+    let audioEl = document.getElementById('interviewer-audio');
+    if (audioEl.src && audioEl.src.startsWith('blob:')) {
+      URL.revokeObjectURL(audioEl.src);
+    }
+    
+    currentAudio = audioEl;
+    currentAudio.src = audioUrl;
     
     currentAudio.onplay = () => {
       isSpeakingNow = true;
@@ -1625,7 +1643,11 @@ async function speakInterviewerText(rawText, onComplete) {
       isSpeakingNow = false;
       if (statusEl) statusEl.textContent = 'Listening and evaluating...';
       stopWaveAnimation();
-      URL.revokeObjectURL(audioUrl);
+      
+      // Clean up previous event listeners so they don't fire multiple times
+      currentAudio.onended = null;
+      currentAudio.onerror = null;
+      
       if (onComplete) {
         onComplete();
       }
@@ -1639,7 +1661,23 @@ async function speakInterviewerText(rawText, onComplete) {
     console.warn('Speech synthesis error:', err);
     isSpeakingNow = false;
     stopWaveAnimation();
+    showAudioBanner('⚠️ Browser blocked auto-playing audio. Click the "🔊 Replay" button above to hear the interviewer.');
     if (onComplete) onComplete();
+  }
+}
+
+function replayInterviewerVoice() {
+  const audioEl = document.getElementById('interviewer-audio');
+  if (audioEl && audioEl.src && audioEl.src.startsWith('blob:')) {
+    audioEl.currentTime = 0;
+    audioEl.play().catch(e => {
+      showAudioBanner("Browser blocked audio replay. Please ensure audio permissions are granted.");
+      console.warn("Replay blocked:", e);
+    });
+  } else if (currentSpeakingText) {
+    speakInterviewerText(currentSpeakingText);
+  } else {
+    showAudioBanner('No audio queued to replay.');
   }
 }
 
@@ -1652,6 +1690,16 @@ let mediaRecorder = null;
 let recordedAudioChunks = [];
 let animFrameId = null;
 let isHardwareMicActive = false;
+
+// Audio Metrics tracking for AI Evaluation
+let audioMetrics = {
+  recordingStartTime: 0,
+  totalVolume: 0,
+  volumeCount: 0,
+  hesitationCount: 0,
+  isPaused: false,
+  pauseStartTime: 0
+};
 
 // Presets for Hackathon / Live Judge Demo
 const DEMO_PRESETS = {
@@ -1750,6 +1798,23 @@ function startHardwareVisualizer() {
 
     // Render VU Level
     const vuPct = Math.min(100, Math.round((average / 128) * 100));
+
+    if (isListening && analyserNode) {
+      audioMetrics.totalVolume += vuPct;
+      audioMetrics.volumeCount++;
+      
+      if (vuPct < 5) {
+        if (!audioMetrics.isPaused) {
+          audioMetrics.isPaused = true;
+          audioMetrics.pauseStartTime = Date.now();
+        } else if (Date.now() - audioMetrics.pauseStartTime > 1500) {
+          audioMetrics.hesitationCount++;
+          audioMetrics.pauseStartTime = Date.now();
+        }
+      } else {
+        audioMetrics.isPaused = false;
+      }
+    }
     const vuBar = document.getElementById('mic-vu-level');
     const vuText = document.getElementById('mic-db-readout');
     if (vuBar && isListening) {
@@ -1847,7 +1912,16 @@ async function startListening() {
   document.getElementById('mic-indicator-dot').style.boxShadow = '0 0 8px var(--danger)';
   document.getElementById('mic-status-label').textContent = '🎙️ Recording candidate voice... (Speak freely or use Presets)';
   document.getElementById('ai-status').textContent = 'Candidate speaking — evaluating depth...';
-  document.getElementById('ai-avatar').classList.add('listening-candidate');
+  document.getElementById('ai-avatar')?.classList.add('listening-candidate');
+
+  audioMetrics = {
+    recordingStartTime: Date.now(),
+    totalVolume: 0,
+    volumeCount: 0,
+    hesitationCount: 0,
+    isPaused: false,
+    pauseStartTime: 0
+  };
 
   recordedAudioChunks = [];
   // Always show the transcribe button when mic is active
@@ -1935,7 +2009,7 @@ function stopListening() {
   document.getElementById('mic-indicator-dot').style.boxShadow = 'none';
   document.getElementById('mic-status-label').textContent = 'Hardware Mic: Ready (Click 🎤 or Press Space)';
   document.getElementById('ai-status').textContent = 'Ready for submission';
-  document.getElementById('ai-avatar').classList.remove('listening-candidate');
+  document.getElementById('ai-avatar')?.classList.remove('listening-candidate');
 
   const text = document.getElementById('voice-transcript').innerText.trim();
   if (text.length > 5) {
@@ -2009,13 +2083,13 @@ async function transcribeRecordedAudio() {
   btn.textContent = '⏳ Transcribing...';
 
   try {
-    const res = await fetch(`${API}/api/interview/transcribe-audio`, {
+    const res = await fetch(`${API}/api/interview/transcribe`, {
       method: 'POST',
       body: formData
     });
     const data = await res.json();
-    if (data.success && data.transcript) {
-      currentTranscript += (currentTranscript ? ' ' : '') + data.transcript;
+    if (data.text) {
+      currentTranscript += (currentTranscript ? ' ' : '') + data.text;
       const el = document.getElementById('voice-transcript');
       el.textContent = currentTranscript;
       el.classList.remove('placeholder');
@@ -2158,23 +2232,38 @@ async function submitAnswer() {
   }
 
   try {
+    const payload = {
+      usn, token,
+      question: q.question || q.text,
+      spoken_answer: voiceAnswer || (code.trim() ? '[No verbal explanation provided]' : '[No answer]'),
+      code: (q.round_type === 'coding' || code.trim()) ? code : null,
+      language: lang,
+      execution_result: currentRunResult,
+      topic: q.topic,
+      claimed_skill_level: q.claimed_level || 5,
+      company: selectedCompany,
+      question_type: q.type || 'technical',
+      track: selectedTrack,
+      qa_history: qAnswers
+    };
+
+    if (audioMetrics.recordingStartTime > 0) {
+      const durationMin = (Date.now() - audioMetrics.recordingStartTime) / 60000;
+      const words = voiceAnswer.split(/\s+/).filter(w => w.length > 0).length;
+      const wpm = durationMin > 0 ? Math.round(words / durationMin) : 0;
+      const avgVol = audioMetrics.volumeCount > 0 ? (audioMetrics.totalVolume / audioMetrics.volumeCount) : 0;
+      
+      payload.audio_metrics = {
+        wpm: wpm,
+        averageVolume: avgVol,
+        pauseCount: audioMetrics.hesitationCount
+      };
+    }
+
     const res = await fetch(`${API}/api/interview/analyze-answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        usn, token,
-        question: q.question || q.text,
-        spoken_answer: voiceAnswer || (code.trim() ? '[No verbal explanation provided]' : '[No answer]'),
-        code: (q.round_type === 'coding' || code.trim()) ? code : null,
-        language: lang,
-        execution_result: currentRunResult,
-        topic: q.topic,
-        claimed_skill_level: q.claimed_level || 5,
-        company: selectedCompany,
-        question_type: q.type || 'technical',
-        track: selectedTrack,
-        qa_history: qAnswers
-      })
+      body: JSON.stringify(payload)
     });
     const analysis = await res.json();
     if (avatar) avatar.classList.remove('evaluating');

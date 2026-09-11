@@ -479,7 +479,7 @@
             <td style="color:var(--muted)">${s.branch.split(' ')[0]}</td>
             <td class="score-cell" style="color:var(--danger)">${s.employability_score}%</td>
             <td>${s.active_backlogs > 0 ? `<span style="color:var(--danger);font-weight:700">${s.active_backlogs} ⚠️</span>` : '—'}</td>
-            <td><button onclick="event.stopPropagation(); triggerTpoAction('${s.usn}','counseling',this)" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">⚡ Schedule Counseling</button></td>
+            <td><button onclick="event.stopPropagation(); triggerTpoAction('${s.usn}','schedule_bootcamp',this)" style="padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--danger);font-size:11px;cursor:pointer">⚡ Schedule Bootcamp</button></td>
           </tr>`;}).join('')
       : '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No students below 60% — great batch! 🎉</td></tr>';
   }

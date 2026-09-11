@@ -19,7 +19,7 @@ from typing import Optional
 from fastapi import FastAPI, Request, HTTPException, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 # Load .env manually (no python-dotenv dependency required)
@@ -192,6 +192,10 @@ class InterviewStartRequest(BaseModel):
     token: str
     track: Optional[str] = "technical"
 
+class MockInterviewStartRequest(BaseModel):
+    usn: str
+    token: str
+
 class AnswerSubmitRequest(BaseModel):
     usn: Optional[str] = ""
     company: Optional[str] = ""
@@ -209,6 +213,7 @@ class AnswerSubmitRequest(BaseModel):
     question_type: Optional[str] = "technical"
     track: Optional[str] = "technical"
     qa_history: Optional[list] = None
+    audio_metrics: Optional[dict] = None
 
 class CodeExecuteRequest(BaseModel):
     code: str
@@ -690,7 +695,7 @@ def skill_gap(req: PredictRequest):
     return compute_skill_gap(profile)
 
 @app.post("/api/roadmap")
-def roadmap(req: PredictRequest):
+async def roadmap(req: PredictRequest):
     if req.usn and req.token:
         session = verify_session_token(req.token)
         if not session:
@@ -700,7 +705,7 @@ def roadmap(req: PredictRequest):
         profile = req.dict(exclude_none=True)
     gap = compute_skill_gap(profile)
     missing = [g["skill"] for g in gap.get("critical_gaps", [])] + [g["skill"] for g in gap.get("minor_gaps", [])]
-    return generate_roadmap(profile, missing, target_role=profile.get("target_role", "SDE"), target_lpa=float(profile.get("target_lpa", 12.0)))
+    return await generate_roadmap(profile, missing, target_role=profile.get("target_role", "SDE"), target_lpa=float(profile.get("target_lpa", 12.0)))
 
 @app.post("/api/resources")
 def resources(req: PredictRequest):
@@ -751,6 +756,32 @@ def get_companies():
         {"id": k, "name": v["name"], "style": v["style"], "focus": v["focus"]}
         for k, v in COMPANY_PROFILES.items()
     ]
+
+@app.post("/api/interview/transcribe")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """Transcribe audio blob using faster-whisper."""
+    try:
+        from faster_whisper import WhisperModel
+        import tempfile
+        import os
+
+        # Use a small fast model
+        model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
+        
+        # Save blob to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            tmp.write(await audio.read())
+            tmp_path = tmp.name
+
+        segments, info = model.transcribe(tmp_path, beam_size=1)
+        text = " ".join([segment.text for segment in segments])
+        
+        os.unlink(tmp_path)
+        
+        return {"text": text.strip()}
+    except Exception as e:
+        print(f"Transcription error: {e}")
+        return {"text": "", "error": str(e)}
 
 @app.post("/api/interview/start")
 def start_interview(req: InterviewStartRequest):
@@ -902,7 +933,8 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
         topic=req.topic or "General",
         claimed_skill_level=req.claimed_skill_level or req.claimed_level or 5,
         company=req.company or "Company",
-        question_type=req.question_type or "technical"
+        question_type=req.question_type or "technical",
+        audio_metrics=req.audio_metrics
     )
 
     if code_eval:
@@ -971,7 +1003,7 @@ async def transcribe_interview_audio(audio: UploadFile = File(...)):
         return {"success": False, "transcript": "", "error": str(e)}
 
 @app.post("/api/interview/tts")
-async def generate_speech_audio(text: str = Form(...), voice: str = Form("en-US-ChristopherNeural")):
+async def generate_speech_audio(text: str = Form(...), voice: str = Form("en-US-AndrewMultilingualNeural")):
     """Generate high-fidelity MP3 speech using Edge-TTS."""
     import edge_tts
     from fastapi.responses import StreamingResponse
@@ -1222,6 +1254,27 @@ def tpo_trigger_action(req: TpoActionRequest):
     student = get_student_by_usn(req.usn)
     student_name = student["name"] if student else req.usn
     action_desc = req.action_type.replace("_", " ").title()
+
+    # Log the intervention to prove it's a real action
+    log_file = DATA_DIR / "tpo_interventions.json"
+    interventions = []
+    if log_file.exists():
+        try:
+            with open(log_file, "r") as f:
+                interventions = json.load(f)
+        except json.JSONDecodeError:
+            pass
+    
+    interventions.append({
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "usn": req.usn,
+        "student_name": student_name,
+        "action_type": req.action_type,
+        "tpo_id": session["usn"]
+    })
+    
+    with open(log_file, "w") as f:
+        json.dump(interventions, f, indent=4)
 
     return {
         "success": True,

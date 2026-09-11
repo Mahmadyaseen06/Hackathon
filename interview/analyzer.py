@@ -172,7 +172,8 @@ async def analyze_answer(
     topic: str,
     claimed_skill_level: int,
     company: str,
-    question_type: str = "technical"
+    question_type: str = "technical",
+    audio_metrics: dict = None
 ) -> dict:
     """
     STRICT analysis of one interview answer using Ollama.
@@ -187,6 +188,13 @@ async def analyze_answer(
         return _fallback_analysis(question, spoken_answer, topic, claimed_skill_level,
                                   question_type, comm_analysis)
 
+    audio_context = ""
+    if audio_metrics:
+        wpm = audio_metrics.get("wpm", 0)
+        vol = audio_metrics.get("averageVolume", 0)
+        hesitations = audio_metrics.get("pauseCount", 0)
+        audio_context = f"\nAUDIO DELIVERY METRICS:\n- Speaking Speed: {wpm} WPM\n- Average Volume/Energy: {vol:.2f} (proxy for confidence)\n- Long Pauses/Hesitations: {hesitations}\n\nUse these metrics to penalize or boost their communication score. A highly confident, well-paced answer is better than a hesitant, low-energy one."
+
     prompt = f"""You are a STRICT {company} senior engineer conducting a technical interview. Your job is to evaluate honestly — NOT to encourage or be nice. Inflate nothing.
 
 QUESTION ASKED: "{question}"
@@ -195,6 +203,7 @@ CANDIDATE'S CLAIMED SKILL LEVEL IN {topic}: {claimed_skill_level}/10
 
 CANDIDATE'S SPOKEN ANSWER:
 "{spoken_answer}"
+{audio_context}
 
 {STRICT_RUBRIC}
 
