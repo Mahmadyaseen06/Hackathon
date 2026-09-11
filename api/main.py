@@ -705,7 +705,7 @@ async def roadmap(req: PredictRequest):
         profile = req.dict(exclude_none=True)
     gap = compute_skill_gap(profile)
     missing = [g["skill"] for g in gap.get("critical_gaps", [])] + [g["skill"] for g in gap.get("minor_gaps", [])]
-    return await generate_roadmap(profile, missing, target_role=profile.get("target_role", "SDE"), target_lpa=float(profile.get("target_lpa", 12.0)))
+    return generate_roadmap(profile, missing, target_role=profile.get("target_role", "SDE"), target_lpa=float(profile.get("target_lpa", 12.0)))
 
 @app.post("/api/resources")
 def resources(req: PredictRequest):
@@ -893,19 +893,8 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
     spoken = (req.spoken_answer or "").strip()
     is_placeholder_spoken = spoken in ["[No verbal explanation provided]", "[No answer]", "[Code only]", ""]
 
-    try:
-        spoken_reply = await generate_interviewer_speech(
-            question=req.question,
-            answer=spoken if not is_placeholder_spoken else "[Candidate submitted code solution]",
-            topic=req.topic or "General",
-            company=req.company or "Company",
-            code=req.code,
-            execution_result=req.execution_result
-        )
-    except Exception as e:
-        spoken_reply = "I have noted your solution. Let us proceed to the next question."
-
     if is_placeholder_spoken and code_eval:
+        spoken_reply = "I have logged your code submission. Let us examine your architectural decisions and trade-offs."
         return {
             "score": code_eval.get("code_score", 5),
             "technical_accuracy": code_eval.get("correctness", 5),
@@ -922,6 +911,7 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
 
     if not spoken or len(spoken) < 3:
         if code_eval:
+            spoken_reply = "Your code has been recorded. For higher scores, be sure to verbally articulate your trade-offs."
             return {
                 "score": code_eval.get("code_score", 5),
                 "technical_accuracy": code_eval.get("correctness", 5),
@@ -961,7 +951,9 @@ async def analyze_single_answer(req: AnswerSubmitRequest):
         blended = round(0.6 * code_eval.get("code_score", 5) + 0.4 * result.get("score", 5))
         result["score"] = blended
 
-    result["interviewer_speech"] = spoken_reply
+    # Result already includes interviewer_speech from unified single-pass Ollama evaluation
+    if not result.get("interviewer_speech"):
+        result["interviewer_speech"] = "I have noted your response. Let us proceed to the next technical challenge."
 
     student = get_student_by_usn(req.usn) if req.usn else None
     student_projects = student.get("projects", []) if student else []

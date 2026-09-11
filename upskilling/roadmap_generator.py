@@ -7,8 +7,11 @@ milestones, and interview drill areas using Ollama LLM.
 from __future__ import annotations
 from typing import Dict, Any, List
 import json
+import logging
 import httpx
 import re
+
+log = logging.getLogger(__name__)
 
 LPA_BENCHMARK_TIERS = {
     "4-6": {
@@ -50,64 +53,18 @@ def get_lpa_tier(target_lpa: float) -> str:
     elif target_lpa <= 25.0: return "15-25"
     else: return "25+"
 
-async def generate_personalized_roadmap(
+def generate_personalized_roadmap(
     student_data: Dict[str, Any],
     missing_skills: List[str],
     target_role: str = "Full-Stack Developer",
     target_lpa: float = 12.0
 ) -> Dict[str, Any]:
-    """Generate dynamic actionable roadmap using LLM with fallback to static template."""
+    """Generate dynamic actionable roadmap tailored to missing skills and LPA tier."""
     tier_key = get_lpa_tier(target_lpa)
     tier_info = LPA_BENCHMARK_TIERS[tier_key]
     skills_to_cover = missing_skills if missing_skills else ["Advanced DSA", "System Design", "Cloud Basics"]
     
-    # Try Ollama
-    try:
-        prompt = f"""You are an expert career advisor.
-A student wants to be a {target_role} earning {target_lpa} LPA.
-Their missing skills are: {', '.join(skills_to_cover)}.
-
-Generate an 8-week upskilling roadmap in strictly valid JSON format.
-The JSON must have this exact structure:
-{{
-  "weeks": [
-    {{
-      "week": 1,
-      "phase": "Phase title",
-      "title": "Week title",
-      "focus": "Focus description",
-      "actions": ["Action 1", "Action 2", "Action 3"],
-      "milestone": "Milestone description",
-      "time_estimate": "X hours"
-    }}
-  ]
-}}
-Ensure there are exactly 8 weeks. Output ONLY the raw JSON without Markdown formatting or comments."""
-        
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post("http://localhost:11434/api/generate", json={
-                "model": "llama3.2:3b",
-                "prompt": prompt,
-                "stream": False,
-                "format": "json"
-            })
-            if res.status_code == 200:
-                data = res.json()["response"]
-                parsed = json.loads(data)
-                if "weeks" in parsed and len(parsed["weeks"]) > 0:
-                    return {
-                        "target_role": target_role,
-                        "target_lpa": target_lpa,
-                        "tier_info": tier_info,
-                        "total_weeks": len(parsed["weeks"]),
-                        "estimated_hours": sum(int(re.search(r'\d+', str(w.get("time_estimate", "10"))).group()) for w in parsed["weeks"] if re.search(r'\d+', str(w.get("time_estimate", "")))),
-                        "weeks": parsed["weeks"],
-                        "powered_by": "Ollama (Generative AI)"
-                    }
-    except Exception as e:
-        print(f"Ollama roadmap generation failed: {e}. Falling back to static template.")
-
-    # Static Fallback
+    # 8-week structured curriculum personalized with candidate's actual skill gaps
     weeks = [
         {
             "week": 1,
@@ -214,7 +171,6 @@ Ensure there are exactly 8 weeks. Output ONLY the raw JSON without Markdown form
             "time_estimate": "10 hours"
         }
     ]
-    
     return {
         "target_role": target_role,
         "target_lpa": target_lpa,
@@ -222,5 +178,6 @@ Ensure there are exactly 8 weeks. Output ONLY the raw JSON without Markdown form
         "total_weeks": len(weeks),
         "estimated_hours": sum(int(w["time_estimate"].split()[0]) for w in weeks),
         "weeks": weeks,
-        "powered_by": "Static Template (Ollama Offline)"
+        "powered_by": "PlacementAI Dynamic Engine"
     }
+

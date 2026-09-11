@@ -232,13 +232,14 @@ Now evaluate this specific answer. Return ONLY a valid JSON object. No markdown 
   "what_was_missing": "<the single most important concept they missed or got wrong>",
   "claim_vs_reality": "<one of: Matches Claim | Below Claim | Exceeds Claim>",
   "red_flags": <true if score < 5 OR claim_vs_reality is Below Claim, else false>,
-  "honest_feedback": "<one sentence of direct honest feedback a real interviewer would say>"
+  "honest_feedback": "<one sentence of direct honest feedback a real interviewer would say>",
+  "interviewer_speech": "<1-2 natural spoken sentences reacting to candidate as a senior interviewer, max 30 words>"
 }}
 
 Important: The candidate claims {claimed_skill_level}/10. If score < claimed_level - 2, verdict MUST be "Overstated" and claim_vs_reality MUST be "Below Claim"."""
 
     try:
-        raw = await _ollama_chat(prompt, max_tokens=350)
+        raw = await _ollama_chat(prompt, max_tokens=180, format_json=True)
         result = _extract_json_from_response(raw)
 
         if not result or "score" not in result:
@@ -278,6 +279,19 @@ Important: The candidate claims {claimed_skill_level}/10. If score < claimed_lev
         result["communication_clarity"] = comm_score
         result["communication_analysis"] = comm_analysis
         result.setdefault("honest_feedback", "No specific feedback available.")
+
+        # Ensure interviewer_speech is present and clean
+        speech = str(result.get("interviewer_speech") or "").strip().strip('"')
+        if not speech or len(speech) < 10:
+            if "introduce yourself" in question.lower() or "background" in question.lower():
+                speech = "Thank you for that overview. Let us dive directly into the technical architecture of your project."
+            elif combined_score >= 7:
+                speech = "Solid technical clarity on the fundamentals. Let us probe into the real-world trade-offs and edge cases."
+            elif combined_score >= 4:
+                speech = "You have outlined the broad approach, but let us look closer at how this scales and where bottlenecks occur."
+            else:
+                speech = "That response leaves key technical gaps. Let us examine how you handle the next engineering scenario."
+        result["interviewer_speech"] = speech
         return result
 
     except Exception as e:
@@ -351,17 +365,20 @@ def _extract_project_mention(answer: str, candidate_projects: list = None) -> Op
                 if w.lower() in answer.lower():
                     return name
 
-    # Regex patterns for phrases like "built X", "worked on X", "project called X", "project is X"
+    # Regex patterns for phrases like "built X", "designed X", "capstone project, I designed X"
     patterns = [
-        r'(?:built|developed|created|worked on|architected|project called|project named|my project)\s+(?:a|an|the)?\s*([A-Za-z0-9\s\-]{3,35})',
+        r'(?:capstone|flagship|primary|course|final\s+year)?\s*project,?\s*(?:I\s+)?(?:designed|built|developed|created|architected)\s+(?:a|an|the)?\s*([A-Za-z0-9\s\-]{3,35})',
+        r'(?:built|developed|created|worked on|architected|designed|implemented|project called|project named)\s+(?:a|an|the)?\s*([A-Za-z0-9\s\-]{3,35})',
         r'([A-Za-z0-9\s\-]{3,25})\s+project',
     ]
+    stopwords = {"system", "app", "application", "website", "few", "lot", "bunch", "couple", "it", "this", "that", "some", "my primary capstone", "for my primary", "primary capstone"}
     for pat in patterns:
         m = re.search(pat, answer, re.IGNORECASE)
         if m:
             candidate = m.group(1).strip()
-            stopwords = {"system", "app", "application", "website", "few", "lot", "bunch", "couple", "it", "this", "that", "some"}
-            if candidate.lower() not in stopwords and len(candidate.split()) <= 4:
+            # Strip trailing prepositional connectors like "in Go", "using React"
+            candidate = re.split(r'\s+(?:in|using|with|for|via)\s+', candidate, flags=re.IGNORECASE)[0].strip()
+            if candidate.lower() not in stopwords and len(candidate.split()) <= 5 and len(candidate) >= 3:
                 return candidate.title()
 
     if candidate_projects and len(candidate_projects) > 0:
@@ -403,25 +420,6 @@ async def generate_adaptive_next_question(
             voice_prompt = "Tell me about one of your best software projects: what problem did you set out to solve, and walk me through its system architecture."
             project_label = "Flagship Engineering Project"
 
-        if ollama_ok and last_answer and len(last_answer) > 20:
-            prompt = f"""You are a senior {company} interviewer in an AI mock room.
-The candidate just completed their self-introduction:
-"{last_answer}"
-Detected or profile project: {detected_project or 'None specified'}
-
-Goal:
-If they mentioned a specific project, ask them directly to explain that project's architecture and data flow.
-If they did not name a project, ask them to pick their best project and walk through its architecture.
-Write ONE direct, conversational interview question (1-2 sentences). Return ONLY the question."""
-            try:
-                ai_q = await _ollama_chat(prompt, max_tokens=70)
-                cleaned = ai_q.strip().strip('"').replace('\n', ' ').strip()
-                if len(cleaned) > 20 and "?" in cleaned:
-                    q_text = cleaned
-                    voice_prompt = cleaned
-            except Exception:
-                pass
-
         return {
             "round_id": 1,
             "round_name": "Round 1: Project Architecture & Technical Defense",
@@ -438,25 +436,8 @@ Write ONE direct, conversational interview question (1-2 sentences). Return ONLY
     # Stage 1 -> Stage 2: Candidate explained Project Architecture
     elif current_index == 1:
         fallback_project = _extract_project_mention(last_answer, student_projects) or "this project"
-        q_text = f"In that architecture, what were the most critical technical trade-offs you evaluated (e.g. database, caching, or framework choices)? What was the hardest failure mode, concurrency bottleneck, or production bug you resolved?"
-        voice_prompt = "In that architecture, what was the hardest technical trade-off or failure mode you encountered, and how did you resolve it?"
-
-        if ollama_ok and last_answer and len(last_answer) > 20:
-            prompt = f"""You are a senior {company} engineering director.
-The candidate just explained their system architecture:
-"{last_answer}"
-
-Goal:
-Challenge ONE technical decision, trade-off, or failure mode they described (e.g. concurrency, database bottlenecks, caching, or error recovery).
-Write ONE direct, probing question (1-2 sentences max). Return ONLY the question."""
-            try:
-                ai_q = await _ollama_chat(prompt, max_tokens=70)
-                cleaned = ai_q.strip().strip('"').replace('\n', ' ').strip()
-                if len(cleaned) > 20 and "?" in cleaned:
-                    q_text = cleaned
-                    voice_prompt = cleaned
-            except Exception:
-                pass
+        q_text = f"In that architecture for {fallback_project}, what were the most critical technical trade-offs you evaluated (e.g. database, caching, or framework choices)? What was the hardest failure mode, concurrency bottleneck, or production bug you resolved?"
+        voice_prompt = f"In that architecture, what was the hardest technical trade-off or failure mode you encountered, and how did you resolve it?"
 
         return {
             "round_id": 1,
