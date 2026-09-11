@@ -970,6 +970,21 @@ async def transcribe_interview_audio(audio: UploadFile = File(...)):
     except Exception as e:
         return {"success": False, "transcript": "", "error": str(e)}
 
+@app.post("/api/interview/tts")
+async def generate_speech_audio(text: str = Form(...), voice: str = Form("en-US-ChristopherNeural")):
+    """Generate high-fidelity MP3 speech using Edge-TTS."""
+    import edge_tts
+    from fastapi.responses import StreamingResponse
+    
+    communicate = edge_tts.Communicate(text, voice)
+    
+    async def stream_audio():
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                yield chunk["data"]
+                
+    return StreamingResponse(stream_audio(), media_type="audio/mpeg")
+
 @app.post("/api/interview/followup")
 async def get_followup_question(req: AnswerSubmitRequest):
     """Get a natural AI-generated follow-up question."""

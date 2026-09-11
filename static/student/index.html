@@ -5,31 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Dashboard — AI Placement Predictor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #070b14;
-      --surface: rgba(255,255,255,0.04);
-      --surface2: rgba(255,255,255,0.07);
-      --border: rgba(255,255,255,0.08);
-      --primary: #6366f1;
-      --primary-glow: rgba(99,102,241,0.25);
-      --accent: #22d3ee;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
+      --bg: #f8f5ee;
+      --surface: #f4efe4;
+      --surface2: #ece6d8;
+      --border: #d4cfc4;
+      --primary: #1d6f5c;
+      --primary-glow: rgba(29,111,92,0.15);
+      --accent: #2e7d32;
+      --success: #2e7d32;
+      --warning: #d97706;
+      --danger: #9e3b33;
+      --text: #1a1917;
+      --muted: #6b665d;
       --sidebar-w: 260px;
     }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; }
 
     /* ── Sidebar ── */
     .sidebar {
       width: var(--sidebar-w);
       min-height: 100vh;
-      background: rgba(10,14,28,0.95);
+      background: rgba(248, 245, 238, 0.95);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -43,12 +43,12 @@
       border-bottom: 1px solid var(--border);
     }
     .logo-mark {
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Newsreader', serif; font-style: italic;
       font-size: 18px;
       font-weight: 800;
-      background: linear-gradient(135deg, #6366f1, #22d3ee);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text);
+      
+      
       margin-bottom: 2px;
     }
     .logo-sub { font-size: 11px; color: var(--muted); }
@@ -86,7 +86,7 @@
     .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
     .topbar {
       padding: 16px 32px; border-bottom: 1px solid var(--border);
-      background: rgba(7,11,20,0.8); backdrop-filter: blur(10px);
+      background: rgba(248, 245, 238, 0.8); backdrop-filter: blur(10px);
       display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
     }
     .page-title { font-size: 20px; font-weight: 700; }
@@ -104,7 +104,7 @@
 
     /* ── Cards ── */
     .card {
-      background: rgba(13,18,32,0.8); border: 1px solid var(--border); border-radius: 18px;
+      background: rgba(244, 239, 228, 0.8); border: 1px solid var(--border); border-radius: 18px;
       padding: 24px; margin-bottom: 20px;
       transition: border-color 0.2s;
     }
@@ -169,7 +169,7 @@
     /* ── Interview Room ── */
     .interview-room { display: none; }
     .interviewer-avatar {
-      width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1, #22d3ee);
+      width: 64px; height: 64px; color: var(--text);
       border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;
       margin: 0 auto 16px; box-shadow: 0 0 30px rgba(99,102,241,0.4);
       animation: pulse-ring 2s ease-in-out infinite;
@@ -325,7 +325,7 @@
     }
     .modal-close:hover { color: var(--text); }
     .modal-tabs {
-      display: flex; gap: 8px; padding: 10px 24px; background: rgba(255,255,255,0.02);
+      display: flex; gap: 8px; padding: 10px 24px; background: rgba(0,0,0,0.02);
       border-bottom: 1px solid var(--border);
     }
     .modal-tab-btn {
@@ -1315,9 +1315,11 @@
     document.getElementById('profile-cgpa').textContent = u.cgpa;
     document.getElementById('profile-sem').textContent = `Sem ${u.semester}`;
     document.getElementById('profile-backlogs').textContent = u.active_backlogs > 0 ? `${u.active_backlogs} Active ⚠️` : 'None ✅';
-    document.getElementById('stat-aptitude').textContent = u.quantitative_aptitude + '%';
-    document.getElementById('stat-coding').textContent = u.coding_benchmark + '%';
-    document.getElementById('stat-comm').textContent = u.communication_rating + '/10';
+    const hasTakenAssessment = u.interview_history && u.interview_history.length > 0;
+    
+    document.getElementById('stat-aptitude').textContent = (!hasTakenAssessment && u.quantitative_aptitude === 70) ? 'Pending' : u.quantitative_aptitude + '%';
+    document.getElementById('stat-coding').textContent = (!hasTakenAssessment && u.coding_benchmark === 70) ? 'Pending' : u.coding_benchmark + '%';
+    document.getElementById('stat-comm').textContent = (!hasTakenAssessment && u.communication_rating === 7.0) ? 'Pending' : u.communication_rating + '/10';
 
     // Skills
     const skillColors = {10:'#10b981',9:'#10b981',8:'#22d3ee',7:'#6366f1',6:'#8b5cf6',5:'#f59e0b',4:'#f59e0b',3:'#ef4444',2:'#ef4444',1:'#ef4444'};

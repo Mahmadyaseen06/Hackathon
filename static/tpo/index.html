@@ -5,16 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TPO Command Center — AI Placement Predictor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #070b14; --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
-      --border: rgba(255,255,255,0.08); --primary: #6366f1; --primary-glow: rgba(99,102,241,0.2);
-      --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-      --text: #f1f5f9; --muted: #94a3b8; --sidebar-w: 260px;
+      --bg: #f8f5ee;
+      --surface: #f4efe4;
+      --surface2: #ece6d8;
+      --border: #d4cfc4;
+      --primary: #1d6f5c;
+      --primary-glow: rgba(29,111,92,0.15);
+      --accent: #2e7d32;
+      --success: #2e7d32;
+      --warning: #d97706;
+      --danger: #9e3b33;
+      --text: #1a1917;
+      --muted: #6b665d;
+      --sidebar-w: 260px;
     }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; }
 
     .sidebar {
       width: var(--sidebar-w); min-height: 100vh; background: rgba(10,14,28,0.97);
@@ -22,7 +31,7 @@
       position: fixed; top: 0; left: 0; z-index: 100; backdrop-filter: blur(20px);
     }
     .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); }
-    .logo-mark { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2px; }
+    .logo-mark { font-family: 'Newsreader', serif; font-style: italic; font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #ef4444);   margin-bottom: 2px; }
     .logo-sub { font-size: 11px; color: var(--muted); }
     .sidebar-user { padding: 16px 20px; background: rgba(245,158,11,0.06); margin: 12px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.15); }
     .user-role { font-size: 11px; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -47,7 +56,7 @@
     .section { display: none; }
     .section.active { display: block; }
 
-    .card { background: rgba(13,18,32,0.8); border: 1px solid var(--border); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+    .card { background: rgba(244, 239, 228, 0.8); border: 1px solid var(--border); border-radius: 18px; padding: 24px; margin-bottom: 20px; }
     .card:hover { border-color: rgba(245,158,11,0.2); transition: border-color 0.2s; }
     .card-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
     .card-grid { display: grid; gap: 16px; }

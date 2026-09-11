@@ -1775,5 +1775,38 @@
     "interview_history": [],
     "platform_stats": {},
     "platform_stats_history": []
+  },
+  {
+    "usn": "4JN25CS083",
+    "password": "jeevan",
+    "name": "jeevan",
+    "branch": "Computer Science & Engineering",
+    "semester": 7,
+    "cgpa": 8.5,
+    "active_backlogs": 0,
+    "backlogs_history": 0,
+    "quantitative_aptitude": 70,
+    "logical_reasoning": 70,
+    "coding_benchmark": 70,
+    "communication_rating": 7.0,
+    "interview_rating": 7.0,
+    "target_role": "SDE",
+    "target_lpa": 10.0,
+    "skills": {},
+    "certifications": [
+      "aws"
+    ],
+    "internships": [],
+    "projects": [],
+    "github_username": "JeevanM26",
+    "leetcode_username": "",
+    "hackerrank_username": "",
+    "codeforces_username": "",
+    "email": "jeev@gmail.com",
+    "phone": "7986543210",
+    "self_registered": true,
+    "interview_history": [],
+    "platform_stats": {},
+    "platform_stats_history": []
   }
 ]

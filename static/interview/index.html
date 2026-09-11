@@ -12,23 +12,23 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#09090e;
-  --surface:#101017;
-  --surface2:#161622;
-  --surface3:#1c1c2c;
-  --surface4:#252538;
-  --border:rgba(255,255,255,0.08);
+  --bg:#ffffff;
+  --surface:#fafafa;
+  --surface2:#f4f4f5;
+  --surface3:#e4e4e7;
+  --surface4:#d4d4d8;
+  --border:rgba(0,0,0,0.08);
   --border-focus:rgba(99,102,241,0.5);
-  --border-accent:rgba(99,102,241,0.35);
-  --text:#f1f1f8;
-  --muted:#7c7c98;
-  --accent:#6366f1;
+  --border-accent:rgba(99,102,241,0.25);
+  --text:#18181b;
+  --muted:#71717a;
+  --accent:#4f46e5;
   --accent-light:#818cf8;
-  --accent2:#06b6d4;
+  --accent2:#0284c7;
   --success:#10b981;
   --warning:#f59e0b;
   --danger:#ef4444;
-  --radius:12px;
+  --radius:16px;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
 
@@ -298,7 +298,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* Audio Waveform Canvas Visualizer */
 #waveform-container{
   display:flex;align-items:center;gap:6px;height:32px;padding:0 8px;
-  background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.08);
+  background:var(--surface3);border:1px solid var(--border);
   border-radius:8px;
 }
 #live-audio-canvas{
@@ -307,39 +307,45 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 /* Interviewer Dialogue Bubble */
 .interviewer-bubble{
-  background:rgba(10,10,15,0.7);
-  border:1px solid rgba(255,255,255,0.06);
-  border-radius:10px;padding:10px 14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;padding:14px 18px;
   position:relative;
+  box-shadow:0 4px 12px rgba(0,0,0,0.03);
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .bubble-header{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:5px;
+  margin-bottom:8px;
 }
 .bubble-speaker{
-  font-size:10px;font-weight:800;letter-spacing:0.8px;
+  font-size:11px;font-weight:800;letter-spacing:0.8px;
   color:var(--accent2);text-transform:uppercase;
 }
 #replay-voice-btn{
   background:transparent;border:none;color:var(--muted);
-  font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;
+  font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;
   transition:color 0.15s;
 }
 #replay-voice-btn:hover{color:var(--text)}
 #interviewer-dialogue-text{
-  font-size:13px;line-height:1.6;color:#e2e8f0;
+  font-size:14px;line-height:1.6;color:var(--text);
   font-style:italic;
 }
 
 /* Mic Status & VU Decibel HUD */
 #mic-status-hud{
   display:flex;align-items:center;justify-content:space-between;
-  font-size:11px;color:var(--muted);padding:5px 10px;
-  background:rgba(0,0,0,0.3);border-radius:8px;
-  border:1px solid rgba(255,255,255,0.05);
+  font-size:12px;color:var(--muted);padding:8px 12px;
+  background:var(--surface2);border-radius:10px;
+  border:1px solid var(--border);
 }
 .mic-vu-bar-wrap{
-  width:85px;height:6px;background:rgba(255,255,255,0.08);
+  width:85px;height:6px;background:var(--surface4);
   border-radius:100px;overflow:hidden;display:inline-block;margin-left:6px;
   vertical-align:middle;
 }
@@ -866,10 +872,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         <div id="interviewer-card">
           <div id="interviewer-header">
             <div style="display:flex;align-items:center;gap:12px">
-              <div id="ai-avatar-wrap">
-                <div id="ai-avatar">🤖</div>
-                <div class="ai-speaking-pulse"></div>
-              </div>
               <div>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div id="ai-name">Senior Staff Interviewer</div>
@@ -888,12 +890,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
           <!-- Spoken Dialogue Bubble -->
           <div class="interviewer-bubble">
             <div class="bubble-header">
-              <span class="bubble-speaker">INTERVIEWER (TALKING BACK)</span>
+              <span class="bubble-speaker">INTERVIEWER</span>
               <div style="display:flex;align-items:center;gap:8px">
-                <select id="voice-select" onchange="changeVoice(this.value)" title="Choose Interviewer Voice" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:2px 8px;border-radius:6px;outline:none;max-width:170px;cursor:pointer">
-                  <option value="">🎙️ Natural AI Voice</option>
-                </select>
-                <button id="replay-voice-btn" onclick="replayInterviewerVoice()">🔊 Replay Voice</button>
+                <button id="replay-voice-btn" onclick="replayInterviewerVoice()">🔊 Replay</button>
               </div>
             </div>
             <div id="interviewer-dialogue-text">"Welcome to your interview. Let's begin."</div>
@@ -1561,27 +1560,22 @@ function cleanTextForSpeech(text) {
     .trim();
 }
 
-function replayInterviewerVoice() {
-  if (currentSpeakingText) {
-    speakInterviewerText(currentSpeakingText);
-  }
-}
-
 function toggleTTS() {
   ttsEnabled = !ttsEnabled;
   const btn = document.getElementById('tts-toggle-btn');
   btn.textContent = ttsEnabled ? '🔊 Voice: ON' : '🔇 Voice: MUTED';
   btn.style.color = ttsEnabled ? 'var(--text)' : 'var(--muted)';
-  if (!ttsEnabled && window.speechSynthesis) {
-    clearTimeout(speechTimeout);
-    window.speechSynthesis.cancel();
-    currentUtterance = null;
+  if (!ttsEnabled && currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
     stopWaveAnimation();
+    const statusEl = document.getElementById('ai-status');
+    if (statusEl) statusEl.textContent = 'Listening and evaluating...';
   }
 }
 
-function speakInterviewerText(rawText, onComplete) {
-  if (!ttsEnabled || !window.speechSynthesis) {
+async function speakInterviewerText(rawText, onComplete) {
+  if (!ttsEnabled) {
     if (onComplete) onComplete();
     return;
   }
@@ -1592,65 +1586,61 @@ function speakInterviewerText(rawText, onComplete) {
     return;
   }
 
-  // CRITICAL ANTI-ECHO 1: pause microphone while interviewer speaks so mic does not capture speaker output
   if (isListening) {
     stopListening();
   }
 
-  // CRITICAL ANTI-ECHO 2: clear any pending timeouts
-  clearTimeout(speechTimeout);
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
 
-  // CRITICAL ANTI-ECHO 3: cancel previous synthesis and wait 90ms for audio unit buffer to flush cleanly
-  window.speechSynthesis.cancel();
+  try {
+    const statusEl = document.getElementById('ai-status');
+    if (statusEl) statusEl.textContent = 'Generating speech...';
 
-  speechTimeout = setTimeout(() => {
-    try {
-      if (!selectedVoice && availableVoices.length === 0) {
-        loadVoices();
+    const formData = new FormData();
+    formData.append("text", text);
+    formData.append("voice", "en-US-ChristopherNeural");
+
+    const response = await fetch("/api/interview/tts", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) throw new Error("TTS generation failed");
+
+    const blob = await response.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    
+    currentAudio = new Audio(audioUrl);
+    
+    currentAudio.onplay = () => {
+      isSpeakingNow = true;
+      if (statusEl) statusEl.textContent = 'Interviewer speaking...';
+      startWaveAnimation();
+    };
+
+    const finishSpeech = () => {
+      isSpeakingNow = false;
+      if (statusEl) statusEl.textContent = 'Listening and evaluating...';
+      stopWaveAnimation();
+      URL.revokeObjectURL(audioUrl);
+      if (onComplete) {
+        onComplete();
       }
+    };
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      currentUtterance = utterance; // Keep global reference to prevent Chrome garbage-collection bug
+    currentAudio.onended = finishSpeech;
+    currentAudio.onerror = finishSpeech;
 
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-      utterance.rate = 0.95; // Calm, clear, natural pace
-      utterance.pitch = 1.0;
-      utterance.lang = selectedVoice ? selectedVoice.lang : 'en-US';
-
-      utterance.onstart = () => {
-        isSpeakingNow = true;
-        document.getElementById('ai-avatar')?.classList.add('speaking');
-        const statusEl = document.getElementById('ai-status');
-        if (statusEl) statusEl.textContent = 'Interviewer speaking...';
-        startWaveAnimation();
-      };
-
-      const finishSpeech = () => {
-        isSpeakingNow = false;
-        document.getElementById('ai-avatar')?.classList.remove('speaking');
-        const statusEl = document.getElementById('ai-status');
-        if (statusEl) statusEl.textContent = 'Listening and evaluating...';
-        stopWaveAnimation();
-        currentUtterance = null;
-        if (onComplete) {
-          onComplete();
-        }
-      };
-
-      utterance.onend = finishSpeech;
-      utterance.onerror = (e) => {
-        console.warn('SpeechSynthesis event:', e);
-        finishSpeech();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } catch(err) {
-      console.warn('Speech synthesis error:', err);
-      if (onComplete) onComplete();
-    }
-  }, 90);
+    await currentAudio.play();
+  } catch(err) {
+    console.warn('Speech synthesis error:', err);
+    isSpeakingNow = false;
+    stopWaveAnimation();
+    if (onComplete) onComplete();
+  }
 }
 
 // ── God-Tier Hardware Audio Engine & Spectrum Visualizer ──
